@@ -1,0 +1,77 @@
+---
+title: "Biology Primer"
+---
+
+This document lists some basic facts on molecular biology for the non-biologists in the audience -- even though you should remember these points from high school.
+
+### DNA
+
+- A cell's genetic information is stored in its *DNA* (desoxyrobonucleic acids). DNA is a polymer, i.e., it is made as a long chain of repeating elements, the *nucleotides*, which are linked by *phosphate bonds*. 
+- There are four nucleotides: adenine (A), cytosine (C), guanine (G) and thymine (T). The information stored in the DNA is represented by the sequence of these elements. 
+- DNA is a double-helix, comprising two *strands* running in opposite direction whose bases are paired up (*base pairing*). Adenine always pairs with thymine (AT), cytosine with guanine (CG.
+- Therefore, the sequences of the two strands are related to each othe by the operation of *reverse complementation*, i.e., reversing the sequence, and replacing each base by its complementary base (i.e., swapping A↔Tv and G↔T). Example:
+```
+>>>> AGGCTCAGT >>>>   (first strand, read from left to right)
+<<<< TCCGAGTCA <<<<   (second strand, read from right to left)
+```
+- Each *base pair* (bp) in the genome contains 2 bit of information.
+- To make copies of DNA, the cell uses enzymes called *polymerases* which seperate the two strands and use one of the strands as "template" to assemble a new strand by base-pairing.
+- Polymerases are used to duplicate the DNA for cell division, and to make RNA (see below).
+- In eukaryotes (cells with proper cellular nucleus), DNA is organized in *chromosomes*: long linear chains. In procaryotes (bacteria and archae, which do not have a nucleus), DNA forms a loop. Eukaryotes also contain *mitochondriae* (abbreviated MT) which contain a DNA loop like prokaryotes.
+- The chromosomes are numbered (for humans: from 1 to 22) except for the sex chromosomes, which are denoted X and Y.
+- A *reference assembly* is a set of sequences for a species' chromosomes that is used to describe a "typical" or "average" individual's DNA.
+- There are databases that describe which parts of the DNA sequence is the same in (nearly) all individuals and which parts tend to vary between individuals (polymorphisms).
+
+### RNA
+
+- In order to "make use of "work" with DNA, the cell can make a copy of a defined stretch of the DNA. This copy is made as RNA, a chemical variant of DNA, and is single-stranded, i.e. not a double helix.
+- In RNA, the base thymine (T) is replaced by uracil (U).
+- The process of making an RNA copy of DNA is called *transcription*, the produced RNA is called a *transcript*.
+- A region of DNA that is regularly transcribed to RNA is called a *gene*.
+- An important class of transcripts are those that conatin "blueprints" for proteins. The genes producing these are called *protein-coding genes*.
+
+### Directions
+
+- Chromosomes have a special region in the middle called the *centromer* that divides the chromsome into two *arms*. By convention, the shorter arm (p arm) is on the left, and the base pairs are numbered from left to right, starting either with 1 or 0.
+- In RNA, sequences are written in the same order in which they are chained by the polymerase and read by the ribosome. The start is called the *5' end*, the end (in reading direction) is called the *3' end*. 
+
+### Proteins
+
+- Proteins are polymeric macromolecules formed from chains of amino acids.
+- Proteins that catalyze chemical reactions are called *enzymes*. They are the molecular machines that make living cells possible.
+- Structural proteins, in contrast, are building blocks for the cells structure.
+- Proteins are polymers of basic building blocks, the amino acids (AAs), that are connected via the so-called *peptide bond*. 
+- There are 20 proteinogenic amino acids (+2 special ones).
+- A protein is defined by the sequence of these amino acids. 
+- A special molecular machine, the *ribosome*, assembles proteins by chaining together individual amino acids. It reads of the requried sequence of the amino acids from an RNA transcript called a *messenger RNA*.
+- This process is called *translation*
+- While the linear AA chain is assembled the nascent protein folds into a complicated 3D shape that is crucial for its function. This happens due to chemical attractions and repulsions between the amino acids in the chain and between an amino acid and the surrounding water molecules.
+- The amino acids all differ in their chemical properties, thus making a wide variety of such interactions possible.
+
+### The genetic code
+
+- An RNA transcript that can be processed by a ribosome to build a protein is called "messenger RNA" (mRNA). 
+- It contains a sequence of groups of three bases each, called *codons*. Each of the $4^3$ possible codons codes for an amino acid, except for the *stop codon* that instructs the ribosome to finish the translation and release the finished protein.
+- As there are 20 amino acids (and the stop signal), the code is redundant: For each meaning there are 2 to 4 codons.
+- Here is the [genetic code](https://en.wikipedia.org/wiki/Genetic_code).
+
+### Transcript types
+
+There are several types of genes/transcripts:
+
+- *Protein-coding genes* are transcribed to *messenger RNA* (mRNA), which are read by ribosomes and serve as "blueprint" for assembling proteins.
+    - An mRNA transcript has three parts: The part in the middle is called the coding sequence (CDS), which contains the sequence of codons, always starting with AUG (the codon for methionine, that also serves as start signal).
+    - The part before the transcription start signal is called the *5' untranslated region* (5'-UTR).
+    - The part after the stop codon is called the *3' untranslated region* (3' UTR).
+    - In most cases, the 3' UTR is followed by a multiple adenines, called the *poly-A tail*.
+- Other transcripts are called *non-coding*. There are several:
+    - *Ribosomal genes* are transcribed to *ribosomal RNA* (rRNA). These fold into a special shape that can catalyze reactions (a ribozyme) and form the core of the ribosome. The vast majority of a cell's RNA is rRNA.
+    - *Transfer RNA* (tRNA) are short pieces of RNA that hold individual amino acids and supply them to the ribosomes.
+    - small nucleolar RNAs (snoRNAs) have a role in splicing (see below).
+    - micro-RNAs (miRNAs) and long non-coding RNAs (lncRNAs) are various other RNA that have regulatory roles, e.g., they influence how often a messenger  transcript gets translated before it gets degraded.
+
+### Splicing and isoforms
+
+- While a (protein coding or a long non-coding) gene is transcribed, a machinery called the *spliceosome* cuts out large parts of the produced transcripts, reducing the initial "pre-mRNA" to a much shorter "mature mRNA". The removed parts are called *introns*, the remaining parts (that are chained together) are called *exons*. The places wher the RNA is cut are called *splice sites*.
+- Depending on many factors, one gene can give rise to different transcripts (transcript isoforms) that differ in where the transcription starts, where is terminates (or: where the poly-A tail is attached) and which splice sites are used.
+- A "gene model" is teh information what isoforms have been observed to be produced by a gene. A collection of models for all genes, togetehr with the transcript types (see above) is called a "gene annotation" for a reference assembly.

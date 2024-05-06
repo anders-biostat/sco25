@@ -1,0 +1,54 @@
+---
+title: "Mathematics of Single-cell Omics"
+---
+
+<style>
+.quarto-title > h1.title {
+  display: none;
+}
+</style>
+
+  <p style="text-align:right">
+  	<a href="https://www.bioquant.uni-heidelberg.de">
+  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:20%;padding:3%">
+  	</a>
+  	<a href="https://uni-heidelberg.de">
+  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:20%;padding:3%">
+  	</a>
+  </p>
+
+<h3>Applied mathematics for Biology:</h3>
+<h2 style="margin-top:0px">Single-cell omics</h2>
+
+<h4>Lecture Notes (summer term 2024)</h4>
+<h5><a href="mailto:simon.anders@bioquant.uni-heidelberg.de">Simon Anders</a>, Universität Heidelberg</h5>
+
+-----
+
+## Material
+- [Lecture announcement](announcement.html)
+- [Biology primer](biology_primer.html)
+- [Overview High-throughput Sequencing](overview_hts.html)
+- [A simple analysis with Seurat](seurat.html)
+- [Doing the Seurat analysis "on foot"](pedestrian.html)
+
+## Video Recodings
+- [Lecture of 2024-04-22](https://youtu.be/Xr7AeQp-ceA)
+- [Lecture of 2024-04-24](https://youtu.be/MoqG0GlzExc)
+
+## Dates and times
+
+Lecture times/dates:
+
+- on **Mondays**, 10-12 am c.t.
+- on **Wednesdays**, 16-18 pm s.t.
+- *no lecture* on Mon 29 Apr and Wed 1 May
+
+Place:
+
+- normally: seminar room *SR 042* in BioQuant (INF 267)
+- exceptions:
+  - Wed 05 Jun: SR 043
+  - Wed 12 Jun: Greenier-Saal (7th floor)
+  - Wed 26 Jun: SR 041
+

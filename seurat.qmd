@@ -1,0 +1,186 @@
+---
+title: "A simple analysis with Seurat"
+format: html
+---
+
+### Seurat
+
+To get a first feel for single-cell RNA-Seq data, we will perform a simple standard analysis using *Seurat*, an R package offering comprehensive functionality to analyse such data. Seurat has been developed by Rahul Satija and his research group at New York University and is described in multiple publications. The package is named for French pointilist painter Georges Seurat. The web site for Seurat is [here](https://satijalab.org/seurat/).
+
+We load the package in R. We will also need the Matrix package and the magrittr package.
+
+```{r}
+suppressPackageStartupMessages({
+  library( Seurat )
+  library( Matrix )
+  library( magrittr ) })
+```
+
+### First example data: PBMCs
+
+Our first example data set is a single-cell RNA-Seq data set produced by 10X (the manufacturer of the leading microfluidics platform for single-cell sequencing) to demonstrate their product.
+
+They took a sample of peripheral blood (i.e., blood taken from a vein) of a human donor and removed all red blood cells and platelets (which both have no nucleus) and all white blood cells with multiple nuclei, leaving us only those types of white blood cells that have a single nucleus, i.e., with "peripheral-blood mononuclear cells": PBMC.
+
+A count matrix has been obtained from the sequencing reads, using 10X's "Cellranger" software. The matrix is available from teh 10X web site, [here](https://cf.10xgenomics.com/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz).
+
+The matrix is provided in 10X's own format. Seurat has a function to load this:
+
+```{r}
+count_matrix <- Read10X( "~/tmp/pbmc3k/filtered_gene_bc_matrices/hg19/" )
+```
+
+#### First look at the count matrix
+
+The matrix is provided as a sparse matrix (as defined in the Matrix package):
+
+```{r}
+class( count_matrix )
+```
+
+Specifically, it is a column-sparse matrix (one of three standard storage formats for sparse matrices).
+
+Let's have a look at the top left corner of the matrix
+
+```{r}
+count_matrix[ 1:10, 1:10 ]
+```
+
+All entiries are zero (denoted as dot).
+
+We have rows for the genes and columns for the cell barcodes:
+```{r}
+dim( count_matrix )
+```
+
+The rows are labelled with gene symbols:
+
+```{r}
+rownames(count_matrix) %>% head(20)
+```
+
+The columns are labelled with cell barcodes:
+
+```{r}
+colnames(count_matrix) %>% head(20)
+```
+
+The column sums of the matrix tell us how many reads we got per cell:
+
+```{r}
+colSums(count_matrix) %>% head(20)
+```
+
+Here is a histogram of the total read counts per cell, on a log10 scale
+
+```{r}
+colSums(count_matrix) %>% log10() %>% hist() 
+```
+
+Let's pick an arbitrary cell and ask what genes were expressed in this cell:
+
+```{r}
+cell <- 1423
+count_matrix[ , cell ] %>% sort(decreasing=TRUE) %>% head(50)
+```
+
+We can also ask how often each value appears:
+
+```{r}
+table( count_matrix[ , cell] )
+```
+
+What are the most strongly expressed genes? Let's average over all cells:
+
+```{r}
+rowMeans(count_matrix) %>% sort(decreasing=TRUE) %>% head(30)
+```
+
+How similar are two arbitrarily picked cells?
+
+```{r fig.width=6, fig.height=6}
+cell1 <- 1352
+cell2 <- 762
+
+plot( 
+  jitter( count_matrix[,cell1] + 1 ), 
+  jitter( count_matrix[,cell2] + 1), 
+  cex=.3, log="xy" )
+```
+
+### Analysis with Seurat
+
+```{r}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+```{r}
+UMAPPlot( seu ) + ggplot2::coord_equal()
+```
+
+In this plot, each cell is represented by a point in a so-called dimension-reduced embedding. This means that the points have been arranged such that cells that are similar appear close to each other while cells that are very different are put far apart from each other. 
+
+We will discuss soon in detail how such dimension reduction works and, importantly, what is meant by "similar".
+
+Seurat has also run a "clustering" algorithm that assigns the cells to different "clusters" of cells that are similar to each other. Colours are used here to indicate cluster membership.
+
+We observe that the cells fall into three big groups that each split into a number of smaller clusters.
+
+#### Identifying cell types
+
+We suspect that these represent different types of white blood cells. There should be B-cells, T-cells and perhaps monocytes.
+
+T cells are defined as white blood cells that show a the T-cell receptor as their surface, a protein complex made up of various proteins, one of which is called the T-cell receptor epsilon chain. This protein is described for the gene CD3E. We can ask Seurat to indicate the read counts for this gene in the UMAP plot:
+
+```{r}
+FeaturePlot( seu, "CD3E")
+```
+
+We conclede that clusters 0 and 3 are probably the T cells.
+
+We can also colour for CD79A, a marker for B cells:
+
+```{r}
+FeaturePlot( seu, "CD79A")
+```
+
+To find out what the group to the left is, we can go another way. Let's ask Seurat to find genes that are expressed much mroe strongly in clusters 1 and 4 than in clusters 0, 2, 3, 5:
+
+```{r}
+FindMarkers( seu, ident.1=c(1,4), ident.2=c(0,2,3,5), test.use="t" ) -> m
+head( m, 50 )
+```
+
+From this list, an immunologist would quickly see that these cells are monocytes.
+
+#### Back to math
+
+What is happening inside Seurat.
+
+A few questions we might have:
+
+- How do we define "similarity" of cells?
+- Each cell is represented by a vector of count values. Can we simply define a metric or distance measure in that space to quantify similarity?
+- It will turn out that this does not work, due to the counting noise. Why?
+- How can we make cells with differing total read count comparable?
+- We will overcome the count-noise issue by performing a principal component analysis (a matrix decomposition based on the eigendecomposition). Why does that work?
+- The cells seem to be living in a high-dimensional space. Can this really be faithfully shown by a two-dimensional plot? How do we check the faithfulness? Here, we will get into a rabbit hole involving multi-variate optimization, metrics in distribution spaces, interactive visualizations and maybe GPU programming.
+- How to suitable define "clusters" of similar cells? This will lead us to applications of graph theory.
+
+#### The manifold hypothesis
+
+A teaser to the core idea in single-cell analysis:
+
+Cells "live" in a "state space" that is spanned by all the possible configurations of the cells in the organism. When a cell reacts to a stimulus or changes its state for another reason, this will be a continuous (maybe even smooth?) move in this statespace. 
+
+However, we cannot observe the state space directly -- but we assume that each state is associated with a transcriptome, i.e., a measure or distribution in the space of read count vectors spanned by the genes (i.e., of possible columns in the count matrix).
+
+We assume that the distribution of the cells in our sample lives on a *manifold* in state space, and we wish to learn first the topology of this manifold, then gain a metric and an atlas for it, then infer the distribution/measure on this manifold, from which our cells have been sampled. And finally, we have to translate this mathematical description into a biological insights.
