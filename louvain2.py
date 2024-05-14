@@ -56,55 +56,39 @@ def expected_fraction_of_internal_edges( lnl, membv ):
    espg = edge_stubs_per_group( lnl, membv )
    return ( espg**2 ).sum() / espg.sum()**2
 
-def modularity_score( edgelist, group ):
+def modularity_score( lnl, membv ):
    return actual_fraction_of_internal_edges( lnl, membv ) - \
       expected_fraction_of_internal_edges( lnl, membv ) 
+
+def delta_modularity_score( lnl, membv, vertex, new_group ):
+   old_group = membv[vertex]
+   espg = edge_stubs_per_group( lnl, membv )
+   n_edges = espg.sum()/2
+   # change in actual egde fraction
+   delta_n_internal_edges = 0
+   for nv in lnl[vertex]:
+      if membv[nv] == old_group:
+         delta_n_internal_edges -= 1
+      elif membv[nv] == new_group:
+         delta_n_internal_edges += 1
+   delta_actual_fraction = delta_n_internal_edges / n_edges
+   # change expected edge fraction
+   numerator_change = ( espg[old_group] - len(lnl[vertex]) )**2 - espg[old_group]**2 + \
+      ( espg[new_group] + len(lnl[vertex]) )**2 - espg[new_group]**2
+   delta_expected_fraction = numerator_change / (2*n_edges)**2
+   return delta_actual_fraction - delta_expected_fraction
+
+
 
 lnl = make_lnl()
 
 tbl = pd.read_csv( "ump_cl.csv" )
 membv = tbl['group'].values - 1
 
-print( modularity_score(lnl, membv))
+ms0 = modularity_score(lnl, membv)
+print( ms0 )
 
-# How many edges are there?
-n_edges = 0
-for nl in lnl:
-   n_edges += len(nl)
-n_edges /= 2
-print( n_edges )   # 21176
-print( edge_stubs_per_group(lnl,membv).sum()/2 )
+print( delta_modularity_score( lnl, membv, 17, 7 ) )
+membv[17] = 7
+print( modularity_score(lnl, membv) - ms0 )
 
-### Try: Move a vertex from one group to another
-v = 17
-g0 = membv[v]
-g1 = 7
-
-# How many actual edges will we gain or lose?
-delta_n_internal_edges = 0
-for nv in lnl[v]:
-   if membv[nv] == g0:
-      delta_n_internal_edges -= 1
-   elif membv[nv] == g1:
-      delta_n_internal_edges += 1
-print( delta_n_internal_edges / n_edges )
-
-af0 = actual_fraction_of_internal_edges(lnl, membv)
-membv[v] = g1
-print( actual_fraction_of_internal_edges(lnl, membv) - af0, "A" )
-membv[v] = g0
-
-# How does the expected fraction change?
-espg = edge_stubs_per_group( lnl, membv )
-espg2 = edge_stubs_per_group( lnl, membv )
-numerator_change = ( espg[g0] - len(lnl[v]) )**2 - espg[g0]**2 + \
-   ( espg[g1] + len(lnl[v]) )**2 - espg[g1]**2
-print( numerator_change / (2*n_edges)**2 )
-
-print("B")
-
-
-ef0 = expected_fraction_of_internal_edges(lnl, membv)
-membv[v] = g1
-print( expected_fraction_of_internal_edges(lnl, membv) - ef0 )
-membv[v] = g0
