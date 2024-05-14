@@ -54,7 +54,7 @@ def edge_stubs_per_group( lnl, membv ):
 
 def expected_fraction_of_internal_edges( lnl, membv ):
    espg = edge_stubs_per_group( lnl, membv )
-   return ( ( espg / espg.sum() )**2 ).sum()
+   return ( espg**2 ).sum() / espg.sum()**2
 
 def modularity_score( edgelist, group ):
    return actual_fraction_of_internal_edges( lnl, membv ) - \
@@ -73,6 +73,7 @@ for nl in lnl:
    n_edges += len(nl)
 n_edges /= 2
 print( n_edges )   # 21176
+print( edge_stubs_per_group(lnl,membv).sum()/2 )
 
 ### Try: Move a vertex from one group to another
 v = 17
@@ -90,13 +91,20 @@ print( delta_n_internal_edges / n_edges )
 
 af0 = actual_fraction_of_internal_edges(lnl, membv)
 membv[v] = g1
-print( actual_fraction_of_internal_edges(lnl, membv) - af0 )
+print( actual_fraction_of_internal_edges(lnl, membv) - af0, "A" )
+membv[v] = g0
 
 # How does the expected fraction change?
+espg = edge_stubs_per_group( lnl, membv )
+espg2 = edge_stubs_per_group( lnl, membv )
+numerator_change = ( espg[g0] - len(lnl[v]) )**2 - espg[g0]**2 + \
+   ( espg[g1] + len(lnl[v]) )**2 - espg[g1]**2
+print( numerator_change / (2*n_edges)**2 )
 
-# First count the edges per group:
-n_groups = membv.max() + 1
-edges_per_group = np.zeros( n_groups )
-for v in range(len(lnl)):
-   g = membv[v]
-   edges_per_group[g] += len(lnl[v])
+print("B")
+
+
+ef0 = expected_fraction_of_internal_edges(lnl, membv)
+membv[v] = g1
+print( expected_fraction_of_internal_edges(lnl, membv) - ef0 )
+membv[v] = g0
