@@ -1,5 +1,5 @@
 ---
-title: "Principal COmponent Analysis"
+title: "Principal Component Analysis"
 ---
 
 Load example data
