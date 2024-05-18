@@ -1,0 +1,13 @@
+project:
+  type: website
+
+website:
+  title: "Mathematics of single-cell omics"
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: false
+
+
