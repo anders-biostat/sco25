@@ -40,12 +40,13 @@ title: "Mathematics of Single-cell Omics"
   - [Doing the Seurat analysis "on foot"](pedestrian.html)
 - [Lecture of 2024-05-06](https://youtu.de/5EGlihUE8FE) 
   - Modularity clustering
-- Exercise class of 2024-05-08  
+- [Exercise class of 2024-05-08](https://youtu.be/QQeXGoebWqs)  
   - Implementing modularity score in Python
+  - [louvain.py](louvain.py)
 - [Lecture of 2024-05-13](https://youtu.be/55jgeLzbLgQ) 
   - [Mathematics of PCA](pca.html)
-  - Blackboard images: [...]
-- Exercise class of 2024-05-15:
+  - Blackboard photos: [to to: insert links to pictures of blackboard]
+- (Exercise class of 2024-05-15)[https://youtu.be/1uCcugEhJfM]:
   - [...]
 
 ## Dates and times

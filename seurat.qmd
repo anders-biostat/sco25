@@ -27,7 +27,7 @@ A count matrix has been obtained from the sequencing reads, using 10X's "Cellran
 The matrix is provided in 10X's own format. Seurat has a function to load this:
 
 ```{r}
-count_matrix <- Read10X( "~/tmp/pbmc3k/filtered_gene_bc_matrices/hg19/" )
+count_matrix <- Read10X( "data/pbmc3k/filtered_gene_bc_matrices/hg19/" )
 ```
 
 #### First look at the count matrix

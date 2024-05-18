@@ -11,7 +11,7 @@ suppressPackageStartupMessages( {
 ```
 
 ```{r}
-count_matrix <- Read10X( "~/tmp/pbmc3k/filtered_gene_bc_matrices/hg19/" )
+count_matrix <- Read10X( "data/pbmc3k/filtered_gene_bc_matrices/hg19/" )
 ```
 
 Qu: Examine the sparse storage format of the matrix.

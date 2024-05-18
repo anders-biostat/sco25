@@ -11,7 +11,7 @@ suppressPackageStartupMessages( {
   library( sparseMatrixStats ) 
   library( tidyverse ) } )
 
-count_matrix <- Read10X( "~/tmp/pbmc3k/filtered_gene_bc_matrices/hg19/" )
+count_matrix <- Read10X( "data/pbmc3k/filtered_gene_bc_matrices/hg19/" )
 ```
 
 Log-normalize
@@ -161,12 +161,12 @@ We try this by starting with a random vector, and applying the matrix 5 times. T
 the vector to unit length after each operation. Then, we compare the vector with the actual first eigenvector (as calculated
 by irlba) with a scatter plot.
 
-```{r}
+```{r fig.width=3,fig.height=3}
 v <- rnorm( length(hvg) )
 for( i in 1:10 ) {
   v <- as.vector( yty %*% v )
   v <- v / sqrt(sum(v^2))
-  plot( pca$rotation[,"PC1"], v, asp=1 )
+  plot( pca$rotation[,"PC1"], v, asp=1, pch="." )
 }
 v1 <- v
 ```
@@ -174,7 +174,7 @@ v1 <- v
 To get the second eigenvector, we do the same as before, but after each operation we subtract the vector's projection
 onto the first eigenvector. 
 
-```{r}
+```{r fig.width=3,fig.height=3}
 v <- rnorm( length(hvg) )
 for( i in 1:10 ) {
   v <- as.vector( yty %*% v )
@@ -187,7 +187,7 @@ v2 <- v
 
 By projecting out the first two eigenvectors, we can get the third eigenvector:
 
-```{r}
+```{r fig.width=3,fig.height=3}
 v <- rnorm( length(hvg) )
 for( i in 1:10 ) {
   v <- as.vector( yty %*% v )

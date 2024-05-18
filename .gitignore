@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+sco24.Rproj
+
+/.quarto/
+*_cache/
+*_files/
