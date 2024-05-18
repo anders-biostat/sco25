@@ -1,0 +1,631 @@
+---
+title: "Smoothing"
+---
+### Some example data, and the problem setting
+
+The following code produces a function whose graphs shows several ups and downs.
+Don't pay to much attention on how the function works; just look at its graph.
+
+```{r}
+library( splines )
+
+spline_coefs = c( .1, .1, .1, .3, 1.3, 1.3, -.1, -.1, -.1, .3, .3  )
+spline_knots = c( .1, .1, .32, .35, .36, .48, .7 )
+  
+true_function <- function(x)
+   bs( x, knots=spline_knots, intercept=TRUE ) %*% spline_coefs
+
+xg <- seq( 0, 1, length.out=1000 )
+plot( xg, true_function( xg ), type="l" )
+```
+
+Let's assume, we have some complicated apparatus or some complex system, which 
+responds to some input or stimulus with an output or response governed by this
+function. Unfortunately, the measurement of the response is very noisy, and
+we have measurements only for a limited number of stimulus values.
+
+Here's the 100 stimulus values:
+
+```{r}
+n <- 100
+set.seed( 13245769 )
+x <- runif( n )
+```
+
+And here's the measured responses:
+
+```{r}
+y <- true_function( x ) + rnorm( n, sd=.1 )
+```
+
+This is how our data looks like:
+
+```{r}
+plot( x, y )
+```
+
+Can we reconstruct the original function from this noisy data?
+
+### Binned means
+
+The simplest idea would be to bin the x-values and calculate for
+each bin of x values an average of the y values, e.g. one average of the y values
+corresponding to the x-values x from 0 to 0.1, one average for x between .1 and .2, etc.
+
+```{r}
+suppressPackageStartupMessages( library( tidyverse ) )
+
+tibble( x, y ) %>%
+mutate( xbin = cut_width( x, .1, center=0.05 ) ) %>%
+group_by( xbin ) %>%
+summarise_all( mean ) %>%
+ggplot() + geom_point( aes( xbin, y ) )
+```
+
+### Kernel smoothing
+
+The hard cuts might introduce artefacts. An alternative is the following:
+
+To get a smooth $y$ value for a given value $x_0$, calculate a *weighted* mean
+of the $y$ values, where the weight depends on the distance $x-x_0$ and is 0
+for distance larger than some "smoothing bandwidth" $h$:
+
+$$ f_\text{sm}(x_0) = \frac{ \sum_i y_i w_i }{\sum_i w_i}, $$
+where the weights depend on some "kernel function" $f_\text{K}$ as
+$$ w_i = f_\text{K}\left(\frac{x-x_0}{h}\right).$$
+
+There are many choices for kernel functions. Wikipedia [lists](https://en.wikipedia.org/wiki/Kernel_(statistics)) the popular
+ones.
+
+A kernel function should be symmetric $f_\text{K}(x)=f_\text{K}(-x)$, 
+have a single mode at 0, be continuous, perhaps also differentiable, and 
+small or even zero for $|x|>0$. We use the tricube kernel
+$$ f_\text{tc}(u) = \left\{ \begin{align}
+\frac{70}{81} \left(1-|u|^3\right)^3 \qquad & \text{for } |u| \le 1 
+\\
+0 \qquad & \text{otherwise} 
+\end{align} \right.$$
+
+The prefactor merely ensures that the function has a unit integral. 
+As we divide by the weight sum anyway, we don't need it:
+
+```{r}
+tricube <- function(u)
+  ifelse( abs(u) < 1, ( 1 - abs(u)^3 )^3, 0 )
+```
+
+Here's the smoothing function $f_\text{sm}$ from above, now in R:
+
+```{r}
+kernel_smooth <- function( x0, x, y, h ) {
+  w <- tricube( ( x - x0 ) / h )
+  sum( w * y ) / sum( w )
+}
+```
+
+We use it to draw a smoothed plot:
+
+```{r}
+xg <- seq( 0, 1, length.out = 300 )
+
+plot( 
+  xg, 
+  sapply( xg, kernel_smooth, x, y, h=.1), 
+  type="l", col="red", ylim=c( -.1, 1.5 ) )
+
+lines( xg, true_function( xg ), col="blue" )
+points( x, y )
+```
+
+For comparison, we have added to the smoothing curve (red) the true function (blue),
+from which we had sampled our data.
+
+#### Bandwidth choice
+
+Experiment a bit with values for $h$, the kernel width (also called the "smoothing bandwidth").
+
+How to choose a good value? What's the trade-off?
+
+
+### Local regression
+
+(also known as "LOESS smoothing" or "LOWESS smoothing", for 
+"locally estimated/weighted scatterplot smoothing")
+
+In the curves above, the smoothed line has difficulties following the steep decent in the middle.
+This is because a kernel smoother cannot "sense slope".
+
+Before, we have calculated a weighted average to get a smooth $y$ value for a given
+point $x_0$. Now, we will perform a weighted regression at this point.
+
+Let's choose $x_0=0.4$ and look at the weights by making a scatter plot  
+using points with weight-proportional area:
+
+```{r}
+x0 <- .4
+
+w <- tricube( ( x - x0 ) / .1 )
+
+plot( x, y, cex=w )
+```
+
+Let's fit a regression in line into with plot. We use the fact that the `lm` function 
+accepts weights.
+
+```{r}
+fit <- lm( y ~ x, weights=w )
+
+fit
+```
+
+Here, `lm` has now maximized the weighted sum of squared residuals,
+
+$$ \frac{\sum_i w_i ( \hat y_i - y )^2}{\sum_i w_i}, \qquad \text{with } \hat y_i = \hat a + \hat b x_i, $$
+where $\hat a$ and $\hat b$ are the fitetd coefficients (intercept and slope), reported by
+```{r}
+coef(fit)
+```
+and $w_i$ are the weights, calculated as above.
+
+Let's put the regression line into our plot, in orange, together fith the fitted
+value at point $x_0$ (in red) :
+
+```{r}
+plot( x, y, cex=w )
+abline( a=coef(fit)[1], b=coef(fit)[2], col="orange" )
+points( x0, coef(fit)[1] + x0*coef(fit)[2], col="red" )
+lines( xg, true_function(xg), col="lightblue" )
+```
+
+Here is a function that does all these steps:
+
+```{r}
+local_regression_smooth <- function( x0, x, y, h ) {
+  w <- tricube( ( x - x0 ) / h )
+  fit <- lm( y ~ x, weights=w )
+  coef(fit)[1] + x0 * coef(fit)[2]
+}
+```
+
+It's not vectorized, so we have to wrap it in an `sapply` to get the whole smoothed curve
+(as before):
+
+```{r}
+plot( 
+  xg, 
+  sapply( xg, local_regression_smooth, x, y, h=.1), 
+  type="l", col="red", ylim=c( -.1, 1.5 ) )
+
+lines( xg, true_function( xg ), col="blue" )
+```
+Here, switching from simple kernel smoothing to local regression did not make that much of a difference
+but sometimes, it helps a lot.
+
+#### Higher-order local regression
+
+Of course, instead of fitting a regression line, we could have fitted a parabola.
+This is quickly done, by adding a quadratic term to the regression
+
+```{r}
+local_quadratic_regression_smooth <- function( x0, x, y, h ) {
+  w <- tricube( ( x - x0 ) / h )
+  fit <- lm( y ~ x + I(x^2), weights=w )
+  coef(fit)[1] + x0 * coef(fit)[2] + x0^2 * coef(fit)[3]
+}
+```
+
+```{r}
+plot( 
+  xg, 
+  sapply( xg, local_quadratic_regression_smooth, x, y, h=.1), 
+  type="l", col="red", ylim=c( -.1, 1.5 ) )
+
+lines( xg, true_function( xg ), col="blue" )
+```
+
+This did, in fact, improve the fit.
+
+#### Adaptive bandwidth
+
+What if the x values are not uniformly dstributed?
+
+This time, we draw our x values from a non-uniform distribution:
+
+```{r}
+set.seed( 13245768 )
+
+x <- sample( c( rbeta( n/2, 3, 7 ), rbeta( n/2, 9, 1 ) ) )
+y <- true_function( x ) + rnorm( n, sd=.1 )
+
+plot( x, y )
+lines( xg, sapply( xg, local_quadratic_regression_smooth, x, y, h=.1 ), col="red" )
+lines( xg, true_function( xg ), col="blue" )
+```
+
+The bandwidth is too large where the points are dense and too narrow where they are sparse.
+
+Adaptive bandwidth: Always choose $h$ such that a fixed number of x values are within the
+kernel window.
+
+```{r}
+local_quadratic_regression_adaptive_smooth <- function( x0, x, y, hn ) {
+  ds <- sort( abs( x - x0 ) )
+  h <- ds[hn]
+  w <- tricube( ( x - x0 ) / h )
+  fit <- lm( y ~ x + I(x^2), weights=w )
+  coef(fit)[1] + x0 * coef(fit)[2] + x0^2 * coef(fit)[3]
+}
+
+plot( x, y )
+lines( xg, sapply( xg, local_quadratic_regression_adaptive_smooth, x, y, hn=30 ), col="red" )
+lines( xg, true_function( xg ), col="blue" )
+```
+
+#### Locfit
+
+In R, all this, and more, is available via the `loess` function (part of base R)
+or the `locfit` package. Our implementation above is, of course, very simple and slow, so better
+use these functions.
+
+```{r}
+plot( x, y )
+lines( xg, sapply( xg, local_quadratic_regression_adaptive_smooth, x, y, hn=30 ), col="red" )
+lines( xg, true_function( xg ), col="blue" )
+
+fit <- loess( y ~ x, degree=2, span = 30/length(x) )
+lines( xg, predict( fit, xg ), col="orange", lty="dashed" )
+```
+
+Here, we specified in the `loess` call that we want local regression with quadratic polynomials, 
+with an adaptive bandwidth as given by `span` (which specified the number of points put under
+the kernel as fraction of the total number of data points).
+
+It seems that the "loess" function gives a slightly better result than our simple implementation.
+Maybe it knows an additional trick?
+
+### Uncertainty estimation
+
+#### Bootstrapping
+
+Usually, we do not know the "true" function. So, how can we judge how good it is?
+
+Bootstrapping offers a way.
+
+Bootstrapping means to replace the data with new data which is obtained by 
+drawing observations, i.e., $(x,y)$ pairs, from the data, with replacement. 
+Doing this many times provides a distribution of possible alternative fits.
+
+First, let's do this for simple kernel smoothing:
+
+```{r}
+plot( x, y, xlim=c(0,1), ylim=c(-.2,1.6) )
+
+for( i in 1:100 ) {
+  bss <- sample.int( length(x), replace=TRUE )
+  lines( xg, sapply( xg, kernel_smooth, x[bss], y[bss], h=.1 ), 
+     col = adjustcolor( "red", alpha=.1 ) ) }
+
+lines( xg, true_function(xg), col="blue" )
+```
+
+Now the same for local quadratic regression with the `loess` function:
+
+```{r}
+plot( x, y, xlim=c(0,1), ylim=c(-.5,1.5) )
+
+for( i in 1:100 ) {
+  bss <- sample.int( length(x), replace=TRUE )
+  lines( xg, predict( loess( y[bss] ~ x[bss], degree=2, span = 30/length(x) ), xg ),
+     col = adjustcolor( "red", alpha=.1 ) ) }
+
+lines( xg, true_function(xg), col="blue" )
+```
+
+#### Leave-one-out cross-validation
+
+Another possibility is to use LOO-CV:
+
+Calculate for each data point its y value, using the y values of its neighbours, but
+not using the point's own y value.
+
+```{r}
+yhat_loo <- sapply( 1:length(x), function(i)
+  kernel_smooth( x[i], x[-i], y[-i], h=.1 ) ) 
+
+plot( x, y )
+points( x, yhat_loo, col="red" )
+```
+
+Now we can calculate a mean squared error (MSE):
+
+```{r}
+mean( ( y - yhat_loo )^2 )  # Mean squared error
+```
+
+Is the MSE lower with a more advanced smoother?
+
+```{r}
+yhat_loo <- sapply( 1:length(x), function(i)
+  predict( loess( y[-i] ~ x[-i] ), x[i] ) ) 
+
+mean( ( y - yhat_loo )^2, na.rm=TRUE )
+```
+
+#### Standard errors from regression
+
+Using the math of ordinary least squares (OLS) regression, we can also get standard errors
+from a LOESS fit.
+
+Here, we multiply by 1.96 to get a 95% confidence band. 
+
+```{r}
+pred <- predict( loess( y ~ x, span=.1 ), xg, se=TRUE )
+
+plot( x, y, xlim=c(0,1), ylim=c(-.5,1.5) )
+lines( xg, pred$fit, col="red" )
+rect( xg, pred$fit - 1.96 * pred$se.fit, 
+      lead(xg), pred$fit + 1.96 * pred$se.fit, col=alpha("red",.3), lty="blank" )
+lines( xg, true_function(xg), col="blue" )
+
+
+```
+
+### Example with Poisson noise
+
+Above, the noise was Gaussian (normal). In our single-cell data, it is Poissonian.
+Furthermore, we would like to calculate the curve on the log level, while properly dealing
+with zeroes.
+
+We construct example count data from our curved function.
+
+Let's use a few more data points this time:
+
+```{r}
+n <- 300
+```
+
+Let's sample predictors. We call them x, as before, even though t might be appropriate, too,
+as in out real-data example, the x axis was pseudotime.
+
+```{r}
+set.seed( 13245768 )
+x <- runif(n)
+```
+
+First, we need cell sizes (count totals per cell). We draw them from a log normal:
+
+```{r}
+s = round( exp( rnorm( n, log(1e3), .5 ) ) )
+
+hist( log10(s) )
+```
+
+Next, we get true fractions from our `true_function`, which we exponentiate. We have to rescale and shift a bit to get realistic values:
+
+```{r}
+true_fraction <- function(x) exp( true_function(x) * 4 - 8 )
+
+q <- true_fraction(x)
+
+plot( x, q, log="y")
+```
+
+Now, we add the Poisson noise:
+
+```{r}
+k <- rpois( n, q * s )
+
+plot( x, log( k/s * 1e4 + 1 ) )
+```
+
+### Kernel smoothing
+
+Let's first use a simple kernel smoother. However, for the average, we use this time not
+$$ f_\text{sm}(x_0) = \frac{ \sum_i y_i w_i }{\sum_i w_i}, $$
+as before, but
+$$ f_\text{Psm}(x_0) = \log \frac{ \sum_i k_i w_i }{\sum_i s_i w_i}, $$
+We first try it, then see why this makes sense.
+
+```{r}
+kernel_smooth_Poisson <- function( x0, x, k, s, h ) {
+  w <- tricube( ( x - x0 ) / h )
+  sum( w * k ) / sum( w * s )
+}
+```
+
+We use it to draw a smoothed plot:
+
+```{r}
+xg <- seq( 0, 1, length.out = 300 )
+
+plot( xg, sapply( xg, kernel_smooth_Poisson, x, k, s, h=.1 ), 
+  type="l", col="red", log="y", ylim=c(1e-4,1e-1) )
+
+lines( xg, true_fraction( xg ), col="blue" )
+
+```
+To understand the change in the last two equations, we need a short detour:
+
+#### Inverse-variance weighting
+
+Given $n$ independent random variables $X_i$ with variances $v_i=\operatorname{v_i}$, 
+we want to estimate the expectation 
+of their mean, $\operatorname{E}\left(\frac{1}{n}\sum_{i=1}^n X_i\right)$, by way 
+of estimating a weighted mean,
+$$ \hat\mu = \frac{\sum_iw_iX_i}{\sum_i w_i}. $$
+How should the weights be chosen such that the estimator's sampling variance, 
+$\operatorname{Var}\hat\mu$, is minimized?
+
+If all the estimated variances are the same,  $v_i=v$, then the weights should all be the same, too:
+$w_i\propto 1$.
+
+In general, however, the weights might differ. Then, one should choose $\w_i\propto \frac{1}{v_i}$.
+
+This is easily proven with Lagrange multipliers; the proof can be found on the Wikipedia page
+on [inverse-variance weighting](https://en.wikipedia.org/wiki/Inverse-variance_weighting).
+
+#### Application to Poisson variables
+
+Let us now assume that the random variables we want to average over are fractions
+derived from Poisson counts. We have cells, indexed by $i$, with counts for our gene
+of interest, given by $K_i\sim \operatorname{Pois}(s_i q)$, where $s_i$ is the
+"size", i.e., the total count sum for the cell. We wish to estimate the common
+expected fraction $q$ via teh weighted average
+$$ \hat q = \frac{\sum_iw_i\frac{K_i}{s_i}}{\sum_i w_i}. $$
+What weights $w_i$ should we use? Using $\operatorname{Var} K_i=s_i q$ together with
+the preceding result, we get
+$$ w_i \propto \frac{1}{\operatorname{Var}\frac{K_i}{s_i}}=\frac{1}{\frac{1}{s_i^2}\operatorname{Var}K_i}=\frac{1}{\frac{1}{s_i^2}s_iq}=\frac{s_i}{q} \propto s_i $$
+Hence:
+
+$$ \hat q = \frac{\sum_iw_i\frac{K_i}{s_i}}{\sum_i w_i} = \frac{\sum_i s_i\frac{K_i}{s_i}}{\sum_i s_i} = \frac{\sum_i K_i}{\sum_i s_i}. $$
+This justifies our switching from $\frac{1}{n}\sum_i(k_i/s_i)$ to $(\sum_i k_i)/(\sum_i s_i)$ in our smoothing function.
+
+### Generalized linear models
+
+Before proceding further, we need another detour, this time to introduce generalized
+linear models (GLMs) as a generalization of OLS linear models. 
+
+#### Example: Radioactive decay
+
+We have measurements of the number of clicks per minute for a radioactive sample.
+Let's simulate this: We count every 10 minutes for 1 minute, up to 200 minutes. The
+activite at t=0 is 1000 clicks/min, the half-life is 130 min.
+
+```{r}
+t <- seq( from=0, by=10, length.out=20 )
+expected_counts_per_min <- 100* 2^( - t / 20 )
+
+k <- rpois( length(t), expected_counts_per_min )
+
+plot( t, k )
+```
+
+A simple approach is to plot on a semi-log plot:
+
+```{r}
+plot( t, k, log="y")
+```
+and fit a regression line. However, the zeroes mess this up.
+
+Here's a better way:
+
+We may assume that 
+$$ k_i \sim \operatorname{Pois}( \alpha e^{\kappa t_i})$$
+The true values are $\alpha = 100$ (the initial click rate) and
+$\kappa = \ln 2 / 20\approx .035$ (using the half life, 20, from above).
+
+We can find maximum-likelihood estimates for $\alpha$ and $\kappa$. 
+Here is the log-likelihood for a pair of candidate values $\alpha$ and $kappa$:
+
+```{r}
+ll <- function( alpha, kappa )
+  sum( dpois( k, alpha * exp( -kappa * t ), log=TRUE ) )
+```
+
+We can find the parameters that maximize this function, using some guessed initital values:
+
+```{r}
+optim( 
+  c( 50, 0.1 ),
+  function( x ) -ll( x[1], x[2] ) )
+```
+#### GLMs
+
+Rewriting our model a bit, we recover the form of a "generalized linear model" (GLM). A GLM
+always has three components:
+
+(i) The response (in our case, the counts $K_i$) follows a distribution from the so-called exponential 
+family (which includes the normal, the Poisson, the binomial, the gamma-Poisson, and others). Here, we have:
+
+$$ K_i \sim \operatorname{Pois}( \mu_i ). $$
+(ii) The mean parameter $\mu_i$ in that distribution is coupled with teh so-called "linear
+predictir$ \eta_i$ by a function, the so-called "link function". Here:
+$$ \eta_i = \log \mu_i. $$
+(iii) The linear predictor is a linear combination of known predictors $x_ij$ with unknown coefficients $\beta_j$. In general
+$$ \eta_i = \beta_0 + \sum_j \beta_j x_{ij} + o_i$$
+and here simply
+$$ \eta_i = \beta_0 + \beta_1 t_i, $$ 
+i.e. we have, besides the intercept $\beta_0$, only one further coefficient, $\beta_1$. 
+
+There are also no offsets $o_i$. (If the time
+we had waited at each time point to count would not always have been the same but
+differed from measurement to measurement, we would have included the length these 
+waiting times as "exposure values" $o_i$.)
+
+We can clearly identify how the coefficients of the GLM correspond to
+our parameters: $\beta_1=-\kappa=-\ln2/T_{1/2}$ and $\beta_0=\ln\alpha$.
+
+If the model has this shape, the general optimizer `optim` that we have used above
+can be replaced by a GLM solver:
+
+```{r}
+fit <- glm( k ~ t, family = poisson(link="log") )
+fit
+```
+We get the same result as with optim. We see this directly for the coefficient for $t$ (i.e.,
+$\kappa$), but for $\alpha$, we have to exponentiate:
+```{r}
+exp(coef(fit)[1])
+```
+
+#### IRLS
+
+The `glm` function is faster than `optim` and more stable, because it uses a special
+algorithm known as "iteratively reweighted least squares" (IRLS) fitting.
+
+I was too lazy to write up how this works, so I asked ChatGPT to do my work:
+
+https://chatgpt.com/share/38554552-182e-45cf-9ea9-556a3592d6df
+
+### Local regression with GLMs
+
+Now, that we know GLMs, we can come back to our count data to be smoothed:
+
+```{r}
+set.seed( 13245768 )
+x <- runif(n)
+s <- round( exp( rnorm( n, log(1e3), .5 ) ) )
+k <- rpois( n, q * s )
+
+plot( x, log( k/s * 1e4 + 1 ) )
+```
+
+Instead of a simple kernel smoother, let's to local regression again, but now
+with the `glm` function instead of the `lm` function:
+
+```{r}
+local_quadratic_regression_smooth_Poisson <- function( x0, x, k, s, h ) {
+  w <- tricube( ( x - x0 ) / h )
+  fit <- glm( k ~ x + I(x^2), weights=w, offset=log(s), family=poisson("log") )
+  unname( coef(fit)[1] + x0 * coef(fit)[2] + x0^2 * coef(fit)[3] )
+}
+```
+
+Can you see why we pass the totals $s$ as offsets? Why logarithmized? Have a careful
+look at the formula with $o_i$ above.
+
+Here is the result. Smoothed curve in red, noisy data in gray, original function in blue.
+
+```{r}
+suppressWarnings(
+  yhat <- sapply( xg, local_quadratic_regression_smooth_Poisson, x, k, s, .15 ) )
+
+plot( x, log( k/s + 1e-4 ), col="gray" )
+lines( xg, yhat, col="red" )
+lines( xg, log( true_fraction( xg ) ), col="blue" ) 
+```
+We get a lot of warnings aboutv failure of IRLS to converge for some values.
+
+Instead of trying to debug this, we use the locfit package, where we have a ready-made
+function for this purpose:
+
+```{r}
+library( locfit )
+
+fit <- locfit( k ~ lp( x, h=.15), weights=s, family="poisson" )
+
+plot( x, log( k/s + 1e-4 ), col="gray" )
+lines( xg, log( predict( fit, xg ) ), col="red" )
+lines( xg, log( true_fraction( xg ) ), col="blue" ) 
+
+```
