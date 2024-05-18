@@ -34,7 +34,19 @@ title: "Mathematics of Single-cell Omics"
 
 ## Video Recodings
 - [Lecture of 2024-04-22](https://youtu.be/Xr7AeQp-ceA)
-- [Lecture of 2024-04-24](https://youtu.be/MoqG0GlzExc)
+  - [Overview High-throughput Sequencing](overview_hts.html)
+  - [A simple analysis with Seurat](seurat.html)
+- [Exercise class of 2024-04-24](https://youtu.be/MoqG0GlzExc) (Standard analysis on foot)
+  - [Doing the Seurat analysis "on foot"](pedestrian.html)
+- [Lecture of 2024-05-06](https://youtu.de/5EGlihUE8FE) 
+  - Modularity clustering
+- Exercise class of 2024-05-08  
+  - Implementing modularity score in Python
+- [Lecture of 2024-05-13](https://youtu.be/55jgeLzbLgQ) 
+  - Mathematics of PCA
+  - Blackboard images: [...]
+- Exercise class of 2024-05-15:
+  - [...]
 
 ## Dates and times
 
