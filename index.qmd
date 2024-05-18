@@ -43,7 +43,7 @@ title: "Mathematics of Single-cell Omics"
 - Exercise class of 2024-05-08  
   - Implementing modularity score in Python
 - [Lecture of 2024-05-13](https://youtu.be/55jgeLzbLgQ) 
-  - Mathematics of PCA
+  - [Mathematics of PCA](pca.html)
   - Blackboard images: [...]
 - Exercise class of 2024-05-15:
   - [...]
