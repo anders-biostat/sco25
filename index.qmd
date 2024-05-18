@@ -33,20 +33,26 @@ title: "Mathematics of Single-cell Omics"
 - [Doing the Seurat analysis "on foot"](pedestrian.html)
 
 ## Video Recodings
-- [Lecture of 2024-04-22](https://youtu.be/Xr7AeQp-ceA)
+- Lecture of 2024-04-22:
+  - [Video](https://youtu.be/Xr7AeQp-ceA)
   - [Overview High-throughput Sequencing](overview_hts.html)
   - [A simple analysis with Seurat](seurat.html)
-- [Exercise class of 2024-04-24](https://youtu.be/MoqG0GlzExc) (Standard analysis on foot)
+- Exercise class of 2024-04-24
+  - [Video](https://youtu.be/MoqG0GlzExc)
   - [Doing the Seurat analysis "on foot"](pedestrian.html)
-- [Lecture of 2024-05-06](https://youtu.de/5EGlihUE8FE) 
+- Lecture of 2024-05-06
+  - [Video](https://youtu.de/5EGlihUE8FE) 
   - Modularity clustering
-- [Exercise class of 2024-05-08](https://youtu.be/QQeXGoebWqs)  
+- Exercise class of 2024-05-08
+  - [Video](https://youtu.be/QQeXGoebWqs)  
   - Implementing modularity score in Python
   - [louvain.py](louvain.py)
-- [Lecture of 2024-05-13](https://youtu.be/55jgeLzbLgQ) 
+- Lecture of 2024-05-13
+  - [Video](https://youtu.be/55jgeLzbLgQ) 
   - [Mathematics of PCA](pca.html)
   - Blackboard photos: [to to: insert links to pictures of blackboard]
-- [Exercise class of 2024-05-15](https://youtu.be/1uCcugEhJfM):
+- Exercise class of 2024-05-15
+  - [Video](https://youtu.be/1uCcugEhJfM):
   - [...]
 
 ## Dates and times
