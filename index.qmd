@@ -46,7 +46,7 @@ title: "Mathematics of Single-cell Omics"
 - [Lecture of 2024-05-13](https://youtu.be/55jgeLzbLgQ) 
   - [Mathematics of PCA](pca.html)
   - Blackboard photos: [to to: insert links to pictures of blackboard]
-- (Exercise class of 2024-05-15)[https://youtu.be/1uCcugEhJfM]:
+- [Exercise class of 2024-05-15](https://youtu.be/1uCcugEhJfM):
   - [...]
 
 ## Dates and times
