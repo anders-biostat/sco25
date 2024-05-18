@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Mathematics of single-cell omics - Overview High-throughput Sequencing</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Overview High-throughput Sequencing</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="dna-sequencing" class="level3">
+<h3 class="anchored" data-anchor-id="dna-sequencing">DNA Sequencing</h3>
+<section id="sanger-sequencing" class="level4">
+<h4 class="anchored" data-anchor-id="sanger-sequencing">Sanger sequencing</h4>
+<ul>
+<li>With Sanger’s invention of what is now called <em>Sanger sequencing</em> (1977) it became possible to read off the sequence of DNA molecules. Typically, one can read several hundreds of bases from one end towards the other end.</li>
+<li>For Sanger sequence, one needs a huge amount of copies of the same DNA fragments.</li>
+<li>Fortunately, it is easy to exponentially amplify DNA with the polymerase-chain reaction (PCR) which is able to duplicate DNA molecules and so doubles the number of molecules in each reaction cycle.</li>
+<li>Availability of commercial Sanger sequencers (from 1984 on) with read-out via fluorescent light (in 4 colours) made it possible to sequence, e.g., the entire human genome (“completed” 2003).</li>
+<li>Sanger sequencing works in solution. The liquid solution must contain copies of only one sequence; as one otherwise gets an unreadable mixture of sequencing signals from the different sequences.</li>
+</ul>
+</section>
+<section id="high-throughput-sequencing" class="level4">
+<h4 class="anchored" data-anchor-id="high-throughput-sequencing">High-throughput sequencing</h4>
+<ul>
+<li>In the early 2000s, ideas came up to fix the DNA fragments to a surface and perfrom the DNA such that the copies attach to the surface in clsoe proximity.</li>
+<li>Thus, one can spread many different DNA fragments over the surface and amplify each fragment into a “cluster” of copies. As the surface offers space for millions of spatially separated clusters, one can obtain the sequences of millions of different DNA fragments in parallel.</li>
+<li>Such high-throughput sequencing (HTS) machines became available in the 2000s and have sense continuously improved in throughput and cost effectiveness.</li>
+<li>The method described above has been commercialized by Solexa, which was then bought by Illumina. It was not the first, but one of the first HTS methods. Illumina is still market leader for HTS machines.</li>
+<li>Now, it is possible to obtain a human subject’s (nearly) complete genome within two days for a few hundred euro.</li>
+<li>The approach is to obtain DNA from many cells and fragment it into many pieces of a few hundred base-pairs (bp) length.</li>
+<li>The number of sequencing reads that overlap a give base pair in the genome is Poisson distributed.</li>
+<li>The expected number of fragments (the “coverage” rate) depends on the total number of sequencing reads obtained.</li>
+<li>Therefore, a trade-off has to be made between cost-effectiveness and completeness.</li>
+</ul>
+</section>
+<section id="transcriptomics-rna-sequencing" class="level4">
+<h4 class="anchored" data-anchor-id="transcriptomics-rna-sequencing">Transcriptomics / RNA sequencing</h4>
+<ul>
+<li>All cells of an individual have the same DNA, but they differ vastly in shape and function. (Compare a blood cell with a skin cell.)</li>
+<li>This is because different cells express (i.e., transcribe) different genes, because they need different proteins.</li>
+<li>Which genes a cell expresses and to what extent is regulated by complicated biochemical reactions.</li>
+<li>Hence, a cell’s type and state is reflected to a good extent by its RNA content, also called its “transcriptome”.</li>
+<li>Therefore, a comparably simple way to get a large amount of information about what is goin on in a biological sample is to extract the RNA from all the cells and sequence it.</li>
+<li>RNA can be readily transformed into complimentary DNA (using a process called reverse transcription, that can easily performed in vitro), and this DNA is the sequenced using HTS.</li>
+</ul>
+</section>
+<section id="analysis-of-rna-seq-data" class="level4">
+<h4 class="anchored" data-anchor-id="analysis-of-rna-seq-data">Analysis of RNA-Seq data</h4>
+<ul>
+<li>When performin RNA sequencing, one obtains a very long list with sequences of the RNA fragments (the “reads”), typically as text file in FASTQ format.</li>
+<li>One then <em>aligns</em> the reads to the genome: A special program, called a <em>short-read aligner</em> is used to search for the sequence of each read in the genome (i.e., in a reference assembly). Of course, the aligner has to search through the chromosome sequences and their reverse complements.</li>
+<li>The aligner should be splice-aware, i.e., expect that a read might strecth over an intron and hence align to two places with a gap in between.</li>
+<li>The aligner produces a file (typically in SAM format) that give for each read the position in the genome where the sequence matched. Typically, the chromosome name is given, the position in the chromosome (as an integer) where the read’s match starts, the strand (“+” for match to the sequence as given, “-” for match to the reverse complement), followed by information on skipped parts (introns), descripancies between reference and read (mismatched bases) etc.</li>
+<li>A portion of the reads will stay “unmapped” (i.e., the aligner could not find their sequence in the genome), and some reads might match several loci (positions) in the genome.</li>
+<li>Using a genome annotation file (which contains the genetic coordinates of all genes with their transcripts and exons), another software then determines for each read which gene it is from.</li>
+<li>In the end, we get for each gene a <em>count</em>: a number telling us how many sequencing reads were seen that mapped to this gene.</li>
+</ul>
+</section>
+<section id="bulk-rna-seq" class="level4">
+<h4 class="anchored" data-anchor-id="bulk-rna-seq">Bulk RNA-Seq</h4>
+<ul>
+<li>Usually one performs RNA-Seq in order to <em>compare</em> the transcriptome of differend types of samples.</li>
+<li>For example, one might compare tumor samples with samples from adjacent normal tissues. In order to make sure that results are general and not specific to on subject, one needs sample pairs from several, or, ideally, many, patients. Genes whose expression is constistently stronger in the tumor samples than in the corresponding normal samples might be the genes that cause the tumour’s malignancy.</li>
+<li>Other useful comparisons might be
+<ul>
+<li>Compare tissue samples from mice that have been treated with some drug with “control mice” which have received a placebo, to see how the drug influences the cells’ function.</li>
+<li>Compare samples from different tissues, to understand the difference between them.</li>
+<li>and many more</li>
+</ul></li>
+<li>In most cases, the goal is to find <em>differentiaklly expressed genes</em> (DGEs), i.e., genes whose expression strength differs in a consistent (i.e., statistically significant) manner between the sample groups</li>
+</ul>
+</section>
+<section id="single-cell-rna-seq" class="level4">
+<h4 class="anchored" data-anchor-id="single-cell-rna-seq">Single-cell RNA-Seq</h4>
+<ul>
+<li>Tissues comprise many cell types.</li>
+<li>For example, skin contain keratinocyte (which make up the skin’s sturdy outer layer), other epithelial cells (comprising e.g.&nbsp;the soft lower layer), cells making up the hair follicles, even muscle cells that can raise the hairs and, of course, the endothelial cells that line the blood capillaries and the various blood cells inside these, as well as receptor and nerve cells so that we can sense touch, heat, cold and pain etc.</li>
+<li>If we find genes that are differentially expressed between, say, healthy skin and skin affected by a disease – which of these cell types is affected? Is the gene upregulated (i.e., expressed more strongly) in all cell types or only in some.</li>
+<li>We would need to know which of the sequencing reads come from which cell.</li>
+</ul>
+<p>In <em>single-cell RNA-Seq</em> we can tell whether two reads come from the same cell or from two different cells.</p>
+<p>There are at least three possible ways to achieve this. - Plate-based methods: A microtiter plate is used (a grid-like arrangement of many miniature “test tubes” called “wells”) and a flow cytometer is used to place exactly one cell into each well. - Microfluidic methods: An emulsion of water droplets in oil is produced using microfluidics such that each water-in-oil droplet contains (ideally) at most one cell. - Combinatorial indexing: We skip the explanation for these.</p>
+<p>Each compartment (well or droplet) gets a “DNA barcode oligo”: a short piece of DNA with a random sequence that gets incorporated into the cDNA during reverse transcription. Thus, each sequenced fragment contains teh sequence of the RNA fragment, together with this “cell barcode” that identifies the compartment (and hence the cell) that the read came from.</p>
+<p>We will get back to details on how this works.</p>
+</section>
+<section id="preprocessing-of-single-cell-rna-seq-data" class="level4">
+<h4 class="anchored" data-anchor-id="preprocessing-of-single-cell-rna-seq-data">Preprocessing of single-cell RNA-Seq data</h4>
+<ul>
+<li>As before, each reads gets aligned to the genome. Afterwards, the gene that the read maps to is identified.</li>
+<li>Additionally, the cell barcode is analysed. A list of all cell barcodes that appear in the sample is generated, and each read is assigned to one element in this list.</li>
+<li>The final result is a <em>count matrix</em>:
+<ul>
+<li>The rows of the matrix correspond to genes.</li>
+<li>The columns correspond to cell barcodes and hence cells.</li>
+<li>The matrix entries tell how many reads have been found that mapped to this gene and seemed to originated from the cell with this barcode.</li>
+</ul></li>
+</ul>
+<p>There are a number of complications that we will need to discuss: - A barcode may be corrupted by a read error, causing a read to be assigned to the wrong cell. - A compartment may not have contained a cell but still contained a few RNA molecules that were present in the solution, stemming from destroyed cells with broken cell membrane. Such barcode will have very few reads assigned to them, and we have to recognize them as not being cells. - A compartment might have contained more than one cell, and thus a mixture of RNA from several cells of possibly different type. This is called a “doublet”.</p>
+<p>The main issue, however, is: The process is very lossy. A typical mammalian cell contains a several hundred thousands of mRNA molecules, but we usually only get a few thousand (microfluidics methods) or at best up to around 20,000 reads (plate-based methods).</p>
+<p>Which molecules get sequenced is a random process, and we need to take care of the “counting noise” thus produced.</p>
+<p>Many genes are produced by the cells at very low copy numbers, and with the selection during sequencing, we will very frequently end up with a zero count. The count matrix is therefore very <em>sparse</em> (i.e., a large fraction of the matrix elements have the value 0).</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
