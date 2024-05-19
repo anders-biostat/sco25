@@ -280,7 +280,7 @@ Here, we specified in the `loess` call that we want local regression with quadra
 with an adaptive bandwidth as given by `span` (which specified the number of points put under
 the kernel as fraction of the total number of data points).
 
-It seems that the "loess" function gives a slightly better result than our simple implementation.
+It seems that the "loess" function (orange line) gives a slightly better result than our simple implementation (red line).
 Maybe it knows an additional trick?
 
 ### Uncertainty estimation
@@ -459,7 +459,7 @@ $\operatorname{Var}\hat\mu$, is minimized?
 If all the estimated variances are the same,  $v_i=v$, then the weights should all be the same, too:
 $w_i\propto 1$.
 
-In general, however, the weights might differ. Then, one should choose $\w_i\propto \frac{1}{v_i}$.
+In general, however, the weights might differ. Then, one should choose $w_i\propto \frac{1}{v_i}$.
 
 This is easily proven with Lagrange multipliers; the proof can be found on the Wikipedia page
 on [inverse-variance weighting](https://en.wikipedia.org/wiki/Inverse-variance_weighting).
@@ -630,6 +630,382 @@ lines( xg, log( true_fraction( xg ) ), col="blue" )
 
 ```
 
-### Spline smoothing
+### Spline regression
 
-[to be added]
+#### Spline basis: first look
+
+Another possibility is construct a smoothing curve as a linear combination of suitable 
+basis function.
+
+The function `bs` from the `splines` package produces a popular choice for a bsis function
+known as "B splines".
+
+We ask `bs` to provide a 7-dimensional basis and evaluate the basis functions
+at the points `xg` (our sequence of 300 numbers between 0 and 1):
+
+```{r}
+library( splines )
+
+head( cbind( x=xg,  bs( xg, df=7, intercept=TRUE ) ) )
+```
+
+Here's a plot
+
+```{r}
+knots <- seq( 0, 1, length.out=8 )
+matplot( xg, bs( xg, intercept=TRUE, Boundary.knots=knots[c(1,8)], knots=knots[1:7] ), 
+    type="l", lty="solid" ) 
+
+abline( v=knots, col="gray" )
+```
+In a spline basis, the domain of the basis (here, the unit interval), is split into intervals, as 
+indicated above by the gray lines. The boundaries of the intervals are marked with gray lines
+above and called knots. As we specified 7 degrees of freedom, we have $7-1=6$ knots. The knots
+can be places arbitrarily, but here, we have spaced them uniformly.
+
+A B-spline basis, comprising basis functions $b_s$ (here, $s=1,\dots,10) is constructed to have the 
+following properties:
+
+- Each spline is a piecewise-polynomial function, i.e, between any two knots, it is a polynomial.
+
+- The degree of the polynomial can be chosen; for `bs`, the default is 3.
+
+- The basis peritions the unit, i.e., for every $x$ within the range of knots, $\sum_s b_s(x)=1$.
+
+For a B-spline basis made of 3rd-degree polynomials, we further have:
+
+- Each basis has support on at most 4 segments of the domain, as split by the knots.
+
+- The basis functions are twice differentiable, but the third derivative is discontinuous at the knots.
+
+#### Unpenalized spline regression
+
+To deomstrate spline regression, we go back to our original example with Gaussian, rather than Poisson, noise:
+
+```{R}
+n <- 100
+set.seed( 13245769 )
+x <- runif( n )
+y <- true_function( x ) + rnorm( n, sd=.1 )
+```
+
+We seek a smoothing curve $f(x)=\sum_s \beta_s b_s(x)$ that minimizes $\sum_i\left(y_i-f(x_i)\right)^2$.
+
+We can find this by OLS regression:
+
+```{r}
+my_bs <- function(x) bs( x, intercept=TRUE, Boundary.knots=c(0,1), knots=seq(0,1,length.out=8)[2:7] )
+
+fit <- lm.fit( my_bs(x), y ) 
+fit$coefficients
+
+plot( x, y )
+lines( xg, true_function(xg), col="blue")
+lines( xg, my_bs(xg) %*% fit$coefficients, col="red" )
+```
+
+If we increase the number of knots, the fit becomes better but also too "wiggly"
+
+```{r}
+my_bs <- function(x) bs( x, intercept=TRUE, Boundary.knots=c(0,1), knots=seq(0,1,length.out=20)[2:19] )
+
+fit <- lm.fit( my_bs(x), y ) 
+fit$coefficients
+
+plot( x, y )
+lines( xg, true_function(xg), col="blue")
+lines( xg, my_bs(xg) %*% fit$coefficients, col="red" )
+```
+
+#### Curvature-penalized spline regression
+
+We can solve this issue by adding a penalty term on curvature to our least-square sum:
+$$\sum_i\left(y_i-f(x_i)\right)^2 + \lambda\int_0^1(f''(x))^2\text{d}x=\text{min!}$$
+
+The function `
+
+```{r}
+fit <- smooth.spline( x, y, nknots=20 )
+
+plot( x, y )
+lines( xg, true_function(xg), col="blue")
+lines( xg, predict( fit, xg )$y, col="red")
+```
+
+#### Construction for the B-spline basis
+
+In an iterative construction (de Boor construction), we increase the polynomial degree in each
+iteration. 
+
+We start with a 0th-degree basis, where $b_{s,0}$ is simply 1 between the $s$-th and the $(s+1)$th knot
+and 0 elsewhere.
+
+```{r}
+m <- 13
+knots <- seq( 0, 1, length.out=m+1 )
+
+bs0 <- sapply( 1:m, function(i) as.numeric( xg >= knots[i] & xg < knots[i+1] ) )
+
+matplot( xg, bs0, type="l", lty="solid" )
+abline( v=knots, col="gray" )
+```
+
+The, we construct the 1st-degree basis as follows: $b_{s,1}$ has support between the knot $s$ and knot $s+2$.
+It is a linear interpolation between $b_{s,0}$ and $b_{s+1,0}$, where the "mixing ratio" between the
+two 0th-degree basis function linearly goes from 1:0 to 0:1 while going along the support.
+
+This yields triangles:
+
+```{r}
+bs1 <- sapply( 1:(m-2), function(s) 
+  ( xg - knots[s]   ) / ( knots[s+1] - knots[s]   ) * bs0[,s] +
+  ( knots[s+2] - xg ) / ( knots[s+2] - knots[s+1] ) * bs0[,s+1]  )
+
+matplot( xg, bs1, type="l", lty="solid" )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs1), col="#00000030" )
+```
+
+The vertical gray lines indicate the knots, the horizontal one shows that the sum of all basis function
+adds up to 1 in all the interior segments.
+
+We repeat the process, using the same code, with changes to the indices: Now, the interpolation
+runs with over two segments of each of the previous splines. As we perform linear interpolation over
+linear functions we get piecewise quadratic polynomials, i.e., the following functions are pieced 
+together from parabolas.
+
+```{r}
+bs2 <- sapply( 1:(m-3), function(s) 
+  ( xg - knots[s]   ) / ( knots[s+2] - knots[s]   ) * bs1[,s] +
+  ( knots[s+3] - xg ) / ( knots[s+3] - knots[s+1] ) * bs1[,s+1]  )
+
+matplot( xg, bs2, type="l", lty="solid", ylim=c(0,1) )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs2), col="#00000030" )
+```
+
+As we interpolated between pieces that added to one, the result adds to one again, as indicated by the gray line. Again,
+this only holds in the inner segments.
+
+One more iteration to get to third degree polynomical pieces:
+
+```{r}
+bs3 <- sapply( 1:(m-4), function(s) 
+  ( xg - knots[s]   ) / ( knots[s+3] - knots[s]   ) * bs2[,s] +
+  ( knots[s+4] - xg ) / ( knots[s+4] - knots[s+1] ) * bs2[,s+1]  )
+
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs3), col="#00000030" )
+```
+
+The basis still adds up to 1 in the inner segments.
+
+We refactor our code to use a recursive function, taking the argument, `x`, the 
+index of the basis function, `s`, the basis degree `k`, and the `knots` vector:
+
+```{r}
+bsf <- function( x, s, k, knots ) {
+  if( k == 0 )
+    as.numeric( x >= knots[s] & x < knots[s+1] )
+  else
+    ( x - knots[s]     ) / ( knots[s+k]   - knots[s]   ) * bsf( x, s,   k-1, knots ) +
+    ( knots[s+k+1] - x ) / ( knots[s+k+1] - knots[s+1] ) * bsf( x, s+1, k-1, knots )
+}
+```
+
+This function is known as the Cox-de Beer formula.
+
+With it, we can reconstruct our last plot:
+
+```{r}
+m <- 13
+knots <- seq( 0, 1, length.out=m+1 )
+
+bs3 <- sapply( 1:(m-4), function(s) bsf( xg, s, 3, knots ) )
+
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs3), col="#00000030" )
+```
+The basis produced by `bs` also adds up to 1 in the outer segments. This is achieved
+by moving the outer knots where the sum is not 1 very close together. 
+
+We rerun the code to show this, changing only the knot vector
+
+```{r}
+m <- 13
+knots <- c( -.003, -.002, -.001, seq( 0, 1, length.out=m-6 ), 1.001, 1.002, 1.003, 1.004 )
+
+bs3 <- sapply( 1:(m-4), function(s) bsf( xg, s, 3, knots ) )
+
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs3), col="#00000030" )
+```
+Of course, we should form the limit of moving the outer knots exactly to 0 and 1, but that would require
+us to think very carefully about where to put $<$ and where $\le$ in the $k=0$ case, and that is cumbersome.
+Luckily for us, the authors of `bs` have done that for us.
+
+```{r}
+bs3 <- bs( xg, df=m-4, intercept=TRUE )
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
+abline( v=knots, col="gray" )
+lines( xg, rowSums(bs3), col="#00000030" )
+```
+
+#### Curvature of the spline basis
+
+For the curvature penalization mentioned earlier, we need the second derivative
+of the spline basis. As these are piece-wise 3rd-degree polynomials, we
+expect the second derivative to be piecewise linear. We can calculate explicitely
+the second derivative of the Cox-de Beer function, or we can rely on other people's work
+and believe the formula given, e.g., in Wikipedia.
+
+Still, we can quickly calculate the second derivative via finite differences. For the orginal, we just get
+a repeat of a V-shaped curve:
+
+```{r}
+m <- 13
+knots <- seq( 0, 1, length.out=m+1 )
+
+bs3 <- sapply( 1:(m-4), function(s) bsf( xg, s, 3, knots ) )
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1), main="degree-3 spline basis" )
+
+nr <- nrow(bs3)
+bs3xx <- bs3[1:(nr-2),] - 2*bs3[2:(nr-1),] + bs3[3:nr,]
+
+matplot( xg[2:(nr-1)], bs3xx, type="l", lty="solid", main="2nd derivative" )
+```
+ 
+For the pulled-in outer knots, we get this:
+
+```{r}
+bs3 <- bs( xg, df=m-4, intercept=TRUE )
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1), main="degree-3 spline basis" )
+
+nr <- nrow(bs3)
+bs3xx <- bs3[1:(nr-2),] - 2*bs3[2:(nr-1),] + bs3[3:nr,]
+
+matplot( xg[2:(nr-1)], bs3xx, type="l", lty="solid", main="2nd derivative" )
+```
+
+For a given linear combination $f(x) = \sum_s \beta_s b_{s,3}(x)$, it is easy and
+cheap to calculate the integral of its squared curvature:
+$$\begin{align}
+\int_0^1 \left(f(x)\right)^2\text{d}x &= 
+\int_0^1\left(\sum_{s}\beta_sb_{s,3}\right)\left(\sum_{s'}\beta_sb_{s',3}\right)\text{d}x\\
+&=\sum_{ss'} \beta_s\beta_{s'}\underbrace{\int_0^1b_{s,3}(x)b_{s',3}(x)\mathrm{d}x}_{=P_{ss'}}=
+\vec\beta^\top P \vec \beta
+\end{align}$$
+The matrix $P$ can be easily calculated ahead of time and so, the objective of our 
+minimization for curvature-penalized spline regression becomes:
+
+$$\begin{align}
+L=&\sum_i\left(y_i-f(x_i)\right)^2 + \lambda\int_0^1(f''(x))^2\text{d}x\\
+=&(\vec{y}-X\vec\beta)^\top(\vec{y}-X\vec\beta) + \lambda \vec{β}^\top P \vec\beta\\
+=&\vec y^\top\vec y - 2 \vec\beta^\top X^\top\vec y+\vec\beta^\top\left(
+X^\top X + \lambda P\right)\vec\beta
+\end{align}$$
+
+To  minimize this, we take the gradient w.r.t. $\vec\beta$:
+$$ \nabla_{\vec\beta}L=-2X^\top\vec{y} + 2 \left(X^\top X + \lambda P\right)\vec\beta$$
+Setting the gradient to zero, we obtain the OLS normal equation with the added penalty:
+$$\left(X^\top X + \lambda P\right)\vec\beta = X^\top\vec{y} $$
+As this is an equation of the form $A\vec x=\vec b$, it describes a system of linear equations
+that can be solved with QR decomposition (i.e., Gauß elimination) in order to find $\vec\beta$.
+
+This describes the math behind the `smooth.spline` function except for one point: a clever heuristic
+to find a suitable value for the penalty strength parameter $\lambda$, which we will skip over.
+(In brief: It turns out that a scale-free smoothing strength can be defined, which one then
+multiplies with $\operatorname{tr}X^\top X / \operatorname{tr} P$ to obtain $\lambda$.)
+
+#### P-Splines
+
+An alternative to spline regression with curvature penality is P-spline smoothing.
+
+Here, one uses a basis with rather very many basis functions (large $m$ in our notation),
+lets all the basis functions keep the same shape (no "pulling in" of the boundary knots), and
+replaced the curvature penalty with a penalty on the differences between the coefficients for adjacent 
+splines:
+
+$$ \|\vec y - X\vec\beta\|^2 - \lambda \sum_{s=1}^{m-1}\left(\beta_{s+1}-\beta_s\right)^2$$
+
+It's easy to see that this penalty can be implemented using the same normal equation
+as before when setting $P$ to 
+$$P=\left( 
+\begin{array}{r}
+1  & -1 &    &    &  \\
+-1 &  2 & -1 &    &  \\
+   & -1 &  2 & -1 &  \\
+   &    & -1 &  2 & -1 & \\
+   &    &    & ⋱ &  ⋱ & ⋱ & \\
+   &    &    &    & -1 &  2 & -1 & \\
+   &    &    &    &    & -1 &  2 & -1 & \\
+   &    &    &    &    &    & -1 &  1    
+\end{array}
+\right).$$
+
+To demonstrate,w e first make a really large basis, which extends far out of the domain
+
+```{r}
+knots <- seq( -1, 2, length.out=100 )
+m <- length(knots)-4
+bs3 <- sapply( 1:m, function(s) bsf( xg, s, 3, knots ) )
+matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1), main="degree-3 spline basis" )
+```
+We remove the knots that have no influence inside the domain [0;1]:
+
+```{r}
+knots <- knots[
+  min( which( sapply( 1:length(knots), function(l) bsf( 0, 1, 3, knots[l:length(knots)] ) ) > 0 ) ):
+  max( which( sapply( 1:length(knots), function(l) bsf( 1, l-4, 3, knots[1:l] ) ) > 0 ) ) ]
+
+m <- length(knots)-4
+
+knots
+```
+
+Now, we calculate the values of the spline basis at the x coordinates of the
+data points, and, for later use, also at our grid of equidistant points
+
+```{r}
+spx <- sapply( 1:m, function(s) bsf( x, s, 3, knots ) )
+spxg <- sapply( 1:m, function(s) bsf( xg, s, 3, knots ) )
+```
+
+We construct the penalty matrix $P$
+```{r}
+pty <- diag(2,m)
+pty[ row(pty) == col(pty)+1 ] <- -1
+pty[ row(pty) == col(pty)-1 ] <- -1
+pty[1,1] <- 1
+pty[m,m] <- 1
+image( 1:m, 1:m, pty, asp=1 )
+```
+
+Now, we solve the normal equations for $\lambda=1$:
+
+```{r}
+lambda <- 1
+beta <- solve( t(spx) %*% spx + lambda * pty , t(spx) %*% y )
+```
+
+Here is the plot
+
+```{r}
+plot( x, y )
+lines( xg, spxg %*% beta, col="red" )
+lines( xg, true_function(xg), col="blue" )
+```
+
+Here, for three values of lambda:
+
+```{r}
+plot( x, y )
+for( lambda in c( .01, .1, 1, 10, 100 ) ) {
+  beta <- solve( t(spx) %*% spx + lambda * pty , t(spx) %*% y )
+  lines( xg, spxg %*% beta, col="red" )
+}  
+lines( xg, true_function(xg), col="blue" )
+```
