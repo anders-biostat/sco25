@@ -908,6 +908,8 @@ L=&\sum_i\left(y_i-f(x_i)\right)^2 + \lambda\int_0^1(f''(x))^2\text{d}x\\
 X^\top X + \lambda P\right)\vec\beta
 \end{align}$$
 
+Here, the matrix $X$ has matrix elements $X_{is}=b_{s,3}(x_i)$.
+
 To  minimize this, we take the gradient w.r.t. $\vec\beta$:
 $$ \nabla_{\vec\beta}L=-2X^\top\vec{y} + 2 \left(X^\top X + \lambda P\right)\vec\beta$$
 Setting the gradient to zero, we obtain the OLS normal equation with the added penalty:
@@ -999,7 +1001,7 @@ lines( xg, spxg %*% beta, col="red" )
 lines( xg, true_function(xg), col="blue" )
 ```
 
-Here, for three values of lambda:
+Here, for a few more values of lambda:
 
 ```{r}
 plot( x, y )
