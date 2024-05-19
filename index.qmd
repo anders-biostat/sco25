@@ -25,14 +25,7 @@ title: "Mathematics of Single-cell Omics"
 
 -----
 
-## Material
-- [Lecture announcement](announcement.html)
-- [Biology primer](biology_primer.html)
-- [Overview High-throughput Sequencing](overview_hts.html)
-- [A simple analysis with Seurat](seurat.html)
-- [Doing the Seurat analysis "on foot"](pedestrian.html)
-
-## Video Recodings
+## Material and Video Recodings
 - Lecture of 2024-04-22:
   - [Video](https://youtu.be/Xr7AeQp-ceA)
   - [Overview High-throughput Sequencing](overview_hts.html)
