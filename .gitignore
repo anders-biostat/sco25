@@ -7,3 +7,6 @@ sco24.Rproj
 /.quarto/
 *_cache/
 *_files/
+
+data/
+images/

@@ -53,7 +53,7 @@
     "href": "index.html#video-recodings",
     "title": "Mathematics of Single-cell Omics",
     "section": "Video Recodings",
-    "text": "Video Recodings\n\nLecture of 2024-04-22:\n\nVideo\nOverview High-throughput Sequencing\nA simple analysis with Seurat\nExample data: pbmc3k\n\nExercise class of 2024-04-24\n\nVideo\nDoing the Seurat analysis “on foot”\n\nLecture of 2024-05-06\n\nVideo\nModularity clustering\nblackboard photo\n\nExercise class of 2024-05-08\n\nVideo\n\nImplementing modularity score in Python\nlouvain.py\n\nLecture of 2024-05-13\n\nVideo\nMathematics of PCA\nBlackboard photos: 1 2\n\nExercise class of 2024-05-15\n\nVideo:\nfitting pseudotimes and splines\nR code: pseudotime_1.R, splines_1.R\nexample data: data/cmss.rda"
+    "text": "Video Recodings\n\nLecture of 2024-04-22:\n\nVideo\nOverview High-throughput Sequencing\nA simple analysis with Seurat\nExample data: PBMC3k (available on 10X web site, and Moodle)\n\nExercise class of 2024-04-24\n\nVideo\nDoing the Seurat analysis “on foot”\n\nLecture of 2024-05-06\n\nVideo\nModularity clustering\nblackboard photo\n\nExercise class of 2024-05-08\n\nVideo\n\nImplementing modularity score in Python\nlouvain.py\n\nLecture of 2024-05-13\n\nVideo\nMathematics of PCA\nBlackboard photos: 1 2\n\nExercise class of 2024-05-15\n\nVideo:\nfitting pseudotimes and splines\nR code: pseudotime_1.R, splines_1.R\nexample data: cmss.rda (on Moodle)"
   },
   {
     "objectID": "index.html#dates-and-times",
