@@ -10,11 +10,9 @@ title: "Mathematics of Single-cell Omics"
 
   <p style="text-align:right">
   	<a href="https://www.bioquant.uni-heidelberg.de">
-  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:20%;padding:3%">
-  	</a>
+  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:30%;padding:3%"></a>
   	<a href="https://uni-heidelberg.de">
-  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:20%;padding:3%">
-  	</a>
+  	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:30%;padding:3%"></a>
   </p>
 
 <h3>Applied mathematics for Biology:</h3>
@@ -25,7 +23,7 @@ title: "Mathematics of Single-cell Omics"
 
 -----
 
-## Material and Video Recodings
+## Material and  Video Recodings
 - Lecture of 2024-04-22:
   - [Video](https://youtu.be/Xr7AeQp-ceA)
   - [Overview High-throughput Sequencing](overview_hts.html)
