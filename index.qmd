@@ -37,12 +37,14 @@ title: "Mathematics of Single-cell Omics"
   - [Video](https://youtu.be/Xr7AeQp-ceA)
   - [Overview High-throughput Sequencing](overview_hts.html)
   - [A simple analysis with Seurat](seurat.html)
+  - Example data: [pbmc3k](data/pbmc3k)
 - Exercise class of 2024-04-24
   - [Video](https://youtu.be/MoqG0GlzExc)
   - [Doing the Seurat analysis "on foot"](pedestrian.html)
 - Lecture of 2024-05-06
   - [Video](https://youtu.de/5EGlihUE8FE) 
   - Modularity clustering
+  - [blackboard photo](images/blackboard_modularity.jpeg)
 - Exercise class of 2024-05-08
   - [Video](https://youtu.be/QQeXGoebWqs)  
   - Implementing modularity score in Python
@@ -50,10 +52,12 @@ title: "Mathematics of Single-cell Omics"
 - Lecture of 2024-05-13
   - [Video](https://youtu.be/55jgeLzbLgQ) 
   - [Mathematics of PCA](pca.html)
-  - Blackboard photos: [to to: insert links to pictures of blackboard]
+  - Blackboard photos: [1](images/blackboard_pca_1.jpeg) [2](images/blackboard_pca_2.jpeg)
 - Exercise class of 2024-05-15
   - [Video](https://youtu.be/1uCcugEhJfM):
-  - [...]
+  - fitting pseudotimes and splines
+  - R code: [pseudotime_1.R](pseudotime_1.R), [splines_1.R](splines_1.R)
+  - example data: [data/cmss.rda](data/cmss.rda)
 
 ## Dates and times
 

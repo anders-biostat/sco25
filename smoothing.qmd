@@ -629,3 +629,7 @@ lines( xg, log( predict( fit, xg ) ), col="red" )
 lines( xg, log( true_fraction( xg ) ), col="blue" ) 
 
 ```
+
+### Spline smoothing
+
+[to be added]
