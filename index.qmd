@@ -49,6 +49,12 @@ title: "Mathematics of Single-cell Omics"
   - fitting pseudotimes and splines
   - R code: [pseudotime_1.R](pseudotime_1.R), [splines_1.R](splines_1.R)
   - example data: cmss.rda (on Moodle)
+- Lecture of 2024-05-23
+  - planned content:
+    - Expression dynamics along pseudotime trajectories
+    - [Smoothing](smoothing.html)
+    - [Principal curves](principal_curves.html)
+  
 
 ## Dates and times
 
