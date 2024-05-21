@@ -1,0 +1,213 @@
+---
+title: "Trajectories"
+---
+
+### Standard analysis
+
+We load our usual example data
+
+```{r}
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Matrix )
+  library( sparseMatrixStats )
+  library( Seurat ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+    "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+    "~/Downloads/ifnagrko/ifnagrko_var.csv",
+    cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+    mtx.transpose=TRUE) -> count_matrix
+```
+
+```{r}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+```{r}
+UMAPPlot( seu, label=TRUE ) + coord_equal()
+```
+
+This time, we will concetrate on the long elongated main structure, which we
+will call the "lineage" in the following. It is a snapshot of the development
+of astrocytes that act as neural stem cells and become transient amplifying 
+progenitors (TAPs) which undergo cell cycle, i.e., divide and multiply, and the 
+turn into neuroblasts and finally neurons.
+
+To orient us in the plot, we highlight the expression of Aqp4 (aquaporin-4, a marker for 
+astrocytes), Mki67 (a marker for prliferating, i.e., dividing cells), Dcx 
+(doublecortin, a marker for neuroblasts) and Gria1 (Glutamate ionotropic receptor, 
+AMPA type, subunit 1; a marker for mature neurons)
+
+```{r}
+FeaturePlot( seu, c( "Aqp4", "Mki67", "Dcx", "Gria1" ) )
+```
+
+We conclude that the lineage is well covered by the following clusters
+
+```{r}
+lineage_clusters <-  c( 10, 9, 0, 13, 14, 3, 5, 6, 11, 1, 2, 7 ) 
+```
+
+Just out of curiosity, we also try to identify clusters 4 and 8:
+
+```{r}
+presto::wilcoxauc(
+  LayerData(seu),
+  factor(case_when(
+    seu$seurat_clusters %in% lineage_clusters ~ "lineage",
+    seu$seurat_clusters %in% c( 4, 8 ) ~ "4_or_8",
+    TRUE ~ "other" )) ) -> wa
+
+head(wa)
+```
+
+```{r}
+presto::top_markers( wa )
+```
+
+As a try, I've asked ChatGPT what these genes point to and it [replied](https://chatgpt.com/share/f2a5e86b-9909-4c50-8b6b-798f9596df71) that the cells in our clusters 4 and 8 are oligondendrocyte precursor cells (OPCs). This matches
+my expectation.
+
+### Aim: Trajectory
+
+Our first aim for today is to fit a "pseudotime trejectory" to the lineage. This means
+thatw e want to assign to each cell in the lineage a real number, which we call
+it "pseudotime" that monotonally increases along the putative developmental trajectory 
+from astrocytic neural stem cells via TAPs and neuroblasts to neurons.
+
+We will do this by fitting a "principal curve", i.e. a curve in PCA space that tracks
+along the lineage and is fitted such that the squared sum of the cells' distance to
+their respectively closest point on the curve (their projection image) is minimal.
+The distance of this projection image to the curve start (measured along the curve)
+will be used as pseudotime.
+
+The "principal curve" method is described in detail in [this section of the lecture notes](principal_curves.html).
+
+Here, we will use the function from the `princurve` package.
+
+As preparation, we first explore distances with sleepwalk:
+
+```{r}
+sleepwalk::sleepwalk( Embeddings(seu,"umap"), Embeddings(seu,"pca") )
+```
+We notice that the cycling cells have a lot of distance to the non-cycling
+lineage cells. This will cause problems because the principal curve alorithm
+cannot deal with loops, i.e., the curve should pass besides the cell-cycle loop.
+However, the distances to the curve will then become large right in the middle, deflecting
+the curve.
+
+### Regressing out the cell cycle
+
+We solve this issue by reducing the impact that the cell cycle has on distances
+in PCA space.
+
+To help with this, Seurat comes with two list of genes that are strongly upregulated 
+in all cells in the S phase and in the G2/M phase of the cell cycle. 
+
+(The cell cycle in brief: G1 phase: first growth phase, after cell division; similar
+to a non-cycling cell's rest state -- S phase: synthesis phase, i.e. duplicating of 
+the DNA; G2 phase: second growth phase, in preparation for cell division;
+M phase: mitosis, i.e., separation of the chomosomes, followed by cell division)
+
+Here's the lists:
+
+```{r}
+cc.genes.updated.2019
+```
+
+Unfortunately, these are human gene symbols, but we can convert them to mouse 
+symbols via Ensembl BioMart:
+
+```{r}
+read_tsv( "~/Downloads/biomart_export_human_mouse.tsv", show_col_types=FALSE ) %>% 
+  select( human_gene_symbol = `Gene name`, mouse_gene_symbol = `Mouse gene name` ) -> human_mouse_table
+
+human_mouse_table %>% 
+filter( human_gene_symbol %in% cc.genes.updated.2019$s.genes, !is.na(mouse_gene_symbol) ) %>%
+pull( mouse_gene_symbol ) %>% na.omit() -> mouse_cc_genes_s
+
+human_mouse_table %>% 
+filter( human_gene_symbol %in% cc.genes.updated.2019$g2m.genes, !is.na(mouse_gene_symbol) ) %>% 
+pull( mouse_gene_symbol ) -> mouse_cc_genes_g2m
+
+mouse_cc_genes_s
+
+mouse_cc_genes_s
+```
+
+We can simply add up the expression of these genes to get for each gene two "cell-cycle scores":
+
+```{r}
+seu$cc_score_s   <- colSums( LayerData(seu)[ mouse_cc_genes_s, ] )
+seu$cc_score_g2m <- colSums( LayerData(seu)[ mouse_cc_genes_g2m, ] )
+```
+
+Here, we have used `LayerData`, which returns the log-normalized expression data,
+i.e. $y=_{ij}\log(k_{ij}/s_j\cdot 10^4 + 1)$.
+
+Here's a plot, using blended colour. Red channel is S score, blue channel G2M score:
+
+```{r}
+Embeddings(seu, "umap") %>%
+as_tibble( rownames="cell" ) %>%
+add_column( 
+  s_score   = seu$cc_score_s,
+  g2m_score = seu$cc_score_g2m ) %>% 
+mutate( color = rgb( 
+  red   = s_score / max(s_score),   
+  green = 0,
+  blue  = g2m_score / max(g2m_score ) ) ) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=I(color) ), size=.3 ) +
+  coord_equal()
+```
+
+Now, we redo the PCA, with the following modification. Before, we only scaled
+and centered the genes, now we regress out the scores.
+
+We demonstrate this with one gene:
+
+```{r}
+fit <- lm( LayerData(seu)["Mcm3",] ~ seu$cc_score_s + seu$cc_score_g2m )
+fit
+head(residuals(fit))
+```
+
+Here, we have fitted, for the gene $i=\text{Mcm3}}$, the linear model
+$$ y_{ij} = \beta_0 + \beta_\text{S} x^\text{S}_i + \beta_\text{G2M} x^\text{G2M}_i + \epsilon_{ij} $$
+and then extracted the residuals $r_{ij} = \hat y_{ij} - y_{ij}$. As residuals, they are already
+centered, but still need to be divided by their standard deviation before being given to the PCA.
+
+We do this for each of the highly variable genes.
+
+Unfortunately, this code is quite slow:
+
+```r
+sapply( VariableFeatures(seu), function(gene) 
+  lm.fit( cbind( 1, seu$cc_score_s, seu$cc_score_g2m ), LayerData(seu)["Mcm3",] )$residuals ) -> residuals
+```
+
+Here's faster code, using the looped linear model solver from the limma package
+
+```{r}
+fit <- limma::lmFit( 
+  LayerData(seu)[VariableFeatures(seu),], 
+  cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) ) 
+
+yhat <- cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) %*% t(fit$coefficients)
+
+residuals <- as.matrix( LayerData(seu)[VariableFeatures(seu),] - t(yhat) )
+
+pca <- prcomp( residuals, center=FALSE, scale=TRUE )
+
+ump <- uwot::um
+```
