@@ -413,6 +413,7 @@ Iteration 10---distance^2: 524569.8</code></pre>
 </section>
 <section id="expression-dynamics" class="level3">
 <h3 class="anchored" data-anchor-id="expression-dynamics">Expression dynamics</h3>
+<p>Here is a plot showing the expression of one gene, Slc1a3 (Glast), along the pseudotime:</p>
 <div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-15_2e6f035c654de005fd907f50a25d3bb7">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
@@ -430,114 +431,164 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <p><img src="trajectory_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<p>We now fit a smooth curve through this scatte plot.</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-16_3f9d5972443e8d3bdc2de92ceedf68fa">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>( locfit )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>locfit 1.5-9.9   2024-03-01</code></pre>
+<p>In order to make more apparent how many point are on the zero line, this line has been broadened.</p>
+<p>We now fit a smooth curve through this scatter plot. As we want to do this properly, we use locfit with Poisson GLM, i.e., wo don’t use the log-normalized values but the raw counts. (Details <a href="smoothing.html">here</a>.)</p>
+<p>First we assemble the data</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-16_b4fb20b71c858f9bbe17908ba0be4324">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>( locfit )</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> seu<span class="sc">$</span>dist_to_curve,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">in_lineage =</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">count =</span> <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[<span class="st">"Slc1a3"</span>,],</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">total =</span> <span class="fu">colSums</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>) ),</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">expr =</span> <span class="fu">LayerData</span>(seu)[<span class="st">"Slc1a3"</span>,] ) <span class="sc">%&gt;%</span></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">expr =</span> <span class="fu">ifelse</span>( expr<span class="sc">&gt;</span><span class="dv">0</span>, expr, <span class="fu">runif</span>( <span class="fu">n</span>(), <span class="sc">-</span>.<span class="dv">2</span>, <span class="dv">0</span> ) ) ) <span class="ot">-&gt;</span> tbl</span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 6
+      pt  dist in_lineage count total   expr
+   &lt;dbl&gt; &lt;dbl&gt; &lt;lgl&gt;      &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+1 0.143  37.5  FALSE         11  8934  2.59 
+2 0.432   2.05 TRUE           0  7672 -0.126
+3 0.0468  7.45 TRUE          11  6889  2.83 
+4 0.0946  2.99 TRUE          24  5131  3.87 
+5 0.470   4.34 TRUE           0  5988 -0.136
+6 0.0355  3.98 TRUE          24  9866  3.23 </code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'locfit'</code></pre>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following object is masked from 'package:purrr':
+<p>The we run <code>lucfit</code>:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-17_400d15cc8cbaeafc2fb9a4828e237f6d">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( count <span class="sc">~</span> pt, tbl, <span class="at">weight=</span>total, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call:
+locfit(formula = count ~ pt, data = tbl, weights = total, family = "poisson")
 
-    none</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> seu<span class="sc">$</span>dist_to_curve,</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">in_lineage =</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters,</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">count =</span> <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[<span class="st">"Slc1a3"</span>,],</span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">total =</span> <span class="fu">colSums</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>) ),</span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">expr =</span> <span class="fu">LayerData</span>(seu)[<span class="st">"Slc1a3"</span>,] ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">expr =</span> <span class="fu">ifelse</span>( expr<span class="sc">&gt;</span><span class="dv">0</span>, expr, <span class="fu">runif</span>( <span class="fu">n</span>(), <span class="sc">-</span>.<span class="dv">2</span>, <span class="dv">0</span> ) ) ) <span class="ot">-&gt;</span> tbl</span>
-<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( count <span class="sc">~</span> pt, tbl, <span class="at">weight=</span>total, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-13"><a href="#cb42-13" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( <span class="at">pt =</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">1000</span> ) ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-14"><a href="#cb42-14" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">y =</span> <span class="fu">predict</span>( fit, pt ) ) <span class="ot">-&gt;</span> tbl_fit</span>
-<span id="cb42-15"><a href="#cb42-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-16"><a href="#cb42-16" aria-hidden="true" tabindex="-1"></a>tbl <span class="sc">%&gt;%</span></span>
-<span id="cb42-17"><a href="#cb42-17" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>( in_lineage ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-18"><a href="#cb42-18" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt ) ) <span class="sc">+</span></span>
-<span id="cb42-19"><a href="#cb42-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">y =</span> count<span class="sc">/</span>total <span class="sc">+</span> <span class="fl">1e-4</span>, <span class="at">col=</span>dist ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span></span>
-<span id="cb42-20"><a href="#cb42-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>( <span class="fu">aes</span>( <span class="at">y =</span> y ), <span class="at">data=</span>tbl_fit, <span class="at">col=</span><span class="st">"magenta"</span> ) <span class="sc">+</span></span>
-<span id="cb42-21"><a href="#cb42-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> <span class="fu">scale_y_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+Number of observations:          18302 
+Family:  Poisson 
+Fitted Degrees of freedom:       5.033 
+Residual scale:                  1 </code></pre>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-17_6fad0e2e3de10898a2f15ef3c206f372">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">20</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>tg2 <span class="ot">&lt;-</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">100</span> )</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
-<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
-<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>We evaluate the fitted curve along a value grid:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-18_eb2cd6ff74efbccbd62c7ff50931ec97">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( <span class="at">pt =</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">1000</span> ) ) <span class="sc">%&gt;%</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">y =</span> <span class="fu">predict</span>( fit, pt ) ) <span class="ot">-&gt;</span> tbl_fit</span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl_fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>....................</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>fits[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>              [,1]        [,2]        [,3]        [,4]        [,5]
-Cst3   0.035855217 0.037067666 0.037784438 0.037992608 0.037700510
-Slc1a2 0.012262572 0.011624325 0.010907536 0.010137774 0.009338986
-Mt3    0.008338254 0.008435790 0.008362052 0.008128155 0.007753874
-Clu    0.004685951 0.005638626 0.006458559 0.007050345 0.007343839
-Mt1    0.009045342 0.008738399 0.008366646 0.007942673 0.007479294</code></pre>
-</div>
-</div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-18_56c35867aed3c33c636ccaae9eb3066f">
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fits) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+<pre><code># A tibble: 6 × 2
+       pt       y
+    &lt;dbl&gt;   &lt;dbl&gt;
+1 0       0.00562
+2 0.00100 0.00556
+3 0.00200 0.00550
+4 0.00300 0.00544
+5 0.00400 0.00539
+6 0.00501 0.00533</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-19_1dbeb38fcb948cf56bee9cf97fff4dac">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitsz), <span class="at">yaxt=</span><span class="st">"n"</span> )</span>
-<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitsz) ), <span class="fu">rownames</span>(fitsz), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Now we can do the plot:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-19_12aa29e8550a3f94513c9f717159aac8">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>tbl <span class="sc">%&gt;%</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>( in_lineage ) <span class="sc">%&gt;%</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt ) ) <span class="sc">+</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">y =</span> count<span class="sc">/</span>total <span class="sc">+</span> <span class="fl">1e-4</span>, <span class="at">col=</span>dist ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>( <span class="fu">aes</span>( <span class="at">y =</span> y ), <span class="at">data=</span>tbl_fit, <span class="at">col=</span><span class="st">"magenta"</span> ) <span class="sc">+</span></span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> <span class="fu">scale_y_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="trajectory_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-20_fda830e72696e7120a12f10bf1f76d42">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span> )</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="many-genes" class="level4">
+<h4 class="anchored" data-anchor-id="many-genes">Many genes</h4>
+<p>We can run this for several genes. We pick the 10 genes with the highest variance of expression along the lineage:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-20_bc40b96046a0234d7aa70f41cc185ab7">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>tg2 <span class="ot">&lt;-</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">300</span> )</span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
+<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
+<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>..........</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fits[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              [,1]        [,2]        [,3]        [,4]        [,5]
+Cst3   0.035855217 0.036309867 0.036712272 0.037061176 0.037355581
+Slc1a2 0.012262572 0.012061551 0.011850005 0.011628884 0.011399137
+Mt3    0.008338254 0.008389786 0.008422263 0.008435714 0.008430298
+Clu    0.004685951 0.005009726 0.005326528 0.005632580 0.005924104
+Mt1    0.009045342 0.008951637 0.008849940 0.008740681 0.008624301</code></pre>
+</div>
+</div>
+<p>This time, we have evaluated the smoothed curve at a grid of 300 values and got a matrix with one row per gene and one column for each of the 300 time points.</p>
+<p>To visualize this, we use a heatmap:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-21_e23d66e010a469c6ba7a3c40aed1b39b">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fits) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+<p><img src="trajectory_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The genes have different dynamic range. Hence, we should divide each row by its maximum:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-22_2c5198ef3ca729250341b21774abef3b">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitsz), <span class="at">yaxt=</span><span class="st">"n"</span> )</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitsz) ), <span class="fu">rownames</span>(fitsz), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Now, let’s also sort the rows by the positions of these maxima, and replace the colour scale:</p>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-23_2401544b96859706ed7e2c1ecf292bac">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>The same now with the top hundred genes:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-21_e602c892cff28ed3fcea6088446df20d">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
-<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
-<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
-<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
-<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
-<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-24_05d66f13d3c32193dee9ea78ca2d0bd0">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
+<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
+<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
+<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
+<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>....................................................................................................</code></pre>
 </div>
 </div>
+<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-25_c56bb6ab6890a9360a5a37d2dea25c98">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="576"></p>
+</div>
+</div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->
