@@ -96,7 +96,7 @@ Here, we will use the function from the `princurve` package.
 
 As preparation, we first explore distances with sleepwalk:
 
-```{r}
+```{r eval=FALSE}
 sleepwalk::sleepwalk( Embeddings(seu,"umap"), Embeddings(seu,"pca") )
 ```
 We notice that the cycling cells have a lot of distance to the non-cycling
@@ -105,109 +105,206 @@ cannot deal with loops, i.e., the curve should pass besides the cell-cycle loop.
 However, the distances to the curve will then become large right in the middle, deflecting
 the curve.
 
-### Regressing out the cell cycle
-
-We solve this issue by reducing the impact that the cell cycle has on distances
-in PCA space.
-
-To help with this, Seurat comes with two list of genes that are strongly upregulated 
-in all cells in the S phase and in the G2/M phase of the cell cycle. 
-
-(The cell cycle in brief: G1 phase: first growth phase, after cell division; similar
-to a non-cycling cell's rest state -- S phase: synthesis phase, i.e. duplicating of 
-the DNA; G2 phase: second growth phase, in preparation for cell division;
-M phase: mitosis, i.e., separation of the chomosomes, followed by cell division)
-
-Here's the lists:
+Therefore, let's exclude clusters 6 and 11:
 
 ```{r}
-cc.genes.updated.2019
+lineage_clusters_2 <- setdiff( lineage_clusters, c( 6, 11 ) )
 ```
 
-Unfortunately, these are human gene symbols, but we can convert them to mouse 
-symbols via Ensembl BioMart:
+### Fitting the principal curve
+
+Now, we could the `princomp` package to fit the principal curve
 
 ```{r}
-read_tsv( "~/Downloads/biomart_export_human_mouse.tsv", show_col_types=FALSE ) %>% 
-  select( human_gene_symbol = `Gene name`, mouse_gene_symbol = `Mouse gene name` ) -> human_mouse_table
-
-human_mouse_table %>% 
-filter( human_gene_symbol %in% cc.genes.updated.2019$s.genes, !is.na(mouse_gene_symbol) ) %>%
-pull( mouse_gene_symbol ) %>% na.omit() -> mouse_cc_genes_s
-
-human_mouse_table %>% 
-filter( human_gene_symbol %in% cc.genes.updated.2019$g2m.genes, !is.na(mouse_gene_symbol) ) %>% 
-pull( mouse_gene_symbol ) -> mouse_cc_genes_g2m
-
-mouse_cc_genes_s
-
-mouse_cc_genes_s
+princurve::principal_curve( 
+  Embeddings(seu,"pca")[ seu$seurat_clusters %in% lineage_clusters_2, ], 
+  df=10, trace=TRUE, approx_points=1000 ) -> prc
 ```
 
-We can simply add up the expression of these genes to get for each gene two "cell-cycle scores":
+This function returns for each cell a pseudotime value `lambda` and a projected position on
+the curve in PCA space, `s`.
 
 ```{r}
-seu$cc_score_s   <- colSums( LayerData(seu)[ mouse_cc_genes_s, ] )
-seu$cc_score_g2m <- colSums( LayerData(seu)[ mouse_cc_genes_g2m, ] )
-```
-
-Here, we have used `LayerData`, which returns the log-normalized expression data,
-i.e. $y=_{ij}\log(k_{ij}/s_j\cdot 10^4 + 1)$.
-
-Here's a plot, using blended colour. Red channel is S score, blue channel G2M score:
-
-```{r}
-Embeddings(seu, "umap") %>%
+Embeddings(seu,"umap") %>%
 as_tibble( rownames="cell" ) %>%
-add_column( 
-  s_score   = seu$cc_score_s,
-  g2m_score = seu$cc_score_g2m ) %>% 
-mutate( color = rgb( 
-  red   = s_score / max(s_score),   
-  green = 0,
-  blue  = g2m_score / max(g2m_score ) ) ) %>%
+left_join( enframe( prc$lambda, "cell", "lambda" ) ) %>%
 ggplot +
-  geom_point( aes( x=umap_1, y=umap_2, col=I(color) ), size=.3 ) +
-  coord_equal()
+  geom_point( aes( x=umap_1, y=umap_2, col=lambda ), size=.3 ) +
+  coord_equal() + scale_color_viridis_c(option="D")
 ```
 
-Now, we redo the PCA, with the following modification. Before, we only scaled
-and centered the genes, now we regress out the scores.
-
-We demonstrate this with one gene:
+We can assign a pseudotime to the remaining cells by finding the closest curve point:
 
 ```{r}
-fit <- lm( LayerData(seu)["Mcm3",] ~ seu$cc_score_s + seu$cc_score_g2m )
+FNN::get.knnx( prc$s, Embeddings(seu,"pca"), 1 ) -> nnres
+
+prc$lambda[ nnres$nn.index[,1] ] %>%
+  { ( max(.) - . ) / max(.) } %>%
+  set_names( rownames(Embeddings(seu,"pca")) ) -> seu$pt
+```
+
+Her we have rescaled the pseudotime to [0;1] and also reversed the dirction,
+so thjat it now increases from stem cells towards neuroblasts.
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( seu$pt, "cell", "pt" ) ) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=pt ), size=.3 ) +
+  coord_equal() + scale_color_viridis_c(option="D")
+```
+
+We should also check how for each cell is from the curve
+
+```{r}
+nnres$nn.dist[,1] %>%
+  set_names( rownames(Embeddings(seu,"pca")) ) -> seu$dist_to_curve
+  
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( seu$dist_to_curve, "cell", "dist" ) ) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=dist ), size=.3 ) +
+  coord_equal() + scale_color_viridis_c( option="D", trans="log10", direction=-1 )  
+```
+
+### Expression dynamics
+
+Here is a plot showing the expression of one gene, Slc1a3 (Glast), along the 
+pseudotime:
+
+```{r}
+tibble(
+  pt = seu$pt, 
+  dist = seu$dist_to_curve,
+  in_lineage = seu$seurat_clusters %in% lineage_clusters,
+  expr = LayerData(seu)["Slc1a3",] ) %>%
+mutate( expr = ifelse( expr>0, expr, runif( n(), -.2, 0 ) ) ) -> tbl
+
+tbl %>%
+filter( in_lineage ) %>%
+ggplot +
+  geom_point( aes( x=pt, y=expr, col=dist ), size=.3 ) +
+  scale_color_viridis_c()
+```
+In order to make more apparent how many point are on the zero line, this line has been broadened.
+
+We now fit a smooth curve through this scatter plot. As we want to do this properly,
+we use locfit with Poisson GLM, i.e., wo don't use the log-normalized
+values but the raw counts. (Details [here](smoothing.html).)
+
+First we assemble the data
+
+```{r}
+library( locfit )
+
+tibble(
+  pt = seu$pt, 
+  dist = seu$dist_to_curve,
+  in_lineage = seu$seurat_clusters %in% lineage_clusters,
+  count = LayerData(seu,"count")["Slc1a3",],
+  total = colSums( LayerData(seu,"count") ),
+  expr = LayerData(seu)["Slc1a3",] ) %>%
+mutate( expr = ifelse( expr>0, expr, runif( n(), -.2, 0 ) ) ) -> tbl
+
+head(tbl)
+```
+
+The we run `lucfit`:
+```{r}
+fit <- locfit( count ~ pt, tbl, weight=total, family="poisson" )
+
 fit
-head(residuals(fit))
 ```
 
-Here, we have fitted, for the gene $i=\text{Mcm3}}$, the linear model
-$$ y_{ij} = \beta_0 + \beta_\text{S} x^\text{S}_i + \beta_\text{G2M} x^\text{G2M}_i + \epsilon_{ij} $$
-and then extracted the residuals $r_{ij} = \hat y_{ij} - y_{ij}$. As residuals, they are already
-centered, but still need to be divided by their standard deviation before being given to the PCA.
-
-We do this for each of the highly variable genes.
-
-Unfortunately, this code is quite slow:
-
-```r
-sapply( VariableFeatures(seu), function(gene) 
-  lm.fit( cbind( 1, seu$cc_score_s, seu$cc_score_g2m ), LayerData(seu)["Mcm3",] )$residuals ) -> residuals
-```
-
-Here's faster code, using the looped linear model solver from the limma package
+We evaluate the fitted curve along a value grid:
 
 ```{r}
-fit <- limma::lmFit( 
-  LayerData(seu)[VariableFeatures(seu),], 
-  cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) ) 
+tibble( pt = seq( 0, 1, length.out=1000 ) ) %>%
+mutate( y = predict( fit, pt ) ) -> tbl_fit
 
-yhat <- cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) %*% t(fit$coefficients)
+head(tbl_fit)
+```
 
-residuals <- as.matrix( LayerData(seu)[VariableFeatures(seu),] - t(yhat) )
+Now we can do the plot:
 
-pca <- prcomp( residuals, center=FALSE, scale=TRUE )
+```{r}
+tbl %>%
+filter( in_lineage ) %>%
+ggplot( aes( x=pt ) ) +
+  geom_point( aes( y = count/total + 1e-4, col=dist ), size=.3 ) +
+  geom_line( aes( y = y ), data=tbl_fit, col="magenta" ) +
+  scale_color_viridis_c() + scale_y_log10()
+```
 
-ump <- uwot::um
+#### Many genes
+
+We can run this for several genes. We pick the 10 genes with the highest variance
+of expression along the lineage:
+
+```{r}
+LayerData(seu)[ , seu$seurat_clusters %in% lineage_clusters ] %>%
+rowVars() %>%
+sort( decreasing=TRUE ) %>%
+head(10) %>% names() -> genes
+
+tg2 <- seq( 0, 1, length.out=300 )
+
+sapply( genes, function(gene) {
+  fit <- locfit( LayerData(seu,"count")[gene,] ~ seu$pt, 
+          weight=seu$nCount_RNA, family="poisson" )
+  cat(".") 
+  predict( fit, tg2 )
+} ) %>% t() -> fits
+
+fits[1:5,1:5]
+```
+
+This time, we have evaluated the smoothed curve at a grid of 300 values and got a 
+matrix with one row per gene and one column for each of the 300 time points.
+
+To visualize this, we use a heatmap:
+
+```{r}
+image( t(fits) )
+```
+
+The genes have different dynamic range. Hence, we should divide each row by its maximum:
+
+```{r}
+fitsz <- fits / rowMaxs(fits)
+image( t(fitsz), yaxt="n" )
+axis( 2, seq( 0, 1, length.out=nrow(fitsz) ), rownames(fitsz), las=2, cex.axis=.5 )
+```
+
+Now, let's also sort the rows by the positions of these maxima, and replace the colour scale:
+
+```{r}
+fitszs <- fitsz[ order( -apply( fitsz, 1, which.max ) ), ]
+image( t(fitszs), yaxt="n", col=viridisLite::viridis(300) )
+axis( 2, seq( 0, 1, length.out=nrow(fitszs) ), rownames(fitszs), las=2, cex.axis=.5 )
+```
+
+The same now with the top hundred genes:
+
+```{r}
+LayerData(seu)[ , seu$seurat_clusters %in% lineage_clusters ] %>%
+rowVars() %>%
+sort( decreasing=TRUE ) %>%
+head(100) %>% names() -> genes
+
+sapply( genes, function(gene) {
+  fit <- locfit( LayerData(seu,"count")[gene,] ~ seu$pt, 
+          weight=seu$nCount_RNA, family="poisson" )
+  cat(".") 
+  predict( fit, tg2 )
+} ) %>% t() -> fits
+```
+
+```{r fig.width=6,fig.height=15}
+fitsz <- fits / rowMaxs(fits)
+fitszs <- fitsz[ order( -apply( fitsz, 1, which.max ) ), ]
+image( t(fitszs), yaxt="n", col=viridisLite::viridis(300) )
+axis( 2, seq( 0, 1, length.out=nrow(fitszs) ), rownames(fitszs), las=2, cex.axis=.5 )
 ```

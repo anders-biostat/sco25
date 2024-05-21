@@ -51,7 +51,7 @@ title: "Mathematics of Single-cell Omics"
   - example data: cmss.rda (on Moodle)
 - Lecture of 2024-05-23
   - planned content:
-    - Expression dynamics along pseudotime trajectories
+    - [Expression dynamics along pseudotime trajectories](trajectory.html)
     - [Smoothing](smoothing.html)
     - [Principal curves](principal_curves.html)
   
