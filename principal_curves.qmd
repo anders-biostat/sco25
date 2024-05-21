@@ -292,11 +292,11 @@ principal_curve_iteration <- function( x, pt=NULL, curve=NULL ) {
   
   if( is.null(pt) ) {
      # initialization step
-     pt <- pca$x[,"PC1"]
+     pt <- prcomp(x)$x[,"PC1"]
   }
   
   # Spline smoothing of individual coordinates
-  fits <- lapply( 1:2, function(i) smooth.spline( pt, x[,i], df=10 ) )
+  fits <- lapply( 1:ncol(x), function(i) smooth.spline( pt, x[,i], df=10 ) )
 
   # Calculate curve along fine grid
   tg <- seq(
@@ -332,8 +332,6 @@ for( iter in 1:6 ) {
   plot( x, col=scale_colors(l$pt), asp=1, cex=.5, main=sprintf( "Iteration %d", iter ) )
   lines( l$curve, col="red" )
   lines( spline_basis %*% knots, col="blue", lty="dashed" )
-  
-  
 }
 ```
 
