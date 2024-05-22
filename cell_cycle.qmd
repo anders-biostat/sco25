@@ -1,0 +1,182 @@
+---
+title: "Regressing out the cell cycle"
+---
+
+This document contains unfinished notes on that topic.
+
+### Example data
+
+We use the usual IFNAGRKO example data set
+
+```{r}
+
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Matrix )
+  library( sparseMatrixStats )
+  library( Seurat ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+    "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+    "~/Downloads/ifnagrko/ifnagrko_var.csv",
+    cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+    mtx.transpose=TRUE) -> count_matrix
+
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+
+UMAPPlot( seu, label=TRUE)
+```
+
+### Cell-cycle scores
+
+The cycling cells are very different from the non-cycling cells in terms of distance
+in PCA space. Hence, it is often desirable to regress out the cell cycle.
+
+As a first step, we should find the cycling cells and find where they are in the cell cycle.
+
+To help with this, Seurat comes with two list of genes that are strongly upregulated 
+in all cells in the S phase and in the G2/M phase of the cell cycle. 
+
+(The cell cycle in brief: G1 phase: first growth phase, after cell division; similar
+to a non-cycling cell's rest state -- S phase: synthesis phase, i.e. duplicating of 
+the DNA; G2 phase: second growth phase, in preparation for cell division;
+M phase: mitosis, i.e., separation of the chomosomes, followed by cell division)
+
+Here's the lists:
+
+```{r}
+cc.genes.updated.2019
+```
+
+Unfortunately, these are human gene symbols, but we can convert them to mouse 
+symbols via Ensembl BioMart:
+
+```{r}
+read_tsv( "data/biomart_export_human_mouse.tsv", show_col_types=FALSE ) %>% 
+  select( human_gene_symbol = `Gene name`, mouse_gene_symbol = `Mouse gene name` ) -> human_mouse_table
+
+human_mouse_table %>% 
+filter( human_gene_symbol %in% cc.genes.updated.2019$s.genes, !is.na(mouse_gene_symbol) ) %>%
+pull( mouse_gene_symbol ) %>% na.omit() -> mouse_cc_genes_s
+
+human_mouse_table %>% 
+filter( human_gene_symbol %in% cc.genes.updated.2019$g2m.genes, !is.na(mouse_gene_symbol) ) %>% 
+pull( mouse_gene_symbol ) -> mouse_cc_genes_g2m
+
+mouse_cc_genes_s
+
+mouse_cc_genes_s
+```
+
+We can simply add up the expression of these genes to get for each gene two "cell-cycle scores":
+
+```{r}
+seu$cc_score_s   <- colSums( LayerData(seu)[ mouse_cc_genes_s, ] )
+seu$cc_score_g2m <- colSums( LayerData(seu)[ mouse_cc_genes_g2m, ] )
+```
+
+Here, we have used `LayerData`, which returns the log-normalized expression data,
+i.e. $y=_{ij}\log(k_{ij}/s_j\cdot 10^4 + 1)$.
+
+Here's a plot, using blended colour. Red channel is S score, blue channel G2M score:
+
+```{r}
+Embeddings(seu, "umap") %>%
+as_tibble( rownames="cell" ) %>%
+add_column( 
+  s_score   = seu$cc_score_s,
+  g2m_score = seu$cc_score_g2m ) %>% 
+mutate( color = rgb( 
+  red   = s_score / max(s_score),   
+  green = 0,
+  blue  = g2m_score / max(g2m_score ) ) ) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=I(color) ), size=.3 ) +
+  coord_equal()
+```
+
+### Regressing out the cell cycle
+
+Now, we redo the PCA, with the following modification. Before, we only scaled
+and centered the genes, now we regress out the scores.
+
+We demonstrate this with one gene:
+
+```{r}
+fit <- lm( LayerData(seu)["Mcm3",] ~ seu$cc_score_s + seu$cc_score_g2m )
+fit
+head(residuals(fit))
+```
+
+Here, we have fitted, for the gene $i=\text{Mcm3}}$, the linear model
+$$ y_{ij} = \beta_0 + \beta_\text{S} x^\text{S}_i + \beta_\text{G2M} x^\text{G2M}_i + \epsilon_{ij} $$
+and then extracted the residuals $r_{ij} = \hat y_{ij} - y_{ij}$. As residuals, they are already
+centered, but still need to be divided by their standard deviation before being given to the PCA.
+
+We do this for each of the highly variable genes.
+
+Unfortunately, this code is quite slow:
+
+```r
+sapply( VariableFeatures(seu), function(gene) 
+  lm.fit( cbind( 1, seu$cc_score_s, seu$cc_score_g2m ), LayerData(seu)["Mcm3",] )$residuals ) -> residuals
+```
+
+Here's faster code, using the looped linear model solver from the limma package
+
+```{r}
+fit <- limma::lmFit( 
+  LayerData(seu)[VariableFeatures(seu),], 
+  cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) ) 
+
+yhat <- cbind( 1, seu$cc_score_s, seu$cc_score_g2m ) %*% t(fit$coefficients)
+
+residuals <- as.matrix( LayerData(seu)[VariableFeatures(seu),] - t(yhat) )
+```
+
+Now let's feed this to the IRLBA PCA and calculate a new UMAP:
+
+```{r}
+pca <- irlba::prcomp_irlba( t(residuals), center=FALSE, scale.=TRUE, n=20 )
+
+ump <- uwot::umap( pca$x )
+```
+
+The cell cycle is still quite prominent in the new UMAP
+
+```{r}
+as_tibble( ump ) %>%
+mutate( cluster = seu$seurat_clusters ) %>%
+ggplot +
+  geom_point( aes( x=V1, y=V2, col=cluster ), size=.2 ) +
+  coord_equal()
+```
+
+However, the PCA distances are smaller, as can be seen with Sleepwalk
+
+```{r eval=FALSE}
+sleepwalk::sleepwalk( ump, pca$x )
+```
+
+### The same with Seurat
+
+We can also let Seurat do all this regressing out:
+
+```{r}
+seu %>%
+ScaleData( vars.to.regress = c("cc_score_s", "cc_score_g2m") ) %>%
+RunPCA( npcs=20 ) %>%
+RunUMAP( dims=1:20 ) -> seu2
+
+UMAPPlot(seu2, label=TRUE)
+```
+
+Unfortunately, it is hard to say whether Seurat does exactly the same as we have done.

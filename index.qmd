@@ -23,9 +23,28 @@ title: "Mathematics of Single-cell Omics"
 
 -----
 
+## Dates and times
+
+Lecture times/dates:
+
+- on **Mondays**, 10-12 am c.t.
+- on **Wednesdays**, 16-18 pm s.t.
+- *no lecture* on Mon 29 Apr and Wed 1 May
+
+Place:
+
+- normally: seminar room *SR 042* in BioQuant (INF 267)
+- exceptions:
+  - Wed 05 Jun: SR 043
+  - Wed 12 Jun: Greenier-Saal (7th floor)
+  - Wed 26 Jun: SR 041
+
+
+
 ## Material and  Video Recodings
 - Lecture of 2024-04-22:
   - [Video](https://youtu.be/Xr7AeQp-ceA)
+  - [Biology Primer](biology_primer.html)
   - [Overview High-throughput Sequencing](overview_hts.html)
   - [A simple analysis with Seurat](seurat.html)
   - Example data: PBMC3k (available on 10X web site, and Moodle)
@@ -56,19 +75,7 @@ title: "Mathematics of Single-cell Omics"
     - [Principal curves](principal_curves.html)
   
 
-## Dates and times
+## Source code
 
-Lecture times/dates:
-
-- on **Mondays**, 10-12 am c.t.
-- on **Wednesdays**, 16-18 pm s.t.
-- *no lecture* on Mon 29 Apr and Wed 1 May
-
-Place:
-
-- normally: seminar room *SR 042* in BioQuant (INF 267)
-- exceptions:
-  - Wed 05 Jun: SR 043
-  - Wed 12 Jun: Greenier-Saal (7th floor)
-  - Wed 26 Jun: SR 041
-
+The source code for the R/Markdown (Quarto) files used above can be found 
+in the GitHub repository [anders-biostat/sco24](https://github.com/anders-biostat/sco24).
