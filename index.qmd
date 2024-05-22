@@ -69,10 +69,13 @@ Place:
   - R code: [pseudotime_1.R](pseudotime_1.R), [splines_1.R](splines_1.R)
   - example data: cmss.rda (on Moodle)
 - Lecture of 2024-05-23
-  - planned content:
-    - [Expression dynamics along pseudotime trajectories](trajectory.html)
-    - [Smoothing](smoothing.html)
-    - [Principal curves](principal_curves.html)
+  - [Video](https://youtu.be/guufHqBEh7U)
+  - [Expression dynamics along pseudotime trajectories](trajectory.html)
+  - [Smoothing](smoothing.html)
+  - [blackboard photo](images/blackboard_smooth.jpeg)
+- prepared for following lectures 
+  - [Principal curves](principal_curves.html)
+  - [Cell cycle regression](cell_cycle.html)
   
 
 ## Source code
