@@ -1,0 +1,266 @@
+---
+title: "Diffusion distances"
+---
+
+#### Load example data
+
+Before getting into the topic, we load the usual example data and performing standard preprocessing
+
+```{r}
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Matrix )
+  library( sparseMatrixStats )
+  library( Seurat ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+    "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+    "~/Downloads/ifnagrko/ifnagrko_var.csv",
+    cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+    mtx.transpose=TRUE) -> count_matrix
+```
+
+```{r}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+```{r}
+UMAPPlot( seu, label=TRUE ) + coord_equal()
+```
+
+#### Nearest neighbors
+
+In this lesson, we will mainly work with the nearest neighbor data. Seurat has already calculated this but we do this again here:
+
+```{r}
+FNN::get.knn( Embeddings( seu, "pca" ), k=15 ) -> nn
+
+head( nn$nn.index)
+```
+
+#### Adjacency matrix
+
+We next construct the adjacency matrix of the undirected nearest neighbor graph. To connect each vertex to its $i$th nearest neighbor, we need the following edges:
+
+```{r}
+ncells <- ncol(seu)
+
+i <- 3
+cbind( vertex_A=1:ncells, vertex_B=nn$nn.index[,i] ) %>% head()
+```
+
+We can use this as indices of the matrix cells we want to set to one and thus construct a sparse matrix
+
+```{r}
+sparseMatrix(  i=1:ncells, j=nn$nn.index[,i], x=1, dims=c(ncells,ncells) ) %>% summary() %>% head()
+```
+
+
+Adding up on such matrix for i running from 1 to 15 gives us the adjacency matrix
+
+```{r}
+adjm <- sparseMatrix( i=integer(), j=integer(), x=numeric(), dims=c(ncells,ncells) ) # zero matrix
+for( i in 1:ncol(nn$nn.index) ) {
+   adjm <- adjm + sparseMatrix(  i=1:ncells, j=nn$nn.index[,i], x=1, dims=c(ncells,ncells) ) }
+summary(adjm) %>% head()
+```
+
+We make the matrix symmetric
+
+```{r}
+adjm <-  adjm + t(adjm)
+```
+
+Now, some matrix entries have become 2 rather than 1. We set everything back to 1:
+
+```{r}
+adjm@x[] <- 1
+```
+
+Now, we have an adjacency matrix for our nearest neighbor graph.
+
+#### Random walk
+
+We now define a random walk on our graph as follows: A "walker" (or: "token")
+starts at a vertex $i$. In each time step, it choses one of the vertex's
+neighbors at random and moves there. What is the probability of the walker 
+being on vertex $j$ after $\ell$ steps?
+
+We represent the walker being at vertex $i$ with the unit vector in direction $i$,
+i.e., the vector $\vec e_i$, with a 1 at component $i$ and zero elsewhere.
+The transition matrix $T$ with elements $T_{ij}$ tells us the probability of the walker
+moving to vertex $j$ in a step if it was before at vertex $i$:
+
+$$ T_{ij} = A_{ij} \Big/ \sum_{j'}{A_{ij'}}. $$
+The division normalizes the probabiliities by dividing by the number of neighbors
+that the walker can chose from.
+
+```{r}
+trm <- adjm / rowSums(adjm)
+```
+
+Check normalization:
+
+```{r}
+rowSums(trm) %>% head()
+```
+
+
+To try this out, we pick a cell close to the point (-6,6) in the UMAP:
+
+```{r}
+cell <- which.min( ( Embeddings(seu,"umap")[,1] + 6 )^2 + ( Embeddings(seu,"umap")[,2] - 6 )^2 )
+cell
+```
+
+Here's a UMAP plot of this cell and it's neighbors:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+mutate( w = case_when(
+  row_number() == cell ~ "cell",
+  adjm[cell,] == 1 ~ "neighbor",
+  TRUE ~ "other"
+)) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=w ), size=.3 ) + coord_equal() +
+  scale_color_manual( values=c("darkgreen","magenta","#00000006"))
+```
+
+Let's perform 10 steps. We start with a sparse vector with a single 1 at the chosen cell's
+index and 0 elsewhere, then multiply this 10 times with $T$:
+
+```{r}
+u <- sparseVector( i=cell, x=1, length=ncells )
+for( i in 1:10 )
+  u <- u %*% trm
+```
+
+We first check whether `u` is still normalized:
+
+```{r}
+sum(u)
+```
+
+Here's a plot of $\vec{u}=\vec{e}_i^\top T^{10}$.
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+mutate( u = as.vector(u) ) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=u ), size=.3 ) + coord_equal() +
+  scale_color_viridis_c(direction=-1)
+```
+
+#### Exponantiating the transition matrix
+
+Calculating $\ell$ steps by repeated multiplication is wasteful. We should use
+a matrix exponential. 
+
+As preparation for this, we define the diagonal "degree matrix" $D$, that contains the vertex degrees:
+$$ D_{ij} = \delta_{ij} \sum_{j'} A_{ij'}. $$
+
+Now, we have:
+$$ T = D^{-1}A.$$
+
+$T$ is a row-stochastic matrix, i.e., its values are all non-negative and its 
+rows sum to 1.
+
+The probability mass vector for a walker starting at vertex $i$ after one step is
+$\vec{e}_i^\top T$, and after $\ell$ steps, $\vec{e}_i^\top T^\ell$.
+
+To calculate $T^\ell$, we will need the eigendecomposition of the symmetrized transition matrix
+$\tilde T = D^{-1/2} T D^{-1/2}$:
+$$ \tilde T = U\Lambda U^\top,$$
+with the columns of $U$ containing the eigenvectors of $\tilde T$ and the diagonal matrix $\Lambda$
+containing the eigenvalues.
+
+With this, we get
+$$ \begin{align}
+T^\ell &= \left(D^{-1} A\right)^\ell \\
+&= D^{-1/2} \left(D^{-1/2} A D^{-1/2}\right)^\ell D^{1/2} \\ 
+&= D^{-1/2} \left(U \Lambda U^T\right)^\ell D^{1/2} \\ 
+&= \underbrace{D^{-1/2} U \Lambda^\ell}_{=X_\ell} U^T D^{1/2}.
+\end{align} $$
+
+We construct $D$
+
+```{r}
+degdiag <- sparseMatrix( i=1:ncells, j=1:ncells, x=rowSums(adjm) )
+```
+
+We also write down $D^{-1}$, $D^{1/2}$ and $D^{-1/2}$:
+
+```{r}
+invdegdiag     <- sparseMatrix( i=1:ncells, j=1:ncells, x=1/rowSums(adjm) )
+sqrtdegdiag    <- sparseMatrix( i=1:ncells, j=1:ncells, x=sqrt(rowSums(adjm)) )
+invsqrtdegdiag <- sparseMatrix( i=1:ncells, j=1:ncells, x=1/sqrt(rowSums(adjm)) )
+```
+
+Now we get the eigensystem of $\tilde T$, requesting the 100 eigenvalues
+that are largest by magnitude:
+
+```{r}
+eigtrm <- RSpectra::eigs_sym( invsqrtdegdiag %*% adjm %*% invsqrtdegdiag, k=100 )
+```
+
+Now, we can calculate $\vec e_i^\top T^\ell$ as follows:
+
+We calculate first $X_\ell = D^{-1/2} U \Lambda^\ell$:
+
+```{r}
+invsqrtdegdiag %*% eigtrm$vectors %*% diag( eigtrm$values^10 ) %>% as.matrix() -> x10
+
+dim(x10)
+```  
+
+Note that the matrix $X_\ell$ has been trimmed to only the first 50 columns. That is ok
+because the factor $\Lambda^\ell$ gets small quickly and therefore, the columns stay close
+to zero once we get past the first few on the left:
+
+```{r}
+plot( colSums(x10^2) )
+```
+
+Of course, this only works for $\ell \gg 1$ and with $\ell=10$ we may have only just enough steps for the
+approximation becoming valid.
+
+We take the row of $X_\ell$ that corresponds to our cell and multiply this with $U^\top D^{1/2}$ to get 
+$e_i^\top X_\ell U^\top D^{1/2}=e_i^\top T^\ell$:
+
+```{r}
+x10[cell,] %*% t(eigtrm$vectors) %*% sqrtdegdiag %>% as.vector() -> u10
+```
+
+Here is a plot of that vector:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+mutate( u = u10 ) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=u ), size=.3 ) + coord_equal() +
+  scale_color_viridis_c(direction=-1)
+```
+This looks quite similar as the plot we made before. 
+
+Here's a comparison of the two results
+
+```{r}
+plot( u, u10, asp=1, cex=.2, xlab="exact calculation", ylab="using top 100 eigenvectors" )
+abline( 0, 1, col="#00000020" )
+abline( h=0, v=0, col="#00000020" )
+```
+
+#### Diffusion distances
+
