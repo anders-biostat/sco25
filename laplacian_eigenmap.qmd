@@ -1,0 +1,318 @@
+---
+title: "Laplacian eigenmaps"
+---
+
+Laplacian eigenmaps were introduced by Belkin and Niyogi in ther 2003 paper 
+*Laplacian Eigenmaps for Dimensionality Reduction and Data Representation*
+([doi:10.1162/089976603321780317](https://doi.org/10.1162/089976603321780317))
+
+We will try out this method here.
+
+#### Load example data
+
+Before getting into the topic, we load the usual example data and performing standard preprocessing
+
+```{r}
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Matrix )
+  library( sparseMatrixStats )
+  library( Seurat ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+    "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+    "~/Downloads/ifnagrko/ifnagrko_var.csv",
+    cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+    mtx.transpose=TRUE) -> count_matrix
+```
+
+```{r}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+```{r}
+UMAPPlot( seu, label=TRUE ) + coord_equal()
+```
+
+We subset the object to only the "lineage":
+
+```{r}
+seu[ , seu$seurat_clusters %in% c( 0, 3, 5, 1, 2, 7, 6, 11 ) ] -> seul
+
+seul
+```
+
+#### Laplacian eigenmaps
+
+The idea of Laplacian eigenmaps is briefly as follwos: We assume that our data lives
+on a sub-manifold of the feature space, but is "lifted off" from it by random noise.
+Nevertheless, the graph formed by connecting each data point with its $k$ nearest neighbors 
+should recapitulate that manifold's topology and also induce a metric of map on it.
+
+Spectral analysis of the neighborhood graph's Laplacian matrix should reveal something about it,
+for the follwoing reason: The data points are sampled from the manifold. In the limit
+of infinitely many data points, the graph Laplacian matrix can be shown to converge to the manifold's
+Laplace-Betrami operator.  
+
+There are, of course, many choices on how to put weights on the neighborhood graph. We try out
+one popular approach in the following.
+
+#### Neighborhood graph with Gaussian weights
+
+We use a Gaussian distance kernel to obtain edge weights, i.e., for the edge from
+cell (vertex) $i$ to cell $j$, we chose 
+$$ a_{ij} = \exp\left(-\frac{d_{ij}^2}{\sigma_{ij}^2}\right),$$
+where $d_{ij}$ is the distance between cells $i$ and $j$ in feature space and
+$\sigma_{ij}$ is a suitable kernel width. 
+
+For this to be a neighborhood graph's adjacency matrix, we set $a_{ij}=0$ if $i$
+and $j$ are not neighbors. To make this concrete, we work with $k$ nearest neighbors and consider
+two cells neighbors if at least on of them is among the other's $k$ nearest neighbors.
+
+As we did for smoothing, we might chose that width in an "adaptive" manner, adaptiong
+to local density. An easy way to do so is to choose as kernel width, $\signa_i$, for cell $i$ the cell's
+distance to its $k'$-th neighbor, using some $k'<k$. 
+
+In order to make the adjancy matrix symmetric, Zelnik-Manor and Perona (2003) suggest to
+let $\sigma_{ij}^2=\sigma_i\sigma_j$, i.e., we set the squared kernel width used when calculating the weight 
+for the edge from cell $i$ to cell $j$ to the product of the distances of both cells' respective $k'$-th
+nearest neighbor.
+
+#### Calculating the neighborhood graph
+
+We get for each cell its $k=50$ nearest neighbors:
+
+```{r}
+FNN::get.knn( Embeddings(seul,"pca"), k=50 ) -> nn
+```
+
+We set $k'=20$ and hence take the $sigma_i$ from the 20th column of the
+NN distance table.
+
+```{r}
+sigma <- nn$nn.dist[,20]
+```
+
+Now, we obtain the adjacency matrix as follows:
+
+- For each $i$ from 1 to $k$, make a list of edges, namely from each cell $j$ to its
+  $i$-th neighbor $j_i$, setting the edge weight to $\exp(-d(j,j_i)^2/(\sigma(j)\sigma{j_i}))$,
+  where $d(j,j')$ is the distance of from cell $j$ to its $i$-th neighbor and $\sigma(j)$ is the
+  distance of cell $j$ to its $k'$-th neighbor.
+- We concatenate these edge lists to one long one.
+- Then, to properly symmetrize the matrix, we proceed as follows:
+  - For each edge, we sort the cell indices, such that the "left" index is the numerically smaller
+    and the "right" index is the larger one.
+  - If two cells are mutual nearest neighbors, their edge appears twice (first with swapped indices,
+    now with the same indices). We only keep one. Note that we should only check the vertex indices
+    for equality, not the weights, to avoid falling for numerical inaccuricies (as floating point multiplication
+    is not exactly commutative).
+  - We pass the edgelist to the `sparseMatrix` function to form a sparse matrix.  We request a
+    symmetric matrix, causing the function to add the missing lower triangular part.\
+    
+Here is the code:    
+
+```{r}
+ncells <- nrow(nn$nn.index)
+
+map_dfr( 1:ncol(nn$nn.index), function(i) 
+  tibble( 
+    cell1 = 1:ncells, 
+    cell2 = nn$nn.index[,i], 
+    weight = exp( - nn$nn.dist[,i]^2 / ( sigma * sigma[nn$nn.index[,i]] ) ) ) ) %>%
+mutate( 
+  left = pmin( cell1, cell2 ),
+  right = pmax( cell1, cell2 ) ) %>%
+arrange( left, right ) %>%
+select( left, right, weight ) %>%
+distinct( left, right, .keep_all=TRUE ) %>%
+{ sparseMatrix( i=.$left, j=.$right, x=.$weight, 
+    symmetric=TRUE, dims=c(ncells,ncells) ) } -> adjm
+```
+
+Writing $A$ for this adjacency matrix and $D$ for the diagonal matrix of vertex degrees ($D_{ij}=\delta_{ij}\sum_{j'}A_{ij'}$),
+we obtain the scaled graph Laplacian as $L = I - D^{-1/2} A D^{-1/2}$.
+
+We get the smallest (by magnitude) eigenvalues and their eigenvectors.
+
+```{r}
+invsqrtdegdiag <- sparseMatrix( i=1:ncells, j=1:ncells, x=1/sqrt(rowSums(adjm)), symmetric=TRUE )
+
+scaled_laplacian <- sparseMatrix( i=1:ncells, j=1:ncells, x=1, symmetric=TRUE ) - 
+  invsqrtdegdiag %*% adjm %*% invsqrtdegdiag
+
+RSpectra::eigs_sym( scaled_laplacian, 5, which="SM" ) -> eig
+```
+
+The smallest eigenvalue is, as expected, 0:
+
+```{r}
+eig$values
+```
+
+Here is a plot of the data points, using as 2D coordinates the eigenvectors corresponding to the
+two smallest non-zero eigenvalues. We colour by Leiden cluster.
+
+```{r}
+as_tibble(eig$vectors) %>%
+add_column( cluster=seul$seurat_clusters) %>%
+ggplot +
+  geom_point( aes( x=V4, y=V3, col=cluster), size=.1 ) + coord_equal()
+
+```
+
+For comparison, the UMAP, with the same colouring:
+
+```{r}
+Embeddings(seul,"umap") %>%
+as_tibble() %>%
+add_column( cluster=seul$seurat_clusters) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=cluster), size=.1 ) + coord_equal()
+```
+
+
+#### Swiss roll
+
+To make a Swiss role, prepare a biscuit batter and bake it in a tray to obtain
+a spongy rectangular biscuit cake. Put a layer of jam, then a thick layer of cream on top,
+the roll up the layered cake. 
+
+The Swiss role has inspired a standard "test manifold" to study dimension reduction:
+
+First, we sample point from a 2D rectangle:
+
+```{r}
+set.seed( 1324 )
+n <- 10000
+
+x0 <- runif( n, 0, 50 )
+y0 <- runif( n, 0, 6*pi )
+```
+
+Now, roll up the rectangle, using $y_0$ both as rolling angle and as radius.
+For the radius, add some noise to make the biscuit fluffy.
+
+```{r}
+r <- y0 + runif( n, 0, 1 )
+
+cbind(
+  x0,
+  r * cos( y0 ),
+  r * sin( y0 ) ) -> x3
+```
+
+Here's a plot of the roll, looking head-on:
+
+```{r}
+plot( x3[,2], x3[,3], cex=.1, asp=1 )
+```
+
+and from the side:
+
+```{r}
+plot( x3[,1], x3[,2], cex=.1, asp=1 )
+```
+
+Now, let's embed this 3D object into a 7D space, by chosing three random but orthonormal
+basis vectors. To do so, we chose three random vectors
+
+```{r}
+random_vecs <- matrix( rnorm(21), nrow = 7, ncol = 3 )
+```
+
+then orthogonalize them using QR decomposition (which is essentially a sophisticated
+variant of Gram-Schmidt)
+
+```{r}
+random_orthonormal_basis <- qr.Q( qr( random_vecs ) )
+```
+
+Now, let's
+
+```{r}
+x3 %*% t(random_orthonormal_basis) -> x
+
+head(x)
+```
+
+Can we recover the initial 2D sheet (x0, y0) using eigenmaps?
+
+```{r}
+FNN::get.knn( x, k=30 ) -> nn
+
+nn$nn.dist[,18] -> sigma
+
+map_dfr( 1:ncol(nn$nn.index), function(i) 
+  tibble( 
+    cell1 = 1:n, 
+    cell2 = nn$nn.index[,i], 
+    weight = exp( - nn$nn.dist[,i]^2 / ( sigma * sigma[nn$nn.index[,i]] ) ) ) ) %>%
+mutate( 
+  left = pmin( cell1, cell2 ),
+  right = pmax( cell1, cell2 ) ) %>%
+arrange( left, right ) %>%
+select( left, right, weight ) %>%
+distinct( left, right, .keep_all=TRUE ) %>%
+{ sparseMatrix( i=.$left, j=.$right, x=.$weight, 
+    symmetric=TRUE, dims=c(n,n) ) } -> adjm
+
+invsqrtdegdiag <- sparseMatrix( i=1:n, j=1:n, x=1/sqrt(rowSums(adjm)), symmetric=TRUE )
+
+scaled_laplacian <- sparseMatrix( i=1:n, j=1:n, x=1, symmetric=TRUE ) - 
+  invsqrtdegdiag %*% adjm %*% invsqrtdegdiag
+
+RSpectra::eigs_sym( scaled_laplacian, 5, which="SM" ) -> eig
+
+eig$values
+```
+
+The eigenmap, coloured by y0:
+
+```{r}
+as_tibble(eig$vectors) %>%
+add_column( x0, y0 ) %>%
+ggplot +
+  geom_point( aes( x=V4, y=V3, col=y0), size=.1 ) + coord_equal()
+```
+
+The eigenmap, coloured by x0:
+
+```{r}
+as_tibble(eig$vectors) %>%
+add_column( x0, y0 ) %>%
+ggplot +
+  geom_point( aes( x=V4, y=V3, col=x0), size=.1 ) + coord_equal()
+```
+
+How does UMAP fare?
+
+```{r}
+uwot::umap(x) -> ump
+```
+
+Colour by x0:
+
+```{r}
+as_tibble(ump) %>%
+add_column( x0, y0 ) %>%
+ggplot +
+  geom_point( aes( x=V1, y=V2, col=x0), size=.1 ) + coord_equal()
+```
+
+and by y0:
+
+```{r}
+as_tibble(ump) %>%
+add_column( x0, y0 ) %>%
+ggplot +
+  geom_point( aes( x=V1, y=V2, col=y0), size=.1 ) + coord_equal()
+```

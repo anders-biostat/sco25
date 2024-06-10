@@ -82,10 +82,10 @@ Place:
   - Spectra of graphs (Skript still missing)
   - [Diffusion on graphs](graph_diffusion.html)
 - Lecture of 2024-06-10
-  - [to be added]
+  - [Laplacian eigenmaps](laplacian_eigenmap.html)
+  - [UMAP on foot](UMAP_pedestrian.html)
 - prepared for following lectures 
   - [Cell cycle regression](cell_cycle.html)
-  - [UMAP on foot](UMAP_pedestrian.html)
 
 ## Source code
 
