@@ -483,3 +483,69 @@ mutate(
 ggplot +
   geom_point( aes( x=pt_diffusion, y=pt_prc, col=type ), size=.2 )
 ```
+
+### Diffusion space
+
+The space of $X_\ell$ can also be interpreted as an alternative to the feature space,
+called "diffusion space". Using the first few components provides a dimension redution,
+the "diffusion map". 
+
+For this to work well, our neighborhood graph should be connected.
+
+Ours has two connection components, however, as is evident from the fact that our
+transition matrix has two unit eigenvalues:
+
+```{r}
+head( eigtrm$values )
+```
+
+To make our live easier, let's reduce the data to only the lineage cells
+
+```{r}
+in_lineage <- seu$seurat_clusters %in% c( 0, 3, 5, 1, 2, 7, 6, 11 )
+```
+
+Subset the adjacency matrix to these and recalculate the transition matrix and
+its spectrum
+
+```{r}
+adjml <- adjm[ in_lineage, ][ , in_lineage ]
+ncells <- nrow(adjml)
+
+invsqrtdegdiag <- sparseMatrix( i=1:ncells, j=1:ncells, x=1/sqrt(rowSums(adjml)) )
+eigtrm <- RSpectra::eigs_sym( invsqrtdegdiag %*% adjml %*% invsqrtdegdiag, k=10 )
+
+x300 <- as.matrix( invsqrtdegdiag %*% eigtrm$vectors %*% diag( eigtrm$values^300 ) )
+```
+
+```{r}
+as_tibble( x300[,2:3 ] ) %>%
+add_column( cluster = seu$seurat_clusters[in_lineage] ) %>%
+ggplot +
+  geom_point( aes( x=V1, y=V2, col=cluster ), size=.1 ) + coord_equal()
+```
+For comparison, the UMAP with the same c
+
+```{r}
+as_tibble( Embeddings(seu,"umap")[in_lineage,] ) %>%
+add_column( cluster = seu$seurat_clusters[in_lineage] ) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=cluster ), size=.1 ) + coord_equal()
+```
+
+### References
+
+The idea of diffusion distances and diffusion maps has been introduced in this paper:
+
+- Coifman and Lafon (2006): *Diffusion Maps*. Applied and Computational Harmonic Analysis, Vol. 21, Pages 5-30. [doi:10.1016/j.acha.2006.04.006](https://doi.org/10.1016/j.acha.2006.04.006)
+
+Applying these ideas to single-cell data is explored in
+
+- Haghverdi, Büttner, Theis (2015): *Diffusion maps for high-dimensional single-cell analysis of differentiation data*
+  Bioinformatics, Vol. 31, Pages 2989–2998, [doi:10.1093/bioinformatics/btv325](https://doi.org/10.1093/bioinformatics/btv325)
+  
+- Haghverdi, Büttner, Wolf, Buettner, Theis (2016): *Diffusion pseudotime robustly reconstructs lineage branching*
+  Nature Methods, Vol. 13, Pages 845–848
+  
+- Angerer, Haghverdi, Büttner, Theis, Marr, Buettner: *destiny: diffusion maps for large-scale single-cell data in R*,
+Bioinformatic, Vol. 32, Pages 1241-1243, [doi:10.1093/bioinformatics/btv715](https://doi.org/10.1093/bioinformatics/btv715)

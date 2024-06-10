@@ -226,16 +226,16 @@ To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to
 This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:06:21 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+<pre><code>15:32:17 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:06:21 Read 18302 rows and found 20 numeric columns</code></pre>
+<pre><code>15:32:17 Read 18302 rows and found 20 numeric columns</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:06:21 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+<pre><code>15:32:17 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:06:21 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+<pre><code>15:32:17 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
@@ -245,13 +245,13 @@ This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>**************************************************|
-12:06:24 Writing NN index file to temp file /tmp/RtmpZO1imz/file4d2a03f6b078b
-12:06:24 Searching Annoy index using 1 thread, search_k = 3000
-12:06:32 Annoy recall = 100%
-12:06:32 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-12:06:33 Initializing from normalized Laplacian + noise (using RSpectra)
-12:06:37 Commencing optimization for 200 epochs, with 776086 positive edges
-12:06:47 Optimization finished</code></pre>
+15:32:20 Writing NN index file to temp file /tmp/Rtmpph7jNv/file504c155b54113
+15:32:20 Searching Annoy index using 1 thread, search_k = 3000
+15:32:28 Annoy recall = 100%
+15:32:28 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:32:29 Initializing from normalized Laplacian + noise (using RSpectra)
+15:32:33 Commencing optimization for 200 epochs, with 776086 positive edges
+15:32:43 Optimization finished</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -687,6 +687,69 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <p><img src="graph_diffusion_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+</section>
+<section id="diffusion-space" class="level3">
+<h3 class="anchored" data-anchor-id="diffusion-space">Diffusion space</h3>
+<p>The space of <span class="math inline">\(X_\ell\)</span> can also be interpreted as an alternative to the feature space, called “diffusion space”. Using the first few components provides a dimension redution, the “diffusion map”.</p>
+<p>For this to work well, our neighborhood graph should be connected.</p>
+<p>Ours has two connection components, however, as is evident from the fact that our transition matrix has two unit eigenvalues:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( eigtrm<span class="sc">$</span>values )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.0000000 1.0000000 0.9998821 0.9993076 0.9991653 0.9984226</code></pre>
+</div>
+</div>
+<p>To make our live easier, let’s reduce the data to only the lineage cells</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a>in_lineage <span class="ot">&lt;-</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">11</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Subset the adjacency matrix to these and recalculate the transition matrix and its spectrum</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>adjml <span class="ot">&lt;-</span> adjm[ in_lineage, ][ , in_lineage ]</span>
+<span id="cb69-2"><a href="#cb69-2" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">nrow</span>(adjml)</span>
+<span id="cb69-3"><a href="#cb69-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-4"><a href="#cb69-4" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(adjml)) )</span>
+<span id="cb69-5"><a href="#cb69-5" aria-hidden="true" tabindex="-1"></a>eigtrm <span class="ot">&lt;-</span> RSpectra<span class="sc">::</span><span class="fu">eigs_sym</span>( invsqrtdegdiag <span class="sc">%*%</span> adjml <span class="sc">%*%</span> invsqrtdegdiag, <span class="at">k=</span><span class="dv">10</span> )</span>
+<span id="cb69-6"><a href="#cb69-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb69-7"><a href="#cb69-7" aria-hidden="true" tabindex="-1"></a>x300 <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>( invsqrtdegdiag <span class="sc">%*%</span> eigtrm<span class="sc">$</span>vectors <span class="sc">%*%</span> <span class="fu">diag</span>( eigtrm<span class="sc">$</span>values<span class="sc">^</span><span class="dv">300</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( x300[,<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> ] ) <span class="sc">%&gt;%</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster =</span> seu<span class="sc">$</span>seurat_clusters[in_lineage] ) <span class="sc">%&gt;%</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>V1, <span class="at">y=</span>V2, <span class="at">col=</span>cluster ), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+`.name_repair` is omitted as of tibble 2.0.0.
+ℹ Using compatibility `.name_repair`.</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-45-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>For comparison, the UMAP with the same c</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( <span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>)[in_lineage,] ) <span class="sc">%&gt;%</span></span>
+<span id="cb72-2"><a href="#cb72-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster =</span> seu<span class="sc">$</span>seurat_clusters[in_lineage] ) <span class="sc">%&gt;%</span></span>
+<span id="cb72-3"><a href="#cb72-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
+<span id="cb72-4"><a href="#cb72-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>cluster ), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-46-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="references" class="level3">
+<h3 class="anchored" data-anchor-id="references">References</h3>
+<p>The idea of diffusion distances and diffusion maps has been introduced in this paper:</p>
+<ul>
+<li>Coifman and Lafon (2006): <em>Diffusion Maps</em>. Applied and Computational Harmonic Analysis, Vol. 21, Pages 5-30. <a href="https://doi.org/10.1016/j.acha.2006.04.006">doi:10.1016/j.acha.2006.04.006</a></li>
+</ul>
+<p>Applying these ideas to single-cell data is explored in</p>
+<ul>
+<li><p>Haghverdi, Büttner, Theis (2015): <em>Diffusion maps for high-dimensional single-cell analysis of differentiation data</em> Bioinformatics, Vol. 31, Pages 2989–2998, <a href="https://doi.org/10.1093/bioinformatics/btv325">doi:10.1093/bioinformatics/btv325</a></p></li>
+<li><p>Haghverdi, Büttner, Wolf, Buettner, Theis (2016): <em>Diffusion pseudotime robustly reconstructs lineage branching</em> Nature Methods, Vol. 13, Pages 845–848</p></li>
+<li><p>Angerer, Haghverdi, Büttner, Theis, Marr, Buettner: <em>destiny: diffusion maps for large-scale single-cell data in R</em>, Bioinformatic, Vol. 32, Pages 1241-1243, <a href="https://doi.org/10.1093/bioinformatics/btv715">doi:10.1093/bioinformatics/btv715</a></p></li>
+</ul>
 
 
 </section>
