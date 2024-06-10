@@ -62,13 +62,13 @@ Place:
 - Lecture of 2024-05-13
   - [Video](https://youtu.be/55jgeLzbLgQ) 
   - [Mathematics of PCA](pca.html)
-  - Blackboard photos: [1](https://raw.githubusercontent.com/anders-biostat/sco24/master/images/pca_1.jpeg) [2](https://raw.githubusercontent.com/anders-biostat/sco24/master/images/pca_2.jpeg)
+  - Blackboard photos: [1](images/pca_1.jpeg) [2](images/pca_2.jpeg)
 - Exercise class of 2024-05-15
   - [Video](https://youtu.be/1uCcugEhJfM):
   - fitting pseudotimes and splines
   - R code: [pseudotime_1.R](pseudotime_1.R), [splines_1.R](splines_1.R)
   - example data: cmss.rda (on Moodle)
-- Lecture of 2024-05-23
+- Lecture of 2024-05-22
   - [Video](https://youtu.be/guufHqBEh7U)
   - [Expression dynamics along pseudotime trajectories](trajectory.html)
   - [Smoothing](smoothing.html)
@@ -78,6 +78,7 @@ Place:
   - [Smoothing with principal curves](principal_curves.html)
 - Lecture of 2024-06-03
   - [Video](https://youtu.be/AFocVSfeju0)
+  - Blackboard photos: [1](images/blackboard_graph_spectra_1.jpeg) [2](images/blackboard_graph_spectra_2.jpeg)
   - Spectra of graphs (Skript still missing)
   - [Diffusion on graphs](graph_diffusion.html)
 - Lecture of 2024-06-10
