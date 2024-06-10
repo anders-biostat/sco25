@@ -73,8 +73,16 @@ Place:
   - [Expression dynamics along pseudotime trajectories](trajectory.html)
   - [Smoothing](smoothing.html)
   - [blackboard photo](images/blackboard_smooth.jpeg)
+- Lecture of 2024-05-27
+  - [Video](https://youtu.be/UQJhgegLuMU)
+  - [Smoothing with principal curves](principal_curves.html)
+- Lecture of 2024-06-03
+  - [Video](https://youtu.be/AFocVSfeju0)
+  - Spectra of graphs (Skript still missing)
+  - [Diffusion on graphs](graph_diffusion.html)
+- Lecture of 2024-06-10
+  - [to be added]
 - prepared for following lectures 
-  - [Principal curves](principal_curves.html)
   - [Cell cycle regression](cell_cycle.html)
   
 

@@ -264,3 +264,222 @@ abline( h=0, v=0, col="#00000020" )
 
 #### Diffusion distances
 
+We now define a new distance metrix for our cells. Intuitively: To quantify the
+distance between two cells $i$ and $j$, we start random walks at both cells,
+evolve them for $\ell$ steps, and then ask about the overlap between the resulting
+probability vectors. 
+
+We might therefore use
+$$ \left\| e_i^\top T^\ell - e_j
+^\top T^\ell \right\|_2, $$ 
+i.e., the Euclidean distance between rows $i$ and $j$ of $T^\ell$ as the distance between cells $i$ and $j$. 
+
+Note that the number of steps, $\ell$, selects a "length scale" at which the 
+that distance is informative. 
+
+There is a practical difficulty in using this definition, though: When multiplying 
+the small $n\times k$ matrix $X_\ell$ with the transpose of the $n\times k$ eigenvector matrix $U$
+(with $n$ being the number of cells and $k$ being the number of eigenvectors that have been calculated)
+our data blows up to an unwieldy $n\times n$ matrix.
+
+We can avoid this by using the rows of $X_\ell$ instead of the rows of $T^\ell$, 
+and therefore define: 
+
+The *$\ell$-steps diffusion distance* between cells $i$ and $j$ is
+$$ d_{\ell,ij} = \left\| e_i^\top X_\ell - e_j^\top X_\ell \right\|_2, $$ 
+
+Note that this is also 
+$$ d_{\ell,ij} = \left\| \left( e_i^\top T^\ell  - e_i^\top T^\ell\right) D^{-1/2} \right\|_2, $$ 
+i.e., the components of the resulting probability vectors get reweighted by $D^{-1/2}$ before calculating the
+norm of the difference. If we accept this (somewhat unmotivated) reweighting, because it does not change much (as the vertex
+degrees do not differ that much from each other), we have a computationally efficient way of calculating $d_{\ell,ij}$:
+All we need is $X_\ell$.
+
+By calculating the Euclidean distance of every row of $X_\ell$ to the row for our selected cell,
+we get the $\ell$-step diffusion distance of that cell to all other cells:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+mutate( d = sqrt( rowSums( t( t(x10) - x10[cell,] )^2 ) ) ) %>% 
+arrange(-d) %>%
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=d ), size=.3 ) + coord_equal() +
+  scale_color_viridis_c(direction=-1)
+
+```
+
+Below, this plot is repeated for several values of $\ell$. (But remember that our
+approximation error is larger for $\ell \lesssim 10$.)
+
+```{r}
+for( l in c(3, 10, 30, 100, 300, 1000 ) ) {
+  invsqrtdegdiag %*% eigtrm$vectors %*% diag( eigtrm$values^l ) %>% as.matrix() -> xm
+  print(
+    Embeddings(seu,"umap") %>%
+    as_tibble() %>%
+    mutate( d = sqrt( rowSums( t( t(xm) - xm[cell,] )^2 ) ) ) %>% 
+    arrange(-d) %>%
+    ggplot +
+      geom_point( aes( x=umap_1, y=umap_2, col=d ), size=.3 ) + coord_equal() +
+      scale_color_viridis_c(direction=-1) + ggtitle( sprintf( "%d steps", l ) ) )
+}
+```
+
+#### Pseudotime
+
+We now want to define a pseudotime along the lineage, from cluster 0 to cluster 2 and on to 7.
+
+We define a start cell and an end cell, by taking our cell (which is arguably somewhere in the
+middle) and find the cell with the largest distance to it within cluster 0 and 7, respectivelty.
+
+We will work with $\ell=300$:
+
+```{r}
+l <- 300
+xm <- as.matrix( invsqrtdegdiag %*% eigtrm$vectors %*% diag( eigtrm$values^l ) )
+# distances to "intermediate" cell:
+d <- sqrt( rowSums( t( t(xm) - xm[cell,] )^2 ) )
+```
+
+Here is the distance of the cells in cluster 0 (the astrocyte / neuronal stem cell cluster, where the lineage starts) to our intermediate cell:
+
+```{r}
+hist( d[seu$seurat_clusters==0], 100 )
+abline(v=0.0013, col="orange")
+```
+
+
+It seems reasonable to assume that the cells at the steep cliff are the actual start of the
+lineage and the cells further out or some outliers (perhaps cells that started into
+another direction)
+
+```{r}
+start_cell <- which.min( ( d * (seu$seurat_clusters==0) - 0.0013 )^2 )
+```
+
+Let's also find a reasonable "end cell" in the neuron cluster 7:
+
+```{r}
+hist( d[seu$seurat_clusters==7], 100 )
+```
+Here' let's simply take the last cell:
+
+```{r}
+end_cell <- which.max( d * (seu$seurat_clusters==7) )
+```
+
+Now, get distances to these two cells:
+
+```{r}
+dist_to_start <- sqrt( rowSums( t( t(xm) - xm[start_cell,] )^2 ) )
+dist_to_end <- sqrt( rowSums( t( t(xm) - xm[end_cell,] )^2 ) )
+```
+
+```{r}
+tibble( 
+  dist_to_start, dist_to_end, 
+  cluster=seu$seurat_clusters ) %>%
+mutate(
+  type = case_when(
+    cluster %in% c( 0, 3, 5, 1, 2, 7 ) ~ "lineage_straight",
+    cluster %in% c( 6, 11 )  ~ "lineage_cycle",
+    TRUE ~ "other" ) ) %>%
+ggplot +
+  geom_point( aes( x=dist_to_end, y=dist_to_start, col=type ), size=.1 ) +
+  coord_equal()
+```
+Let's rotate this plot by 45°:
+
+```{r}
+tibble( 
+  dist_to_start, dist_to_end, 
+  cluster=seu$seurat_clusters ) %>%
+mutate(
+  type = case_when(
+    cluster %in% c( 0, 3, 5, 1, 2, 7 ) ~ "lineage_straight",
+    cluster %in% c( 6, 11 )  ~ "lineage_cycle",
+    TRUE ~ "other" ) ) %>%
+ggplot +
+  geom_point( aes( 
+    x = dist_to_start - dist_to_end, 
+    y = dist_to_start + dist_to_end, col=type ), size=.1 )
+```
+Our new x-axis should be suitable as pseudotime:
+```{r}
+pseudotime <- dist_to_start - dist_to_end
+```
+
+Let's plot this into the UMAP:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+add_column( pseudotime ) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=pseudotime ), size=.3 ) + coord_equal() +
+  scale_color_gradientn( colours=rje::cubeHelix(100,r=4) ) 
+```
+
+Before we dive into this, let's also plot the `y axis of `dist+to+start+dfist+to_end`:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+add_column( distsum = dist_to_start + dist_to_end ) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=distsum ), size=.3 ) + coord_equal() +
+  scale_color_gradient2( midpoint = .01, limits = c(0,.02), oob=scales::oob_squish )
+```
+Comparing with the plot above, our pseudotime is valid for the red, white and 
+perhaps the very faintly blue regions.
+
+### Comaprison to principal curve
+
+Let's recreate the principal curve that we used before for pseudotime. 
+
+As before, we calculate the principal curve using the cells in the lineage as
+input, without the cells from the two cycling cluster, and use smoothing splines
+with 10 degrees of freedom.
+
+```{r}
+princurve::principal_curve(
+  Embeddings(seu,"pca")[ seu$seurat_clusters %in% c( 0, 3, 5, 1, 2, 7 ), ],
+  df = 10, approx_points=1000 ) -> prc
+```
+
+We again project the remaining cells onto outo the cells on the curve and assign to them
+the same pseudotime as the one of the nearest point on the curve:
+
+```{r}
+FNN::get.knnx( prc$s, Embeddings(seu,"pca"), k=1 ) -> prc_nn
+pseudotime_prc <- prc$lambda[ prc_nn$nn.index ]
+```
+
+Here is the principal-curve-based pseudotime:
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+add_column( pseudotime_prc ) %>% 
+ggplot +
+  geom_point( aes( x=umap_1, y=umap_2, col=pseudotime_prc ), size=.3 ) + coord_equal() +
+  scale_color_gradientn( colours=rje::cubeHelix(100,r=4) ) 
+```
+
+We can also compare the two:
+
+```{r}
+tibble(
+  pt_diffusion = pseudotime,
+  pt_prc = -pseudotime_prc,
+  cluster = seu$seurat_clusters
+) %>%
+mutate(
+  type = case_when(
+    cluster %in% c( 0, 3, 5, 1, 2, 7 ) ~ "lineage_straight",
+    cluster %in% c( 6, 11 )  ~ "lineage_cycle",
+    TRUE ~ "other" ) ) %>%
+ggplot +
+  geom_point( aes( x=pt_diffusion, y=pt_prc, col=type ), size=.2 )
+```
