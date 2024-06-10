@@ -29,14 +29,13 @@ Lecture times/dates:
 
 - on **Mondays**, 10-12 am c.t.
 - on **Wednesdays**, 16-18 pm s.t.
-- *no lecture* on Mon 29 Apr and Wed 1 May
+- *no lecture* on Mon 29 Apr, Wed 1 May, Wed 12 Jun
 
 Place:
 
 - normally: seminar room *SR 042* in BioQuant (INF 267)
 - exceptions:
   - Wed 05 Jun: SR 043
-  - Wed 12 Jun: Greenier-Saal (7th floor)
   - Wed 26 Jun: SR 041
 
 
@@ -82,9 +81,10 @@ Place:
   - Spectra of graphs (Skript still missing)
   - [Diffusion on graphs](graph_diffusion.html)
 - Lecture of 2024-06-10
+  - [Video](https://youtu.be/UuRyUlCO-4M)
   - [Laplacian eigenmaps](laplacian_eigenmap.html)
-  - [UMAP on foot](UMAP_pedestrian.html)
 - prepared for following lectures 
+  - [UMAP on foot](UMAP_pedestrian.html)
   - [Cell cycle regression](cell_cycle.html)
 
 ## Source code

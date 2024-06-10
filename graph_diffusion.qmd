@@ -484,6 +484,21 @@ ggplot +
   geom_point( aes( x=pt_diffusion, y=pt_prc, col=type ), size=.2 )
 ```
 
+Here, teh same, but coloured for cluster (using only the lineage cells). See below for a UMAP
+coloured in the same manner.
+
+```{r}
+tibble(
+  pt_diffusion = pseudotime,
+  pt_prc = -pseudotime_prc,
+  cluster = seu$seurat_clusters
+) %>%
+filter(
+  cluster %in% c( 0, 3, 5, 1, 2, 7, 6, 11 ) )  %>%
+ggplot +
+  geom_point( aes( x=pt_diffusion, y=pt_prc, col=cluster ), size=.2 )
+```
+
 ### Diffusion space
 
 The space of $X_\ell$ can also be interpreted as an alternative to the feature space,

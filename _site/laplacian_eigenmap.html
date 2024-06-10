@@ -132,7 +132,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="load-example-data" class="level4">
 <h4 class="anchored" data-anchor-id="load-example-data">Load example data</h4>
 <p>Before getting into the topic, we load the usual example data and performing standard preprocessing</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-1_b421dce2d589d92e17f1944502162e2d">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( tidyverse )</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Matrix )</span>
@@ -145,7 +145,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">cell.sep=</span><span class="st">","</span>, <span class="at">feature.sep=</span><span class="st">","</span>, <span class="at">skip.cell=</span><span class="dv">1</span>, <span class="at">skip.feature=</span><span class="dv">1</span>, </span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mtx.transpose=</span><span class="cn">TRUE</span>) <span class="ot">-&gt;</span> count_matrix</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-2_555e189ac5cfe19f6bdba6b638f648bf">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>count_matrix <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CreateSeuratObject</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">NormalizeData</span>() <span class="sc">%&gt;%</span></span>
@@ -228,16 +228,16 @@ To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to
 This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:06:36 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+<pre><code>15:44:19 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:06:36 Read 18302 rows and found 20 numeric columns</code></pre>
+<pre><code>15:44:19 Read 18302 rows and found 20 numeric columns</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:06:36 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+<pre><code>15:44:19 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:06:36 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+<pre><code>15:44:19 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
@@ -247,23 +247,23 @@ This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>**************************************************|
-15:06:39 Writing NN index file to temp file /tmp/RtmpYaRB9x/file4fa742e754f9d
-15:06:39 Searching Annoy index using 1 thread, search_k = 3000
-15:06:48 Annoy recall = 100%
-15:06:48 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-15:06:49 Initializing from normalized Laplacian + noise (using RSpectra)
-15:06:54 Commencing optimization for 200 epochs, with 776086 positive edges
-15:07:04 Optimization finished</code></pre>
+15:44:22 Writing NN index file to temp file /tmp/RtmpwAT4Yy/file50c1b7a618495
+15:44:22 Searching Annoy index using 1 thread, search_k = 3000
+15:44:29 Annoy recall = 100%
+15:44:29 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:44:31 Initializing from normalized Laplacian + noise (using RSpectra)
+15:44:34 Commencing optimization for 200 epochs, with 776086 positive edges
+15:44:44 Optimization finished</code></pre>
 </div>
 </div>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-3_b518bb320c548b4d9254ca30f3dbbdf6">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">UMAPPlot</span>( seu, <span class="at">label=</span><span class="cn">TRUE</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>We subset the object to only the “lineage”:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-4_c70784686fdf5a35b7de3cc608bdc233">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>seu[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">11</span> ) ] <span class="ot">-&gt;</span> seul</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>seul</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -292,11 +292,11 @@ Active assay: RNA (20830 features, 2000 variable features)
 <section id="calculating-the-neighborhood-graph" class="level4">
 <h4 class="anchored" data-anchor-id="calculating-the-neighborhood-graph">Calculating the neighborhood graph</h4>
 <p>We get for each cell its <span class="math inline">\(k=50\)</span> nearest neighbors:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-5_bec37ded94ac7f1e287e79c087ddbbc5">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knn</span>( <span class="fu">Embeddings</span>(seul,<span class="st">"pca"</span>), <span class="at">k=</span><span class="dv">50</span> ) <span class="ot">-&gt;</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We set <span class="math inline">\(k'=20\)</span> and hence take the <span class="math inline">\(sigma_i\)</span> from the 20th column of the NN distance table.</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-6_aae0c5b53ae6f0cc4f09cbcf4d71f286">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> nn<span class="sc">$</span>nn.dist[,<span class="dv">20</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we obtain the adjacency matrix as follows:</p>
@@ -312,7 +312,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </ul></li>
 </ul>
 <p>Here is the code:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-7_a9a9e724b78489d21dfbf5ccda4d4b79">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">nrow</span>(nn<span class="sc">$</span>nn.index)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">map_dfr</span>( <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(nn<span class="sc">$</span>nn.index), <span class="cf">function</span>(i) </span>
@@ -331,7 +331,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 <p>Writing <span class="math inline">\(A\)</span> for this adjacency matrix and <span class="math inline">\(D\)</span> for the diagonal matrix of vertex degrees (<span class="math inline">\(D_{ij}=\delta_{ij}\sum_{j'}A_{ij'}\)</span>), we obtain the scaled graph Laplacian as <span class="math inline">\(L = I - D^{-1/2} A D^{-1/2}\)</span>.</p>
 <p>We get the smallest (by magnitude) eigenvalues and their eigenvectors.</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-8_0364c462a0b08b1f1ca1d254f4553704">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(adjm)), <span class="at">symmetric=</span><span class="cn">TRUE</span> )</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>scaled_laplacian <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span>, <span class="at">symmetric=</span><span class="cn">TRUE</span> ) <span class="sc">-</span> </span>
@@ -340,14 +340,14 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>RSpectra<span class="sc">::</span><span class="fu">eigs_sym</span>( scaled_laplacian, <span class="dv">5</span>, <span class="at">which=</span><span class="st">"SM"</span> ) <span class="ot">-&gt;</span> eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The smallest eigenvalue is, as expected, 0:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-9_075719ac3164fead1380ba7c942b2fd8">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>eig<span class="sc">$</span>values</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 6.819817e-03 2.641315e-03 2.175909e-03 4.455835e-04 4.656835e-16</code></pre>
 </div>
 </div>
 <p>Here is a plot of the data points, using as 2D coordinates the eigenvectors corresponding to the two smallest non-zero eigenvalues. We colour by Leiden cluster.</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-10_685288df0d8112b7fc7f3dce5f1465f2">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster=</span>seul<span class="sc">$</span>seurat_clusters) <span class="sc">%&gt;%</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -362,7 +362,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>For comparison, the UMAP, with the same colouring:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-11_da6344744aa5ef3f564b9be9f280b54b">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seul,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster=</span>seul<span class="sc">$</span>seurat_clusters) <span class="sc">%&gt;%</span></span>
@@ -378,7 +378,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 <p>To make a Swiss role, prepare a biscuit batter and bake it in a tray to obtain a spongy rectangular biscuit cake. Put a layer of jam, then a thick layer of cream on top, the roll up the layered cake.</p>
 <p>The Swiss role has inspired a standard “test manifold” to study dimension reduction:</p>
 <p>First, we sample point from a 2D rectangle:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-12_37206a5ff9ff1a62786e79fc3f9f2ed1">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>( <span class="dv">1324</span> )</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -386,7 +386,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>y0 <span class="ot">&lt;-</span> <span class="fu">runif</span>( n, <span class="dv">0</span>, <span class="dv">6</span><span class="sc">*</span>pi )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, roll up the rectangle, using <span class="math inline">\(y_0\)</span> both as rolling angle and as radius. For the radius, add some noise to make the biscuit fluffy.</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-13_b055862842c32444e0c4412c7c88c45c">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> y0 <span class="sc">+</span> <span class="fu">runif</span>( n, <span class="dv">0</span>, <span class="dv">1</span> )</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cbind</span>(</span>
@@ -395,29 +395,29 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  r <span class="sc">*</span> <span class="fu">sin</span>( y0 ) ) <span class="ot">-&gt;</span> x3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here’s a plot of the roll, looking head-on:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-14_d57304b68648989c1c1d7a6203b285f7">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x3[,<span class="dv">2</span>], x3[,<span class="dv">3</span>], <span class="at">cex=</span>.<span class="dv">1</span>, <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>and from the side:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-15_f55971d39338487415e95c1986dc3ea6">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x3[,<span class="dv">1</span>], x3[,<span class="dv">2</span>], <span class="at">cex=</span>.<span class="dv">1</span>, <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
 </div>
 </div>
 <p>Now, let’s embed this 3D object into a 7D space, by chosing three random but orthonormal basis vectors. To do so, we chose three random vectors</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-16_d148320f4c1ec86ba9131f62b6d2aa9d">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>random_vecs <span class="ot">&lt;-</span> <span class="fu">matrix</span>( <span class="fu">rnorm</span>(<span class="dv">21</span>), <span class="at">nrow =</span> <span class="dv">7</span>, <span class="at">ncol =</span> <span class="dv">3</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>then orthogonalize them using QR decomposition (which is essentially a sophisticated variant of Gram-Schmidt)</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-17_9d18971ee87349d3b94d4d82f831029c">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>random_orthonormal_basis <span class="ot">&lt;-</span> <span class="fu">qr.Q</span>( <span class="fu">qr</span>( random_vecs ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, let’s</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-18_f65bf9d05bf508ddc9ed624f52782115">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>x3 <span class="sc">%*%</span> <span class="fu">t</span>(random_orthonormal_basis) <span class="ot">-&gt;</span> x</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -432,7 +432,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>Can we recover the initial 2D sheet (x0, y0) using eigenmaps?</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-19_ed0fead580f08a8cdca5a9f8f8cdc7fc">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knn</span>( x, <span class="at">k=</span><span class="dv">30</span> ) <span class="ot">-&gt;</span> nn</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>nn<span class="sc">$</span>nn.dist[,<span class="dv">18</span>] <span class="ot">-&gt;</span> sigma</span>
@@ -464,7 +464,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>The eigenmap, coloured by y0:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-20_4b1ff21db86fce78a857836d0d8cb5d5">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -474,7 +474,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>The eigenmap, coloured by x0:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-21_9a88865222752fc5559409f436b768b7">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -484,11 +484,11 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>How does UMAP fare?</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-22_194bae17f34f057ab2534cba85ce6584">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>uwot<span class="sc">::</span><span class="fu">umap</span>(x) <span class="ot">-&gt;</span> ump</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Colour by x0:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-23_cd80183199dcf8ecd4ca43ab3d58c4d1">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(ump) <span class="sc">%&gt;%</span></span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -498,7 +498,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>and by y0:</p>
-<div class="cell">
+<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-24_32c13d228daddc9440276be62011970a">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(ump) <span class="sc">%&gt;%</span></span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
