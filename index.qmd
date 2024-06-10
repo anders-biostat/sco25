@@ -84,7 +84,7 @@ Place:
   - [to be added]
 - prepared for following lectures 
   - [Cell cycle regression](cell_cycle.html)
-  
+  - [UMAP on foot](UMAP_pedestrian.html)
 
 ## Source code
 
