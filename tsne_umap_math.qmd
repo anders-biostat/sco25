@@ -1,0 +1,173 @@
+---
+title: "t-SNE and UMAP"
+---
+
+This document describes the mathematics behind the two dimension-reduction methdos, t-SNE and UMAP.
+
+### Notation
+
+- $\mathbf{x}_i\in \mathbb{R}^d$ -- the data points, with b$i=1,\dots,n$
+- $\mathbf{y}_i\in \mathbb{R}^2$ -- their representation in the 2D embedding
+- $d_{ij}=\|\mathbf{x}_i-\mathbf{x}_i\|$ -- distances in data space
+- $D_{ij}=\|\mathbf{y}_i-\mathbf{y}_i\|$ -- distances in embedding
+
+## t-SNE
+
+### Neighborhood relations
+
+We consider the stochastic event that point $i$ "choses" a point $j$ to be considered as neighbour, with p.m.f.
+
+$$ p_{j|i} = \frac{e^{-d_{ij}^2/2\sigma_i^2}}{\sum_{k\neq i}e^{-d_{ik}^2/2\sigma_i^2}}$$
+
+The entropy of this probability distribution is given by
+
+$$H_i = -\sum_{j\neq i}p_{j|i}\log_2 p_{j|i}$$
+
+The exponentiated entropy, i.e., the value $2^{H_i}$, is called the perplexity.
+
+Here, the perplexity turns out to give the "size" of the neighbourhood of point $i$, i.e., the number of points that have a reasonable chance as being chosen as neighbours. 
+
+In, t-SNE, one choses a fixed target value for the perplexity, e.g., 30, and then choses the $\sigma_i$ such that the perplexity takes the desired value. This can be done by binary search (iterated bisections of a search interval).
+
+### Symmetrizing neighborhood
+
+Next, we define 
+
+$$p_{ij}=\frac{p_{j|i}+p_{i|j}}{2n}$$
+
+which gives us a p.m.f. to chose pairs of points that are likely neighbours. The denominator ensures that this adds to 1 over all pairs of points.
+
+
+### Neighborhood in the embedding
+
+We define similar probabilities 
+$$q_{ij}=\frac{q_{j|i}+q_{i|j}}{2n}$$
+for the embedding.
+
+However, the kernel used in $q_{j|i}$ will be different. (See below.)
+
+### KL divergence
+
+We now seek an embedding, i.e., an assignment of 2D coordinates, $\mathbf{y}_{i}$, to all the points such that the probability distributions given by the $p_{ij}$ and the $q_{ij}$ are similar. 
+
+To this end, we quantify the dissimilarity between the two distributions by their Kulbeck-Leibler divergence:
+$$ \text{KL}(p\|q) = \sum_{ij}p_{ij}\log\frac{p_{ij}}{q_{ij}}$$
+
+Note that this is the difference between the entropy of $p_{\cdot\cdot}$ and the cross-entropy of $q_{\cdot\cdot}$ w.r.t $p_{\cdot\cdot}$:
+$$ \text{KL}(p\|q) = \sum_{ij}p_{ij}\log p_{ij} - \sum_{ij}p_{ij}\log q_{ij}$$
+
+Only the latter depends on the $\mathbf{y}_i$.
+
+We find the optimal $\mathbf{y}_i$ by gradient descent for the KL divergence.
+
+### Kernel for embedding: first try
+
+In the older "stochastic neighborhood embedding" method, a Gaussian kernel was also used on the low-dimensional side:
+
+$$ q_{j|i} = \frac{e^{-D_{ij}^2/2}}{\sum_{k\neq i}e^{-D_{ik}^2/2}}$$
+
+Note that, here, we do not chose a bandwidth $\sigma$. It is desirable to have the same kernel width (and hence point density) throughout, and we can set this w.l.o.g. to 1.
+
+This did not work well, presumably due to the following:
+
+### The crowding problem
+
+The volume of a ball of radius $\sigma_i$ around $\mathbf{x}_i$ can contain many more points at a given density than a disk of radius 1 around $\mathbf{y}_i$, because the volume of a ball grows exponentially with the dimension $d$. Therefore, the Gaussian in 2D embedding does not "offer enough space" for all the points of the neighborhood. Making the disk larger does not help as it only rescales the whole embedding.
+
+### Fat-tailed kernel
+
+The solution, that t-SNE proposes, is to use a kernel with fatter tails (higher kurtosis). 
+
+Student's t distribution can be considered a normal distribution with "fattened tails", with the t distribution for just 1 degree of freedom having the fattest tails. Its pdf is
+$$ f_1(t) = \frac{1}{\pi(1+t^2)}$$
+
+We use this for our $q_{ij}$:
+$$ q_{ij} = \frac{(1+D_{ij}^2)^{-1}}{\sum_{kl}(1+D_{kl}^2)^{-1}} $$
+
+
+### Gradient
+
+For any pair $i,j$, the gradient $\mathbf{\nabla}_{\mathbf{y}_i}\left(-p_{ij}\log q_{ij}\right)$ is colinear with $\mathbf{y}_j-\mathbf{y}_i$. We can hence understand it as causing an attractive or repulsive force  between $i$ and $j$.
+
+Therefore, we can use similar methods as used to simulate Newtonian dynamics of clouds of mass points, such as the Barnes-Hut algorithm.
+
+Another important numerical trick to speed up computation is "initial exaggeration": for the earlier iterations, we multiply the gradient with large values.
+
+### Normalization
+
+Note the denominator of the formula for $q_{ij}$. It depends on all the other $\mathbf{y}_k$. This makes gradient descent a bit cumbersome: We can calculate the whole gradient, but we cannot perform stochastic gradient descent (SGD), where we pick point pairs at random following a probability distribution that accelerates convergence. One of the advantages of UMAP is that it omits such global normalization.
+
+## UMAP
+
+### Neighborhood graph
+
+UMAP starts by establishing a graph of nearest neighbors. It uses "fuzzy" neighborhood sets: each data point $i$ has a "fuzzy set" of neighbours $j$; i.e., membership in the set is not deinite but given by a probability.
+
+The probability that point $j$ is in the set of neighbours of point $i$ is given by $p_{i\rightarrow j}.
+
+We always set $p_{i\rightarrow j}=1$ if $j$ is the *nearest* neighbor to $i$ and $p_{i\rightarrow j}=0$ if $j$ is further from $i$ that the $k$-th nearest neighbor (where $k$ is a hyperparameter chosen by the user). The probability for the second to $k$-th neighbor decays exponentially with distance:
+$$p_{i\rightarrow j}=e^{-(d_{ij}-d_{ii_1})/\sigma},$$
+where $d_{ii_1}$ is the distance between $i$ and its nearest neighbor, and $\sigma$ is chosen such that
+$$\sum_{j=1}^k p_{i\rightarrow j}=\log k.$$
+
+### Symmetrization
+
+We can consider the fuzzy neighborhood sets as fuzzy sets of point pairs, and take their fuzzy-set union. This union can be considered as a skeletton of the manifold (on the level of 1-simplices, in the parlance of the UMAP paper). 
+
+Then, the probability of a point pair $(i,j)$ being in this fuzzy-set union is given by
+$$ p_{ij} = p_{i\rightarrow j} + p_{j\rightarrow i} - p_{i\rightarrow j}p_{j\rightarrow i}.$$
+
+### The embedding probability
+
+Similarily, we define a probability $q_{ij}$ that tells us whether a pair of points appears to be in the same neighborhood in the embedding. As before, we want a fat-tailed distribution. To obatin more flexibility, the UMAP authors propose to use
+$$ q_{ij} = \frac{1}{1+aD_{ij}^{2b}}.$$
+Note that we recover the Student t distribution with 1 d.o.f. if we set $a=b=1$.
+
+### The purpurted loss function
+
+In t-SNE, we found the embedding by minimizing the Kullbeck-Leibler divergence between the highdimensional and the embedding neighborhood probability distributions. We noted that this can also be seen as minimizing cross-entropy between the two distributions.
+
+The UMAP authors similarly aim to minimize a cross entropy. However, here, we do not have probabilities to pick a specific point pair when picking one pair of neighbours among all. Rather, the probabilities denote whether a given pair is a pair of neighbours. This changed interpretation justifies that we do not normalize our probabilities. (They do not sum to one when running over all pairs.)
+
+We now write the cross entropy judging the events "$i$ and $j$ are neighbours" and "$i$ and $j$ are not neighbours" for the two distributions.
+
+$$L=\sum_{\substack{i,j\\i\neq j}} \left( p_{ij}\log\frac{p_{ij}}{q_{ij}} + 
+(1-p_{ij})\log\frac{1-p_{ij}}{1-q_{ij}}\right).$$
+
+Again, only part of this depends on the embedding:
+
+$$L=\text{const}-\sum_{\substack{i,j\\i\neq j}} \left( p_{ij}\log q_{ij} + 
+(1-p_{ij})\log(1-q_{ij})\right).$$
+
+We can write down the derivative of the first of these two terms (the attractive force between neighbours), w.r.t. to the $l$-th component of $\mathbf{y}_i$ ($l=1,2$):
+
+$$ \frac{d}{d y_{il}}\left(p_{ij}\log q_{ij}\right) = -2p_{ij}\frac{ab}{d_{ij}^2(a+d_{ij}^{-2b})}y_{il} $$
+
+For $a=b=1$, we get
+$$ \mathbf{\nabla}_{\mathbf{y}_i}\left(p_{ij}\log q_{ij}\right)=-\frac{2p_{ij}}{d_{ij}^2+1}(\mathbf{y}_i-\mathbf{y}_j),$$
+where $d_{ij}^2=\|\mathbf{y}_{i}-\mathbf{y}_j\|^2$.
+
+For the second term (the repulsive force between non-neighbours), we get, for $a=b=1$:
+$$ \mathbf{\nabla}_{\mathbf{y}_i}\left((1-p_{ij})\log (1-q_{ij})\right)=\frac{2(1-p_{ij})}{d_{ij}^2(d_{ij}^2+1)}(\mathbf{y}_i-\mathbf{y}_j)$$
+
+For other values of $a$ and $b$, the expressions get slightly more complicated.
+
+The UMAP paper claims that the software minimizes $L$.
+In fact, however, it mimized an loss there the relative weight of the repulsive term is greatly diminished relative to the attractive term.
+
+### The UMAP algorithm
+
+- Initialize the $\mathbf{y}_i$ in asuitable way, e.g., with the first two non-constant eigenvectors of the weighted neighborhood graph's Laplacian.
+- Repeat $n_\text{iter}$ times:
+  - Set learning rate $\alpha$ according to iteration number (linearly decreasing from 1 to 0)
+  - For each point $i$ do:
+    - For each of neighbor $k$ of point $i$'s $k$ nearest neighbors do:
+      - With probability $1-p_{ij}$ skip this neighbor; otherwise, proceed as follows
+      - Calculate the attractive gradient $\mathbf{g}_\text{a} = \mathbf{\nabla}_{\mathbf{y}_i}\left(p_{ij}\log q_{ij}\right)$
+      - Change $\mathbf{y}_i$ to $\mathbf{y}_i + \alpha \mathbf{g}_\text{a}$
+      - Change $\mathbf{y}_j$ to $\mathbf{y}_j - \alpha \mathbf{g}_\text{a}$
+      - Pick $n_\text{neg}$ random other points $j$, for these do:
+        - Calculate the repulsive gradient $\mathbf{g}_\text{r} = \mathbf{\nabla}_{\mathbf{y}_i}\left((1-p_{ij})(1-\log q_{ij})\right)$
+        - Change $\mathbf{y}_i$ to $\mathbf{y}_i + \alpha \mathbf{g}_\text{r}$
+
+Clearly, the actual strength of the repulsion depends on the choice of the hyperparameter $n_\text{neg}$, which is set to 5 by default.

@@ -1,0 +1,88 @@
+---
+Comparing UMAP and t-SNE
+---
+
+Here, we compare the two dimension reduction methods, t-SNE and UMAP, applied
+to our usual "IFAGRKO" example data.
+
+---
+
+Load the data
+
+```{r}
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Seurat ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+         "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+         "~/Downloads/ifnagrko/ifnagrko_var.csv",
+         cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+         mtx.transpose=TRUE) -> count_matrix
+```
+
+
+RUn the standard Seurat pipeline. Note the we added one step, namely `RunTSNE`
+in addition to `RunUMAP`:
+
+```{r}
+count_matrix %>%
+  CreateSeuratObject() %>%
+  NormalizeData() %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA( npcs=20 ) %>%
+  FindNeighbors( dims=1:20 ) %>%
+  FindClusters( resolution=0.5 ) %>%
+  RunTSNE( dims=1:20 ) %>%
+  RunUMAP( dims=1:20 ) -> seu
+```
+
+Here is the UMAP plot, that we've seen before:
+
+```{r}
+UMAPPlot( seu, label=TRUE ) + coord_equal()
+```
+
+Here is the t-SNE reduction for the same data
+
+```{r}
+TSNEPlot( seu, label=TRUE ) + coord_equal()
+```
+
+To compare the two interactively with Sleepwalk, run
+the following command in an interactive R session:
+
+```r
+sleepwalk::sleepwalk(
+  list( Embeddings(seu,"tsne"), Embeddings(seu,"umap") ),
+  list( Embeddings(seu,"pca"), Embeddings(seu,"pca") ),
+  maxdists = c( 30, 30 ) )
+```
+
+plot( NULL, xlim=c(1,1000), ylim=c(1,30000), log="xy", xlab="distance", ylab="#")
+for(j in 1:100 ) {
+  i <- sample.int(nrow(x),1)
+  lines( sort( sqrt(colSums( ( t(x) - x[i,] )^2 )) ), 1:nrow(x), col="#00000030" ) }
+
+plot( NULL, xlim=c(1,100), ylim=c(1,300), log="xy", xlab="distance", ylab="#")
+for(j in 1:100 ) {
+  i <- sample.int(nrow(x),1)
+  js <- sample.int(nrow(x), 300, replace=TRUE)
+  d <- sqrt(colSums( ( t(x[js,]) - x[i,] )^2 ))
+  lines( sort(d), 1:length(js), col="#00000030" ) }
+
+segments(20,1,200,1*10^c(1,2,3,5,10))
+
+
+nn <- FNN::get.knn(x,300)
+
+Embeddings(seu,"umap") %>%
+as_tibble() %>%
+add_column( dim = log(30)/log(nn$nn.dist[,300]/nn$nn.dist[,10]) ) %>%
+add_column( dens = log(1/nn$nn.dist[,300]) ) %>%  
+ggplot() +
+  geom_point( aes( x=dens, y=dim ), size=.1 ) 
+  geom_point( aes( x=umap_1, y=umap_2, col=dens ), size=.1 ) +
+  scale_color_viridis_c() #limits=c(1,10), oob=scales::oob_squish)
+
