@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mathematics of single-cell omics - Example data</title>
+<title>Mathematics of single-cell omics - UMAP for pedestrians</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -116,7 +116,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Example data</h1>
+<h1 class="title">UMAP for pedestrians</h1>
 </div>
 
 
@@ -131,6 +131,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
+<p>Here, we reimplement UMAP</p>
 <div class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -154,6 +155,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   @numba.jit()</code></pre>
 </div>
 </div>
+<section id="example-data" class="level3">
+<h3 class="anchored" data-anchor-id="example-data">Example data</h3>
 <p>We use again the IFNAGRKO dataset. Log-normalization and PCA has already been performed.</p>
 <p>Here is the result of the PCA:</p>
 <div class="cell" data-execution_count="2">
@@ -176,6 +179,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
          -6.59578868]])</code></pre>
 </div>
 </div>
+</section>
 <section id="standard-umap" class="level3">
 <h3 class="anchored" data-anchor-id="standard-umap">Standard UMAP</h3>
 <p>We use the UMAP package to perform the transformation.</p>
@@ -184,22 +188,22 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ump0 <span class="op">=</span> umap.UMAP( a<span class="op">=</span><span class="dv">1</span>, b<span class="op">=</span><span class="dv">1</span>, verbose<span class="op">=</span><span class="va">True</span> ).fit( pca )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>UMAP(a=1, b=1, verbose=True)
-Fri Jun  7 16:56:17 2024 Construct fuzzy simplicial set
-Fri Jun  7 16:56:17 2024 Finding Nearest Neighbors
-Fri Jun  7 16:56:17 2024 Building RP forest with 12 trees
-Fri Jun  7 16:56:22 2024 NN descent for 14 iterations
+Mon Jun 24 12:15:13 2024 Construct fuzzy simplicial set
+Mon Jun 24 12:15:13 2024 Finding Nearest Neighbors
+Mon Jun 24 12:15:13 2024 Building RP forest with 12 trees
+Mon Jun 24 12:15:18 2024 NN descent for 14 iterations
      1  /  14
      2  /  14
      3  /  14
      4  /  14
     Stopping threshold met -- exiting after 4 iterations
-Fri Jun  7 16:56:39 2024 Finished Nearest Neighbor Search
-Fri Jun  7 16:56:42 2024 Construct embedding
-Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
+Mon Jun 24 12:15:36 2024 Finished Nearest Neighbor Search
+Mon Jun 24 12:15:39 2024 Construct embedding
+Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"ee48db16687d46af87abab5492db32f3","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+{"model_id":"491815d624494935a8eb0597b2a90d63","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
 </script>
 </div>
 </div>
@@ -211,11 +215,12 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
 <p><img src="UMAP_pedestrian_files/figure-html/cell-5-output-1.png" class="img-fluid"></p>
 </div>
 </div>
-<p>Next, we will recreate this “by hand”.</p>
+<hr>
+<p><em>Next, we will recreate this “on foot”.</em></p>
 </section>
 <section id="find-nearest-neighbors" class="level3">
 <h3 class="anchored" data-anchor-id="find-nearest-neighbors">Find nearest-neighbors</h3>
-<p>We use a kd tree to find the 15 nearest neighbors:</p>
+<p>We use a <a href="https://en.wikipedia.org/wiki/K-d_tree">kd tree</a> to find the 15 nearest neighbors:</p>
 <div class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>nnbgs <span class="op">=</span> <span class="dv">14</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>nndist, nnidx <span class="op">=</span> scipy.spatial.KDTree( pca ).query( pca, k<span class="op">=</span>nnbgs<span class="op">+</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -254,7 +259,7 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="similarity-score">Similarity score</h3>
 <p>The UMAP algorithm suggests to convert these distances (we write <span class="math inline">\(d_{ij}\)</span> for the distance from cerll <span class="math inline">\(i\)</span> to cell <span class="math inline">\(j\)</span>) into similarity scores <span class="math inline">\(\mu_{ij}\)</span> using an exponential: For the similarity of a cell <span class="math inline">\(i\)</span> to another cell <span class="math inline">\(j\)</span> that is among its <span class="math inline">\(k\)</span> nearest neighbors, we set <span class="math display">\[\mu_{i\rightarrow j} = a_i e^{-d_{ij}/\sigma_i}.\]</span> The similarity score of cell <span class="math inline">\(i\)</span> to any cell further away is set to 0.</p>
 <p>The UMAP paper argues that the metric in the high-dimensional space should be locally re-adjusted such that the point density becomes roughly uniform, because only then does the algorithm’s theoretical justification hold.</p>
-<p>They suggest to set <span class="math inline">\(a_i=e^{d_{ii_1}/\sigma_i}\)</span>, where <span class="math inline">\(d_{ii_1}\)</span> is the distance of cell <span class="math inline">\(i\)</span> to its nearest neighbor. This means that the similarity score from any cell to its nearest neighbor is 1.</p>
+<p>They suggest to set <span class="math inline">\(a_i=e^{d_{ii_1}/\sigma_i}\)</span>, where <span class="math inline">\(d_{ii_1}\)</span> is the distance of cell <span class="math inline">\(i\)</span> to its nearest neighbor. This means that the similarity score from any cell to its nearest neighbor is 1: <span class="math display">\[\mu_{i\rightarrow j} =e^{-(d_{ij}-d_{i,i_1})/\sigma_i}.\]</span></p>
 <p>Furthermore, the decay constant <span class="math inline">\(\sigma_i\)</span> is chosen such that <span class="math display">\[\sum_{j=1}^k \mu_{i\rightarrow j} = \log_2 k,\]</span> where <span class="math inline">\(k\)</span> is the numebr of nearest neighbors.</p>
 <p>Note that these values are not symmetric under exchange of <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. We therefore call these numbers the “directed” similarity scores.</p>
 <p>To calculate them, we find the decay constants <span class="math inline">\(\sigma_i\)</span> using a simple root-finding approach:</p>
@@ -301,7 +306,7 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
     with 256228 stored elements in Compressed Sparse Row format&gt;</code></pre>
 </div>
 </div>
-<p>This code works as follows: A sparse matrix in COOrdinate form takes three vectors, provided as <code>(data, (row,col))</code>, that indicate that positions and values of all non-zero matrix entries. The <code>i</code>-the iteration of the for-loop constructs such a matrix for the symmetry score of each cell to its <code>i</code>-th nearest neighbor. Adding up these matrices yields the matrix formed by the <span class="math inline">\(\mu_{i \rightarrow j}\)</span>.</p>
+<p>This code works as follows: A sparse matrix in COOrdinate form takes three vectors, provided as <code>(data, (row,col))</code>, that indicate that positions and values of all non-zero matrix entries. The <code>i</code>-the iteration of the for-loop constructs such a matrix for the symmetry score of each cell to its <code>i</code>-th nearest neighbor. Adding up these matrices yields the matrix formed by the <span class="math inline">\(\mu_{i \rightarrow j}\)</span>. We call the matrix <code>adj_dir</code>, because it can be understood as the adjacency matrix of a weighted directed nearest-neighbours graph.</p>
 <p>The values <span class="math inline">\(\mu_{j \rightarrow i}\)</span> are the matrix elements of the transpsoe of that matrix. The symmetrization is hence calculated with:</p>
 <div class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>adj_symm <span class="op">=</span> adj_dir <span class="op">+</span> adj_dir.transpose() <span class="op">-</span> adj_dir.multiply( adj_dir.transpose() )</span>
@@ -331,51 +336,64 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
 </section>
 <section id="compare-with-umap-packages-graph" class="level3">
 <h3 class="anchored" data-anchor-id="compare-with-umap-packages-graph">Compare with UMAP package’s graph</h3>
-<p>Number of edges in our graph?</p>
+<p>We compare the weighted, symmetrized adjency matrix that we have just manually generated with one generated by the UMAP software. That one can be found here:</p>
 <div class="cell" data-execution_count="16">
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>(adj_symm<span class="op">&gt;</span><span class="dv">0</span>).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>ump0.graph_</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
-<pre><code>379018</code></pre>
+<pre><code>&lt;18302x18302 sparse matrix of type '&lt;class 'numpy.float32'&gt;'
+    with 378972 stored elements in Compressed Sparse Row format&gt;</code></pre>
 </div>
 </div>
-<p>For how many of these does the edge weight differ from the one computed by the UMAp package by more than .01?</p>
+<p>Number of edges in our graph, and in theirs?</p>
 <div class="cell" data-execution_count="17">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>( np.<span class="bu">abs</span>( adj_symm <span class="op">-</span> ump0.graph_ ) <span class="op">&gt;</span> <span class="fl">.01</span> ).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>( (adj_symm<span class="op">&gt;</span><span class="dv">0</span>).<span class="bu">sum</span>(),  (ump0.graph_<span class="op">&gt;</span><span class="dv">0</span>).<span class="bu">sum</span>() )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
-<pre><code>4146</code></pre>
+<pre><code>(379018, 378972)</code></pre>
 </div>
 </div>
-<p>These are really few. Undfortunately, there seems to be some mistake here that badly messes up things, because the code below only works with the matrix from the UMAP package, not the matrix we have just computed ourselves. Until I find this one, I replace our matrix with the one from the package:</p>
+<p><strong>TO DO</strong>: There is a discrepancy here. Check the above code and find the mistake.</p>
+<p>For how many of the edges does the edge weight differ from the one computed by the UMAP package by more than .01?</p>
 <div class="cell" data-execution_count="18">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># DEBUG ONLY</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>adj_symm <span class="op">=</span> scipy.sparse.csr_array( ump0.graph_ )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>( np.<span class="bu">abs</span>( adj_symm <span class="op">-</span> ump0.graph_ ) <span class="op">&gt;</span> <span class="fl">.01</span> ).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<pre><code>3788</code></pre>
 </div>
+</div>
+<p>The matrices seem to nearly agree. However, the seemingly minor differences do mess up something, because the code below produces good results only with the <code>ump0.graph_</code>. I will have to search the mistake.</p>
+<p>Until I find it, I replace our matrix with the one from the package:</p>
+<div class="cell" data-execution_count="19">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>adj_symm <span class="op">=</span> scipy.sparse.csr_array( ump0.graph_ )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="initialization-for-umap" class="level3">
+<h3 class="anchored" data-anchor-id="initialization-for-umap">Initialization for UMAP</h3>
+<p>Before we can come to the actual UMAP algorithm, we have to discuss vice/v1”, “action”: “get”, “path”: . This is done via the graph Laplacianb, and teh approach only works for connected graphs. Hence, let’s first check whether our graph is connected:</p>
 </section>
 <section id="connected-components" class="level3">
 <h3 class="anchored" data-anchor-id="connected-components">Connected components</h3>
 <p>The symmetrized matrix can also be interpreted as an adjacency matrix of an undirected weighted graph.</p>
-<p>If we binarize the matrix, i.e., set all non-zero weights to 1, we get the point cloud’s <span class="math inline">\(k\)</span>-nearest-neighbors graph.</p>
+<p>If we binarize the matrix, i.e., set all non-zero weights to 1, we get the point cloud’s unweighted <span class="math inline">\(k\)</span>-nearest-neighbors graph.</p>
 <p>We ask whether this graph is connected:</p>
-<div class="cell" data-execution_count="19">
-<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>ncc, ccidx <span class="op">=</span> scipy.sparse.csgraph.connected_components( adj_symm<span class="op">&gt;</span><span class="dv">0</span> )</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>ncc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="19">
+<div class="cell" data-execution_count="20">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ncc, ccidx <span class="op">=</span> scipy.sparse.csgraph.connected_components( adj_symm<span class="op">&gt;</span><span class="dv">0</span> )</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>ncc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
 <pre><code>3</code></pre>
 </div>
 </div>
 <p>No, it is not. We have two connection components that are not connected with each other.</p>
 <p>How many cells fall into each component?</p>
-<div class="cell" data-execution_count="20">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>np.bincount(ccidx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell" data-execution_count="21">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>np.bincount(ccidx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="21">
 <pre><code>array([17820,   137,   345])</code></pre>
 </div>
 </div>
 <p>To make our life easier, we remove that small components and only keep the “main component” (<code>mc</code>), which has index 0.</p>
-<div class="cell" data-execution_count="21">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>adj_mc <span class="op">=</span> adj_symm[ ccidx<span class="op">==</span><span class="dv">0</span>, :][:, ccidx<span class="op">==</span><span class="dv">0</span> ]</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>adj_mc.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="21">
+<div class="cell" data-execution_count="22">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>adj_mc <span class="op">=</span> adj_symm[ ccidx<span class="op">==</span><span class="dv">0</span>, :][:, ccidx<span class="op">==</span><span class="dv">0</span> ]</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>adj_mc.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="22">
 <pre><code>(17820, 17820)</code></pre>
 </div>
 </div>
@@ -384,28 +402,28 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="leiden-clustering">Leiden clustering</h3>
 <p>Merely so that we have a way of colouring our cells in subsequent plots, we perform a Leiden clustering.</p>
 <p>To this end, we binarize the adjacency matrix (i.e., set all non-zero entries to 1) and form a graph from that.</p>
-<div class="cell" data-execution_count="22">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>nngraph <span class="op">=</span> igraph.Graph.Adjacency( adj_mc<span class="op">&gt;</span><span class="dv">0</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="23">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>nngraph <span class="op">=</span> igraph.Graph.Adjacency( adj_mc<span class="op">&gt;</span><span class="dv">0</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Then, we run the Leiden algorithm.</p>
-<div class="cell" data-execution_count="23">
-<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>clm <span class="op">=</span> leidenalg.find_partition( nngraph, leidenalg.ModularityVertexPartition ).membership</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="24">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>clm <span class="op">=</span> leidenalg.find_partition( nngraph, leidenalg.ModularityVertexPartition ).membership</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we have a vector of cluster memberships. Here, for the first 10 cells:</p>
-<div class="cell" data-execution_count="24">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>clm[:<span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="24">
-<pre><code>[7, 1, 15, 4, 0, 3, 2, 0, 6, 0]</code></pre>
+<div class="cell" data-execution_count="25">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>clm[:<span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="25">
+<pre><code>[10, 1, 15, 4, 0, 2, 3, 0, 5, 0]</code></pre>
 </div>
 </div>
 <p>We can colour the UMAP from before using this:</p>
-<div class="cell" data-execution_count="25">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> plt.colormaps[<span class="st">'tab20'</span>](<span class="bu">range</span>( <span class="bu">max</span>(clm)<span class="op">+</span><span class="dv">1</span> ))</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">0</span> ], ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">1</span> ], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="26">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> plt.colormaps[<span class="st">'tab20'</span>](<span class="bu">range</span>( <span class="bu">max</span>(clm)<span class="op">+</span><span class="dv">1</span> ))</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">0</span> ], ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">1</span> ], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-26-output-1.png" class="img-fluid"></p>
+<p><img src="UMAP_pedestrian_files/figure-html/cell-27-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 </section>
@@ -413,139 +431,135 @@ Fri Jun  7 16:56:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="spectral-clustering">Spectral clustering</h3>
 <p>We are still not ready to perform the actual UMAP algorithm, because we need an initial configuration. In the UMAP package, this is obtained via spectral clustering, so we do the same here:</p>
 <p>We start by constructing the graph Laplacian of our weighted adjacency matrix. To this end, we first get a diagonal matrix D of the degrees of the graph vertices, i.e. <span class="math display">\[D_{ij}=\delta_{ij}\sum_{j'}\mu_{ij'}.\]</span></p>
-<div class="cell" data-execution_count="26">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>degdiag <span class="op">=</span> scipy.sparse.diags( adj_symm.<span class="bu">sum</span>(<span class="dv">0</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="27">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>degdiag <span class="op">=</span> scipy.sparse.diags( adj_symm.<span class="bu">sum</span>(<span class="dv">0</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The standard graph Laplacian is given by <span class="math inline">\(L_0=D-A\)</span>, where <span class="math inline">\(A\)</span> is the adjacency matrix formed by the <span class="math inline">\(\mu_{ij}\)</span>. Spectral clustering, however, works better, if one scales the Laplacian by dividing rows and columns by the square roots of the degrees, obtaining <span class="math display">\[L=D^{-1/2}L_0 D^{-1/2} = I - D^{-1/2} A D^{-1/2}.\]</span></p>
 <p>We get this scaled Laplacian,</p>
-<div class="cell" data-execution_count="27">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="op">=</span> scipy.sparse.diags( <span class="dv">1</span> <span class="op">/</span> np.sqrt( adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>) ) )</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>scaled_laplacian <span class="op">=</span> scipy.sparse.identity(adj_mc.shape[<span class="dv">0</span>]) <span class="op">-</span> invsqrtdegdiag <span class="op">*</span> adj_mc <span class="op">*</span> invsqrtdegdiag</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="28">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="op">=</span> scipy.sparse.diags( <span class="dv">1</span> <span class="op">/</span> np.sqrt( adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>) ) )</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>scaled_laplacian <span class="op">=</span> scipy.sparse.identity(adj_mc.shape[<span class="dv">0</span>]) <span class="op">-</span> invsqrtdegdiag <span class="op">*</span> adj_mc <span class="op">*</span> invsqrtdegdiag</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and get its 10 smallest (by magnitude) eigenvalues and their eigenvectors</p>
-<div class="cell" data-execution_count="28">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>evals, evecs <span class="op">=</span> scipy.sparse.linalg.eigsh( scaled_laplacian, k<span class="op">=</span><span class="dv">10</span>, which<span class="op">=</span><span class="st">'SM'</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="29">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>evals, evecs <span class="op">=</span> scipy.sparse.linalg.eigsh( scaled_laplacian, k<span class="op">=</span><span class="dv">10</span>, which<span class="op">=</span><span class="st">'SM'</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here are the eigenvalues:</p>
-<div class="cell" data-execution_count="29">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>evals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="29">
-<pre><code>array([-7.61673033e-10,  4.62136971e-04,  5.68060284e-04,  8.16269430e-04,
-        1.15417724e-03,  1.30719764e-03,  2.52493486e-03,  2.87093380e-03,
-        4.12936255e-03,  6.07355757e-03])</code></pre>
-</div>
-</div>
-<p>As expected, the lowest eigenvalue is 0. There is only one eigenvalue because our graph is connected. Had we kept the second connection component, we would have obtained a two-dimensional eigenspace to the zero eigenvalue. This is, why we removed it above – so that we do not have to deal with this issue here.</p>
-<p>The eigenvector corresponding to the 0 eigenvalue would be constant for the usncaled Laplacian. Due to the scaling, it is now proportional to the square roots of the vertex degrees:</p>
 <div class="cell" data-execution_count="30">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">0</span>], np.sqrt(adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>)), s<span class="op">=</span><span class="fl">.1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>evals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="30">
-<pre><code>&lt;matplotlib.collections.PathCollection at 0x7f52864ef710&gt;</code></pre>
+<pre><code>array([-1.10779340e-09,  4.51068171e-04,  5.63650240e-04,  8.16247925e-04,
+        1.12456990e-03,  1.27949653e-03,  2.42148730e-03,  2.75061424e-03,
+        4.12631309e-03,  5.92756770e-03])</code></pre>
 </div>
+</div>
+<p>As expected, the lowest eigenvalue is 0. There is only one eigenvalue because our graph is connected. Had we kept the other connection component, we would have obtained a multi-dimensional eigenspace to the zero eigenvalue. This is, why we removed it above – so that we do not have to deal with this issue here.</p>
+<p>The eigenvector corresponding to the 0 eigenvalue would be constant for the usncaled Laplacian. Due to the scaling, it is now proportional to the square roots of the vertex degrees:</p>
+<div class="cell" data-execution_count="31">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">0</span>], np.sqrt(adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>)), s<span class="op">=</span><span class="fl">.1</span> )</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>plt.gcf().set_size_inches(<span class="dv">2</span>,<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-31-output-2.png" class="img-fluid"></p>
+<p><img src="UMAP_pedestrian_files/figure-html/cell-32-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 <p>This vector is hence not of interest. The next two eigenvectors, however, are. We plot them here:</p>
-<div class="cell" data-execution_count="37">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">1</span>], evecs[:,<span class="dv">2</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
-<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell" data-execution_count="32">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">1</span>], evecs[:,<span class="dv">2</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-32-output-1.png" class="img-fluid"></p>
+<p><img src="UMAP_pedestrian_files/figure-html/cell-33-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 <p>This is what we will use as initial configuration for the UMAP algorithm.</p>
 </section>
 <section id="umap" class="level3">
 <h3 class="anchored" data-anchor-id="umap">UMAP</h3>
-<div class="cell" data-execution_count="50">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
-<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squared_distance_2d( v1, v2 ):</span>
-<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> v2[<span class="dv">0</span>] <span class="op">-</span> v1[<span class="dv">0</span>]</span>
-<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>    dy <span class="op">=</span> v2[<span class="dv">1</span>] <span class="op">-</span> v1[<span class="dv">1</span>]</span>
-<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dx<span class="op">*</span>dx <span class="op">+</span> dy<span class="op">*</span>dy</span>
-<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
-<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clip( x ):</span>
-<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x <span class="op">&lt;</span> <span class="op">-</span><span class="fl">4.</span>:</span>
-<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">-</span><span class="fl">4.</span></span>
-<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> x <span class="op">&gt;</span> <span class="fl">4.</span>:</span>
-<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">4.</span></span>
-<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
-<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
-<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span>(parallel<span class="op">=</span><span class="va">True</span>,fastmath<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_epoch( ump, edgefr, edgeto, edgewt, lr ):</span>
-<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ump.shape[<span class="dv">1</span>] <span class="op">!=</span> <span class="dv">2</span>:</span>
-<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>( <span class="st">"Must be 2D embedding"</span> )</span>
-<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>    n_vertices <span class="op">=</span> ump.shape[<span class="dv">0</span>]</span>
-<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>    ump2 <span class="op">=</span> ump.copy()</span>
-<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> prange(edgefr.shape[<span class="dv">0</span>]):</span>
-<span id="cb49-23"><a href="#cb49-23" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-24"><a href="#cb49-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.random.rand() <span class="op">&gt;</span> edgewt[i]: </span>
-<span id="cb49-25"><a href="#cb49-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
-<span id="cb49-26"><a href="#cb49-26" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-27"><a href="#cb49-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Choose edge</span></span>
-<span id="cb49-28"><a href="#cb49-28" aria-hidden="true" tabindex="-1"></a>        v1 <span class="op">=</span> edgefr[i]</span>
-<span id="cb49-29"><a href="#cb49-29" aria-hidden="true" tabindex="-1"></a>        v2 <span class="op">=</span> edgeto[i]</span>
-<span id="cb49-30"><a href="#cb49-30" aria-hidden="true" tabindex="-1"></a>                </span>
-<span id="cb49-31"><a href="#cb49-31" aria-hidden="true" tabindex="-1"></a>        <span class="co"># squared distance</span></span>
-<span id="cb49-32"><a href="#cb49-32" aria-hidden="true" tabindex="-1"></a>        d2 <span class="op">=</span> squared_distance_2d( ump[v1,], ump[v2,] )</span>
-<span id="cb49-33"><a href="#cb49-33" aria-hidden="true" tabindex="-1"></a>               </span>
-<span id="cb49-34"><a href="#cb49-34" aria-hidden="true" tabindex="-1"></a>        <span class="co"># attractive force</span></span>
-<span id="cb49-35"><a href="#cb49-35" aria-hidden="true" tabindex="-1"></a>        grad_coef <span class="op">=</span> <span class="op">-</span><span class="fl">2.</span> <span class="op">/</span> ( d2 <span class="op">+</span> <span class="fl">1.</span> )</span>
-<span id="cb49-36"><a href="#cb49-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
-<span id="cb49-37"><a href="#cb49-37" aria-hidden="true" tabindex="-1"></a>            grad <span class="op">=</span> grad_coef <span class="op">*</span> ( ump[v1,k] <span class="op">-</span> ump[v2,k] )</span>
-<span id="cb49-38"><a href="#cb49-38" aria-hidden="true" tabindex="-1"></a>            grad <span class="op">=</span> clip( grad )</span>
-<span id="cb49-39"><a href="#cb49-39" aria-hidden="true" tabindex="-1"></a>            ump2[v1,k] <span class="op">+=</span> lr <span class="op">*</span> grad</span>
-<span id="cb49-40"><a href="#cb49-40" aria-hidden="true" tabindex="-1"></a>            ump2[v2,k] <span class="op">-=</span> lr <span class="op">*</span> grad</span>
-<span id="cb49-41"><a href="#cb49-41" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-42"><a href="#cb49-42" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-43"><a href="#cb49-43" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Choose 5 rejection partners</span></span>
-<span id="cb49-44"><a href="#cb49-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
-<span id="cb49-45"><a href="#cb49-45" aria-hidden="true" tabindex="-1"></a>            v2 <span class="op">=</span> np.random.randint(n_vertices)</span>
-<span id="cb49-46"><a href="#cb49-46" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb49-47"><a href="#cb49-47" aria-hidden="true" tabindex="-1"></a>            d2 <span class="op">=</span> squared_distance_2d( ump[v1,], ump[v2,] )</span>
-<span id="cb49-48"><a href="#cb49-48" aria-hidden="true" tabindex="-1"></a>            grad_coef <span class="op">=</span> <span class="fl">2.</span> <span class="op">/</span> ( ( d2 <span class="op">+</span> <span class="fl">1.</span> ) <span class="op">*</span> ( d2 <span class="op">+</span> <span class="fl">.001</span> ) )</span>
-<span id="cb49-49"><a href="#cb49-49" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
-<span id="cb49-50"><a href="#cb49-50" aria-hidden="true" tabindex="-1"></a>                grad <span class="op">=</span> grad_coef <span class="op">*</span> ( ump[v1,k] <span class="op">-</span> ump[v2,k] )</span>
-<span id="cb49-51"><a href="#cb49-51" aria-hidden="true" tabindex="-1"></a>                grad <span class="op">=</span> clip( grad )</span>
-<span id="cb49-52"><a href="#cb49-52" aria-hidden="true" tabindex="-1"></a>                ump2[v1,k] <span class="op">+=</span> lr <span class="op">*</span> grad <span class="op">*</span> <span class="fl">.03</span>   <span class="co"># &lt;- strangly low gamma here:</span></span>
-<span id="cb49-53"><a href="#cb49-53" aria-hidden="true" tabindex="-1"></a>                                                 <span class="co"># 0.03 normally, 0.008 for binarized matrix</span></span>
-<span id="cb49-54"><a href="#cb49-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ump2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>For a description of the UMAP algorithm, see <a href="tsne_umap_math.html">here</a>.</p>
+<p>Here is an implementation.</p>
+<div class="cell" data-execution_count="33">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squared_distance_2d( v1, v2 ):</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> v2[<span class="dv">0</span>] <span class="op">-</span> v1[<span class="dv">0</span>]</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>    dy <span class="op">=</span> v2[<span class="dv">1</span>] <span class="op">-</span> v1[<span class="dv">1</span>]</span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> dx<span class="op">*</span>dx <span class="op">+</span> dy<span class="op">*</span>dy</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clip( x ):</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> x <span class="op">&lt;</span> <span class="op">-</span><span class="fl">4.</span>:</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="op">-</span><span class="fl">4.</span></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> x <span class="op">&gt;</span> <span class="fl">4.</span>:</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">4.</span></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> x</span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span>(parallel<span class="op">=</span><span class="va">True</span>,fastmath<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_epoch( ump, edgefr, edgeto, edgewt, lr ):</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> ump.shape[<span class="dv">1</span>] <span class="op">!=</span> <span class="dv">2</span>:</span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>( <span class="st">"Must be 2D embedding"</span> )</span>
+<span id="cb50-20"><a href="#cb50-20" aria-hidden="true" tabindex="-1"></a>    n_vertices <span class="op">=</span> ump.shape[<span class="dv">0</span>]</span>
+<span id="cb50-21"><a href="#cb50-21" aria-hidden="true" tabindex="-1"></a>    ump2 <span class="op">=</span> ump.copy()</span>
+<span id="cb50-22"><a href="#cb50-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> prange(edgefr.shape[<span class="dv">0</span>]):</span>
+<span id="cb50-23"><a href="#cb50-23" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-24"><a href="#cb50-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> np.random.rand() <span class="op">&gt;</span> edgewt[i]: </span>
+<span id="cb50-25"><a href="#cb50-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb50-26"><a href="#cb50-26" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-27"><a href="#cb50-27" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Choose edge</span></span>
+<span id="cb50-28"><a href="#cb50-28" aria-hidden="true" tabindex="-1"></a>        v1 <span class="op">=</span> edgefr[i]</span>
+<span id="cb50-29"><a href="#cb50-29" aria-hidden="true" tabindex="-1"></a>        v2 <span class="op">=</span> edgeto[i]</span>
+<span id="cb50-30"><a href="#cb50-30" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb50-31"><a href="#cb50-31" aria-hidden="true" tabindex="-1"></a>        <span class="co"># squared distance</span></span>
+<span id="cb50-32"><a href="#cb50-32" aria-hidden="true" tabindex="-1"></a>        d2 <span class="op">=</span> squared_distance_2d( ump[v1,], ump[v2,] )</span>
+<span id="cb50-33"><a href="#cb50-33" aria-hidden="true" tabindex="-1"></a>               </span>
+<span id="cb50-34"><a href="#cb50-34" aria-hidden="true" tabindex="-1"></a>        <span class="co"># attractive force</span></span>
+<span id="cb50-35"><a href="#cb50-35" aria-hidden="true" tabindex="-1"></a>        grad_coef <span class="op">=</span> <span class="op">-</span><span class="fl">2.</span> <span class="op">/</span> ( d2 <span class="op">+</span> <span class="fl">1.</span> ) <span class="op">*</span> edgewt[i]</span>
+<span id="cb50-36"><a href="#cb50-36" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb50-37"><a href="#cb50-37" aria-hidden="true" tabindex="-1"></a>            grad <span class="op">=</span> grad_coef <span class="op">*</span> ( ump[v1,k] <span class="op">-</span> ump[v2,k] )</span>
+<span id="cb50-38"><a href="#cb50-38" aria-hidden="true" tabindex="-1"></a>            grad <span class="op">=</span> clip( grad )</span>
+<span id="cb50-39"><a href="#cb50-39" aria-hidden="true" tabindex="-1"></a>            ump2[v1,k] <span class="op">+=</span> lr <span class="op">*</span> grad</span>
+<span id="cb50-40"><a href="#cb50-40" aria-hidden="true" tabindex="-1"></a>            ump2[v2,k] <span class="op">-=</span> lr <span class="op">*</span> grad</span>
+<span id="cb50-41"><a href="#cb50-41" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-42"><a href="#cb50-42" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-43"><a href="#cb50-43" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Choose 5 rejection partners</span></span>
+<span id="cb50-44"><a href="#cb50-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):</span>
+<span id="cb50-45"><a href="#cb50-45" aria-hidden="true" tabindex="-1"></a>            v2 <span class="op">=</span> np.random.randint(n_vertices)</span>
+<span id="cb50-46"><a href="#cb50-46" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb50-47"><a href="#cb50-47" aria-hidden="true" tabindex="-1"></a>            d2 <span class="op">=</span> squared_distance_2d( ump[v1,], ump[v2,] )</span>
+<span id="cb50-48"><a href="#cb50-48" aria-hidden="true" tabindex="-1"></a>            grad_coef <span class="op">=</span> <span class="fl">2.</span> <span class="op">/</span> ( ( d2 <span class="op">+</span> <span class="fl">1.</span> ) <span class="op">*</span> ( d2 <span class="op">+</span> <span class="fl">.001</span> ) ) <span class="op">*</span> (<span class="dv">1</span><span class="op">-</span>edgewt[i])</span>
+<span id="cb50-49"><a href="#cb50-49" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2</span>):</span>
+<span id="cb50-50"><a href="#cb50-50" aria-hidden="true" tabindex="-1"></a>                grad <span class="op">=</span> grad_coef <span class="op">*</span> ( ump[v1,k] <span class="op">-</span> ump[v2,k] )</span>
+<span id="cb50-51"><a href="#cb50-51" aria-hidden="true" tabindex="-1"></a>                grad <span class="op">=</span> clip( grad )</span>
+<span id="cb50-52"><a href="#cb50-52" aria-hidden="true" tabindex="-1"></a>                ump2[v1,k] <span class="op">+=</span> lr <span class="op">*</span> grad <span class="op">*</span> <span class="fl">.1</span>   <span class="co"># &lt;- strangly low gamma here</span></span>
+<span id="cb50-53"><a href="#cb50-53" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ump2</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-execution_count="51">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>ump <span class="op">=</span> evecs[:,<span class="dv">1</span>:<span class="dv">3</span>].copy()</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>adj_mc_coo <span class="op">=</span> adj_mc.tocoo()</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>The function <code>run_epoch</code> goes once through all points. It expects a current UMAP configuration (as 2D array with 2 columns, <code>ump</code>), and the edges of the neighborhood graph given by two vector with the vertex indices of the connected vertices (<code>edgefr</code>, <code>edgeto</code>) and the edge-weights (<code>edgewt</code>) with the rescaled exponentially decaying similarity scores. The last parametyer, <code>lr</code>, is the learning rate.</p>
+<p>In the code above, I have hard-coded a few hyperparameters: - The values for <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> are fixed to 1 and hence do not appear in the expressions for the gradient - The number of repulsive gradient applications per application of the attractive gradient, called <code>negative_sampling_rate</code> in the UMAP documentation, is fixed to its default value, 5. - The repulsive gradient is multiplied with the value 0.1 before it is applied. This parameter, called <code>repulsion_strength</code> in the UMAP documentation or <span class="math inline">\(\gamma\)</span> in the UMAP paper, is normally set to 1 – but with 1, the code below does not produce a good UMAP. I am not sure why the default value does not work. This might indicate that my code deviates from the default hyperparameters somewhere else, too, requiring this change to compensate.</p>
+<p>Now, we initialize the 2D UMAP coordinated with the eigenvectors corresponding to the two lowest non-zero eigenvalues of the graph Laplacian.</p>
+<p>We also change the adjacency graph from CSR to COO sparse format, as this is needed by our code, and we initialize the learning rate <span class="math inline">\(\alpha\)</span> to 1.</p>
+<div class="cell" data-execution_count="34">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>ump <span class="op">=</span> evecs[:,<span class="dv">1</span>:<span class="dv">3</span>].copy()</span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>adj_mc_coo <span class="op">=</span> adj_mc.tocoo()</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-execution_count="53">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> tnrange(<span class="dv">1000</span>):</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>    ump <span class="op">=</span> run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, adj_mc_coo.data, lr )</span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">#ump = run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, np.ones_like(adj_mc_coo.data), lr )</span></span>
-<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>    lr <span class="op">=</span> <span class="fl">.997</span><span class="op">*</span>lr</span>
-<span id="cb51-5"><a href="#cb51-5" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump[:,<span class="dv">0</span>], ump[:,<span class="dv">1</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
-<span id="cb51-6"><a href="#cb51-6" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+<section id="now-we-run-through-the-points-1300-times-each-time-reducing-the-learning-rate-a-bit." class="level3">
+<h3 class="anchored" data-anchor-id="now-we-run-through-the-points-1300-times-each-time-reducing-the-learning-rate-a-bit.">Now we run through the points 1300 times, each time reducing the learning rate a bit.</h3>
+<div class="cell" data-execution_count="35">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> tnrange(<span class="dv">1300</span>):</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    ump <span class="op">=</span> run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, adj_mc_coo.data, lr )</span>
+<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">#ump = run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, np.ones_like(adj_mc_coo.data), lr )</span></span>
+<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a>    lr <span class="op">=</span> <span class="fl">.997</span><span class="op">*</span>lr</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id":"413fba3ca7b046208f7ec165e0fd6955","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
+{"model_id":"4c14095b5297437f8040e924b7da2685","version_major":2,"version_minor":0,"quarto_mimetype":"application/vnd.jupyter.widget-view+json"}
 </script>
-</div>
-<div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-35-output-2.png" class="img-fluid"></p>
-</div>
-</div>
-<div class="cell" data-execution_count="46">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>math.sqrt( ((pca[<span class="dv">13239</span>,:]<span class="op">-</span>pca[<span class="dv">512</span>,:])<span class="op">**</span><span class="dv">2</span>).<span class="bu">sum</span>() )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="46">
-<pre><code>2.401280267835413</code></pre>
 </div>
 </div>
 <div class="cell" data-execution_count="36">
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>( nnidx[<span class="dv">512</span>,<span class="dv">0</span>], nndist[<span class="dv">512</span>,<span class="dv">0</span>] )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-display" data-execution_count="36">
-<pre><code>(13239, 2.401280267835413)</code></pre>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump[:,<span class="dv">0</span>], ump[:,<span class="dv">1</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-37-output-1.png" class="img-fluid"></p>
 </div>
 </div>
 
