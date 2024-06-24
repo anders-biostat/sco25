@@ -84,13 +84,17 @@ Place:
   - [Video](https://youtu.be/UuRyUlCO-4M)
   - [Laplacian eigenmaps](laplacian_eigenmap.html)
 - Lecture of 2024-06-17
-  - Video (not yet uploaded)
+  - [Video](https://youtu.be/i8uBfNQaQGE)
   - [Comparison of t-SNE and UMAP for our example data](umap_vs_tsne.html)
   - [Mathematics of t-SNE and UMAP](tsne_umap_math.html)
+- Lecture of 2024-06-24
+  - [Video](https://youtu.be/mC14eUOdd54)
+  - Blackboard photo: [1](images/blackboard_cca.jpeg)
   - [Reimplementing UMAP in Python](UMAP_pedestrian.html)
+  - [CCA Integration](cca.html) (preliminary)
+  - [Homework: Smoothing](homework_smoothing)
 - prepared for following lectures 
   - [Cell cycle regression](cell_cycle.html)
-  - [CCA Integration](cca.html)
 
 ## Source code
 

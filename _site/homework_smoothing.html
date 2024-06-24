@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mathematics of single-cell omics - Mathematics of Single-cell Omics</title>
+<title>Mathematics of single-cell omics - Homework Smoothing</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -59,6 +59,8 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -76,7 +78,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Mathematics of Single-cell Omics</h1>
+<h1 class="title">Homework Smoothing</h1>
 </div>
 
 
@@ -91,134 +93,38 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<style>
-.quarto-title > h1.title {
-  display: none;
-}
-</style>
-<p style="text-align:right">
-<a href="https://www.bioquant.uni-heidelberg.de"> <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:30%;padding:3%"></a> <a href="https://uni-heidelberg.de"> <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:30%;padding:3%"></a>
-</p>
-<h3 class="anchored">
-Applied mathematics for Biology:
-</h3>
-<h2 style="margin-top:0px" class="anchored">
-Single-cell omics
-</h2>
-<h4 class="anchored">
-Lecture Notes (summer term 2024)
-</h4>
-<h5 class="anchored">
-<a href="mailto:simon.anders@bioquant.uni-heidelberg.de">Simon Anders</a>, Universität Heidelberg
-</h5>
-<hr>
-<section id="dates-and-times" class="level2">
-<h2 class="anchored" data-anchor-id="dates-and-times">Dates and times</h2>
-<p>Lecture times/dates:</p>
+<p>Choose one (or several) of the following exercise problems</p>
+<section id="smoothing-in-pca-space" class="level3">
+<h3 class="anchored" data-anchor-id="smoothing-in-pca-space">Smoothing in PCA space</h3>
+<p>For this task, use the “ifnb” data set that is also used in Seurat’s <a href="https://satijalab.org/seurat/articles/integration_introduction.html">integration vignette</a>. Use only the unstimulated cells (i.e., those where the metadata column “stim” of the Seurat object is “CTRL”, not “STIM”).</p>
+<p>Write a function that takes a gene name and returns a vector of smoothed expression values, one for each cell. For smoothing, average over the cell’s 30 nearest neighbors in PCA space, i.e., those cells that are closest to the cell with regards to Euclidean distance calculated for the principal components (PCs). To obtain PCs, run a PCA only over the CTRL cells (as usual, using the matrix of log-normalized expression values for the 2000 most variable genes). (You can simply use the output of Seurat’s RunPCA function.)</p>
+<p>To perform the smoothing, compare the following two approaches:</p>
 <ul>
-<li>on <strong>Mondays</strong>, 10-12 am c.t.</li>
-<li>on <strong>Wednesdays</strong>, 16-18 pm s.t.</li>
-<li><em>no lecture</em> on Mon 29 Apr, Wed 1 May, Wed 12 Jun</li>
+<li><p>Assign to each cell as smoothed expression of the requested gene the average of the gene’s log-normalized expression for the cell’s 30 nearest neighbors.</p></li>
+<li><p>Sum up the counts for the gene over the cell’s nearest neighbors, also sum of the total counts (over all cells) for these genes, then perform the usual log-normalization on these sums:<br>
+<span class="math display">\[\overline{y}_{ij}=\log\left(\frac{\sum_{j'\in\mathcal{N}_j} k_{ij'}}{\sum_{j'\in\mathcal{N}_j}\sum_{i'} k_{i'j'}}\cdot 10^4+1\right)\qquad\qquad\qquad(*)\]</span><br>
+Here, <span class="math inline">\(k_{ij}\)</span> is the read/UMI count for gene <span class="math inline">\(i\)</span> in cell <span class="math inline">\(j\)</span>, <span class="math inline">\(\mathcal{N}_i\)</span> is the set of cell indices of the 30 nearest neighbors of cell <span class="math inline">\(i\)</span> (including <span class="math inline">\(i\)</span> itself), and <span class="math inline">\(\sum_i\)</span> runs over all genes.</p></li>
 </ul>
-<p>Place:</p>
-<ul>
-<li>normally: seminar room <em>SR 042</em> in BioQuant (INF 267)</li>
-<li>exceptions:
-<ul>
-<li>Wed 05 Jun: SR 043</li>
-<li>Wed 26 Jun: SR 041</li>
-</ul></li>
-</ul>
+<p>For each gene, produce a UMAP plot (using, e.g., the result of RunUMAP) where you colour the cells (i) by their log-normalized expression <span class="math display">\[y_{ij}=\log\left(\frac{k_{ij}}{s_j}\cdot 10^4+1\right)\]</span> (with <span class="math inline">\(s_j=\sum_i k_{ij}\)</span>), (ii) by their averaged log expression <span class="math display">\[\frac{1}{|\mathcal{N_j}|}\sum_{j'\in\mathcal{N}_j}y_{ij'},\]</span> or (iii), by their averaged expression according to <span class="math inline">\((*)\)</span>.</p>
+<p>If you want to, you can also try (iv) to perform the average of (iii) as a weighted average, using a kernel (e.g., the tricube) kernel to obtain weights depending on distance. To set the kernel width, use e.g.&nbsp;the distance to th 20-th nearest neighbour.</p>
+<p>Perform such plots for a few interesting genes. To find interesting genes, either use markers for PBMC cell types (such as those discussed in Seurat’s <a href="https://satijalab.org/seurat/articles/pbmc3k_tutorial">clustering vignette</a>) or simply pick them among the highly variable genes.</p>
+<section id="bonus-task" class="level4">
+<h4 class="anchored" data-anchor-id="bonus-task">Bonus task</h4>
+<p>To see where the smoothing caused artifacts, proceed as follows: Perform the smoothing again, this time not including the cell itself in its set of neighbours.</p>
+<p>Then, given the count value <span class="math inline">\(k_{ij}\)</span> for gene <span class="math inline">\(i\)</span> in cell <span class="math inline">\(j\)</span>, the cell’s count sum <span class="math inline">\(s_j=\sum_i s_{ij}\)</span> and the smoothed expression value <span class="math inline">\(\overline{y}_{ij}\)</span>, calculate <span class="math display">\[p_{ij} = f_{\text{Pois}}(k_{ij}; s_j\overline{y}_{ij}),\]</span> i.e., the probability of obtaining the value <span class="math inline">\(k_{ij}\)</span> from a Poisson distribution with expectation <span class="math inline">\(s_j\overline{y}_{ij}\)</span>. (In R, he p.d.f. <span class="math inline">\(f_\text{Pois}\)</span> of the Poisson distribution is computed by the function <code>dpois</code>.)</p>
+<p>Now, colour the cells in your UMAP by <span class="math inline">\(-\!\log_{10} p_{ij}\)</span>. This highlights cells where the obseverd counts deviates more from the average that one would expect under the assumption that the average is clsoe to the “true” rate, with the deviation of the observed count being due to Poisson noise.</p>
+<p>Refinements: - Check the histogram of the <span class="math inline">\(p_{ij}\)</span> for a given gene <span class="math inline">\(i\)</span>. What shape would you expect? If you know how, also make a QQ plot for <span class="math inline">\(-\!\log_{10} p_{ij}\)</span>. - Instead of colouring by <span class="math inline">\(-\!\log_{10} p_{ij}\)</span>, colour by the Pearson residuals: <span class="math display">\[r_{ij} = \frac{(k_{ij}-s_j\overline{y}_{ij})}{\sqrt{s_j\overline{y_{ij}}}}.\]</span> - Replace the Poisson p.d.f. with the negative-binomial p.d.f., using a suitable overdispersion value. The overdispersion value if the constant <span class="math inline">\(\alpha\)</span> in the negative binomial’s variance-mean function, <span class="math inline">\(v=\mu+\alpha\mu^2\)</span>. Try, e.g., <span class="math inline">\(\alpha=.3\)</span> or <span class="math inline">\(\alpha=1\)</span>.</p>
 </section>
-<section id="material-and-video-recodings" class="level2">
-<h2 class="anchored" data-anchor-id="material-and-video-recodings">Material and Video Recodings</h2>
-<ul>
-<li>Lecture of 2024-04-22:
-<ul>
-<li><a href="https://youtu.be/Xr7AeQp-ceA">Video</a></li>
-<li><a href="biology_primer.html">Biology Primer</a></li>
-<li><a href="overview_hts.html">Overview High-throughput Sequencing</a></li>
-<li><a href="seurat.html">A simple analysis with Seurat</a></li>
-<li>Example data: PBMC3k (available on 10X web site, and Moodle)</li>
-</ul></li>
-<li>Exercise class of 2024-04-24
-<ul>
-<li><a href="https://youtu.be/MoqG0GlzExc">Video</a></li>
-<li><a href="pedestrian.html">Doing the Seurat analysis “on foot”</a></li>
-</ul></li>
-<li>Lecture of 2024-05-06
-<ul>
-<li><a href="https://youtu.de/5EGlihUE8FE">Video</a></li>
-<li>Modularity clustering</li>
-<li><a href="https://raw.githubusercontent.com/anders-biostat/sco24/master/images/blackboard_modularity.jpeg">blackboard photo</a></li>
-</ul></li>
-<li>Exercise class of 2024-05-08
-<ul>
-<li><a href="https://youtu.be/QQeXGoebWqs">Video</a><br>
-</li>
-<li>Implementing modularity score in Python</li>
-<li><a href="louvain.py">louvain.py</a></li>
-</ul></li>
-<li>Lecture of 2024-05-13
-<ul>
-<li><a href="https://youtu.be/55jgeLzbLgQ">Video</a></li>
-<li><a href="pca.html">Mathematics of PCA</a></li>
-<li>Blackboard photos: <a href="images/pca_1.jpeg">1</a> <a href="images/pca_2.jpeg">2</a></li>
-</ul></li>
-<li>Exercise class of 2024-05-15
-<ul>
-<li><a href="https://youtu.be/1uCcugEhJfM">Video</a>:</li>
-<li>fitting pseudotimes and splines</li>
-<li>R code: <a href="pseudotime_1.R">pseudotime_1.R</a>, <a href="splines_1.R">splines_1.R</a></li>
-<li>example data: cmss.rda (on Moodle)</li>
-</ul></li>
-<li>Lecture of 2024-05-22
-<ul>
-<li><a href="https://youtu.be/guufHqBEh7U">Video</a></li>
-<li><a href="trajectory.html">Expression dynamics along pseudotime trajectories</a></li>
-<li><a href="smoothing.html">Smoothing</a></li>
-<li><a href="images/blackboard_smooth.jpeg">blackboard photo</a></li>
-</ul></li>
-<li>Lecture of 2024-05-27
-<ul>
-<li><a href="https://youtu.be/UQJhgegLuMU">Video</a></li>
-<li><a href="principal_curves.html">Smoothing with principal curves</a></li>
-</ul></li>
-<li>Lecture of 2024-06-03
-<ul>
-<li><a href="https://youtu.be/AFocVSfeju0">Video</a></li>
-<li>Blackboard photos: <a href="images/blackboard_graph_spectra_1.jpeg">1</a> <a href="images/blackboard_graph_spectra_2.jpeg">2</a></li>
-<li>Spectra of graphs (Skript still missing)</li>
-<li><a href="graph_diffusion.html">Diffusion on graphs</a></li>
-</ul></li>
-<li>Lecture of 2024-06-10
-<ul>
-<li><a href="https://youtu.be/UuRyUlCO-4M">Video</a></li>
-<li><a href="laplacian_eigenmap.html">Laplacian eigenmaps</a></li>
-</ul></li>
-<li>Lecture of 2024-06-17
-<ul>
-<li><a href="https://youtu.be/i8uBfNQaQGE">Video</a></li>
-<li><a href="umap_vs_tsne.html">Comparison of t-SNE and UMAP for our example data</a></li>
-<li><a href="tsne_umap_math.html">Mathematics of t-SNE and UMAP</a></li>
-</ul></li>
-<li>Lecture of 2024-06-24
-<ul>
-<li><a href="https://youtu.be/mC14eUOdd54">Video</a></li>
-<li>Blackboard photo: <a href="images/blackboard_cca.jpeg">1</a></li>
-<li><a href="UMAP_pedestrian.html">Reimplementing UMAP in Python</a></li>
-<li><a href="cca.html">CCA Integration</a> (preliminary)</li>
-<li><a href="homework_smoothing">Homework: Smoothing</a></li>
-</ul></li>
-<li>prepared for following lectures
-<ul>
-<li><a href="cell_cycle.html">Cell cycle regression</a></li>
-</ul></li>
-</ul>
 </section>
-<section id="source-code" class="level2">
-<h2 class="anchored" data-anchor-id="source-code">Source code</h2>
-<p>The source code for the R/Markdown (Quarto) files used above can be found in the GitHub repository <a href="https://github.com/anders-biostat/sco24">anders-biostat/sco24</a>.</p>
+<section id="smoothed-differential-expression" class="level3">
+<h3 class="anchored" data-anchor-id="smoothed-differential-expression">Smoothed differential expression</h3>
+<p>Use the smoothing method (iii) of the previous section to obtain smoothed values for the local difference between expression of a gene in the stimulated and the control cells.</p>
+<p>Proceed as follows: For a given gene <span class="math inline">\(i\)</span>, calculate for each cell <span class="math inline">\(j\)</span> the smoothed expression by averaging first over its “control neighborhood”, then over its stimulated neighborhood. Then, visualize this result by colouring the cells in a UMAP plot according to this difference. Try this for a few genes. (To find interesting gene, average the expression of each gene over all control and all stimulated genes and pick those where these averages differ strongly.)</p>
+<p>By “control (stimulated) neighborhood”, we mean: Pick among all control (stimulated) cells the 30 cells closest to cell <span class="math inline">\(i\)</span>. Use the Euclidean distance calculated from the CCA coordinates (see vignette) to find the neighbours.</p>
+</section>
+<section id="outlook" class="level3">
+<h3 class="anchored" data-anchor-id="outlook">Outlook</h3>
+<p>Smoothing is a simple but somewhat primitive way to “denoise” the data, i.e.&nbsp;to reduce the impact of counting noise. In one of the following lectures, we will use autoencoders, built from a neural network, to have a better way.</p>
 
 
 </section>

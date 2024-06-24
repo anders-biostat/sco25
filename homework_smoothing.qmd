@@ -1,0 +1,59 @@
+---
+title: "Homework Smoothing"
+---
+
+
+Choose one (or several) of the following exercise problems
+
+### Smoothing in PCA space
+
+For this task, use the "ifnb" data set that is also used in Seurat's [integration vignette](https://satijalab.org/seurat/articles/integration_introduction.html). Use only the unstimulated cells (i.e., those where the metadata column "stim" of the Seurat object is "CTRL",  not "STIM").
+
+Write a function that takes a gene name and returns a vector of smoothed expression values, one for each cell. For smoothing, average over the cell's 30 nearest neighbors in PCA space, i.e., those cells that are closest to the cell with regards to Euclidean distance calculated for the principal components (PCs). To obtain PCs, run a PCA only over the CTRL cells (as usual, using the matrix of log-normalized expression values for the 2000 most variable genes). (You can simply use the output of Seurat's RunPCA function.)
+
+To perform the smoothing, compare the following two approaches:
+
+- Assign to each cell as smoothed expression of the requested gene the average of the gene's log-normalized expression for the cell's 30 nearest neighbors.
+
+- Sum up the counts for the gene over the cell's nearest neighbors, also sum of the total counts (over all cells) for these genes, then perform the usual log-normalization on these sums:
+\
+$$\overline{y}_{ij}=\log\left(\frac{\sum_{j'\in\mathcal{N}_j} k_{ij'}}{\sum_{j'\in\mathcal{N}_j}\sum_{i'} k_{i'j'}}\cdot 10^4+1\right)\qquad\qquad\qquad(*)$$
+\
+Here, $k_{ij}$ is the read/UMI count for gene $i$ in cell $j$, $\mathcal{N}_i$ is the set of cell indices of the 30 nearest neighbors of cell $i$ (including $i$ itself), and $\sum_i$ runs over all genes.
+
+For each gene, produce a UMAP plot (using, e.g., the result of RunUMAP) where you colour the cells (i) by their log-normalized expression 
+$$y_{ij}=\log\left(\frac{k_{ij}}{s_j}\cdot 10^4+1\right)$$ 
+(with $s_j=\sum_i k_{ij}$), (ii) by their averaged log expression 
+$$\frac{1}{|\mathcal{N_j}|}\sum_{j'\in\mathcal{N}_j}y_{ij'},$$ or (iii), by their averaged expression according to $(*)$.
+
+If you want to, you can also try (iv) to perform the average of (iii) as a weighted average, using a kernel (e.g., the tricube) kernel to obtain weights depending on distance. To set the kernel width, use e.g. the distance to th 20-th nearest neighbour.
+
+Perform such plots for a few interesting genes. To find interesting genes, either use markers for PBMC cell types (such as those discussed in Seurat's [clustering vignette](https://satijalab.org/seurat/articles/pbmc3k_tutorial)) or simply pick them among the highly variable genes.
+
+#### Bonus task
+
+To see where the smoothing caused artifacts, proceed as follows: Perform the smoothing again, this time not including the cell itself in its set of neighbours.
+
+Then, given the count value $k_{ij}$ for gene $i$ in cell $j$, the cell's count sum $s_j=\sum_i s_{ij}$ and the smoothed expression value $\overline{y}_{ij}$, calculate 
+$$p_{ij} = f_{\text{Pois}}(k_{ij}; s_j\overline{y}_{ij}),$$
+i.e., the probability of obtaining the value $k_{ij}$ from a Poisson distribution with expectation $s_j\overline{y}_{ij}$. (In R, he p.d.f. $f_\text{Pois}$ of the Poisson distribution is computed by the function `dpois`.)
+
+Now, colour the cells in your UMAP by $-\!\log_{10} p_{ij}$. This highlights cells where the obseverd counts deviates more from the average that one would expect under the assumption that the average is clsoe to the "true" rate, with the deviation of the observed count being due to Poisson noise.
+
+Refinements:
+- Check the histogram of the $p_{ij}$ for a given gene $i$. What shape would you expect? If you know how, also make a QQ plot for $-\!\log_{10} p_{ij}$.
+- Instead of colouring by $-\!\log_{10} p_{ij}$, colour by the Pearson residuals: 
+$$r_{ij} = \frac{(k_{ij}-s_j\overline{y}_{ij})}{\sqrt{s_j\overline{y_{ij}}}}.$$
+- Replace the Poisson p.d.f. with the negative-binomial p.d.f., using a suitable overdispersion value. The overdispersion value if the constant $\alpha$ in the negative binomial's variance-mean function, $v=\mu+\alpha\mu^2$. Try, e.g., $\alpha=.3$ or $\alpha=1$.
+
+### Smoothed differential expression
+
+Use the smoothing method (iii) of the previous section to obtain smoothed values for the local difference between expression of a gene in the stimulated and the control cells. 
+
+Proceed as follows: For a given gene $i$, calculate for each cell $j$ the smoothed expression by averaging first over its "control neighborhood", then over its stimulated neighborhood. Then, visualize this result by colouring the cells in a UMAP plot according to this difference. Try this for a few genes. (To find interesting gene, average the expression of each gene over all control and all stimulated genes and pick those where these averages differ strongly.)
+
+By "control (stimulated) neighborhood", we mean: Pick among all control (stimulated) cells the 30 cells closest to cell $i$. Use the Euclidean distance calculated from the CCA coordinates (see vignette)  to find the neighbours.
+
+### Outlook
+
+Smoothing is a simple but somewhat primitive way to "denoise" the data, i.e. to reduce the impact of counting noise. In one of the following lectures, we will use autoencoders, built from a neural network, to have a better way.
