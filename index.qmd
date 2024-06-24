@@ -90,6 +90,7 @@ Place:
   - [Reimplementing UMAP in Python](UMAP_pedestrian.html)
 - prepared for following lectures 
   - [Cell cycle regression](cell_cycle.html)
+  - [CCA Integration](cca.html)
 
 ## Source code
 
