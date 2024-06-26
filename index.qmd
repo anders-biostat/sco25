@@ -92,8 +92,9 @@ Place:
   - Blackboard photo: [1](images/blackboard_cca.jpeg)
   - [Reimplementing UMAP in Python](UMAP_pedestrian.html)
   - [CCA Integration](cca.html) (preliminary)
-  - [Homework: Smoothing](homework_smoothing)
+  - [Homework: Smoothing](homework_smoothing.html)
 - prepared for following lectures 
+  - [Homework: Integration](homework_integration.html)
   - [Cell cycle regression](cell_cycle.html)
 
 ## Source code

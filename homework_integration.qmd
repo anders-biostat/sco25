@@ -1,0 +1,24 @@
+---
+title: "Homework: Integration with lack of balance"
+---
+
+### Background
+
+In the "ifnb" example data set that we used when discussing Seurat's [CCA integration](cca.html), the two conditions, *control* and *stimulated* where balanced, in the sense that the same cell types appeared in the same proportions in both conditions. This was the case because both experiments were performed with aliquots from the same mixture of cells, and the duration of the experiment was to short for cells to die or to divide.
+
+Often, such balance is not given. Consider, e.g., a comparison of blood from healthy subjects with blood from patients with leukemia. There, the cancer samples will contain tumour cells, the healthy samples will not.
+
+For unbalanced data, integration methods often tend to fail because they try to find corresponding cells in the other samples for all kinds of cells, unless the method contains steps to avoid that.
+
+Here, we want to see whether Seurat's CCA integration deals well with lack of balance, and whether our simple SVD-based integration does.
+
+### Task
+
+Load the "ifnb" dataset. First perform the integration as we did in the [lecture](cca.html). Produce UMAP plots with colouring and facetting suitable to see whether cells from different conditions that have been put together by the integration are always (or at least mostly) of the same cell type. Use the cell-type annotation provided in the "ifnb" example data object (in the cell data column `ifnb$seurat_annotations`) for this.
+
+Then, chose one cell type and remove from the data set all cells of this type in one of the conditions (say, "stim"), but keep them in the other. Perform the integration again, redo the UMAP plots. Are the now "lonely
+cells of that type now still by themselves, or have they been "intermixed" with cells of the other condition from other cell types? 
+
+How does this depend on whether you remove a cell type that is isolated from the others (e.g., all B cells), or a cell type that is connected to another similar type (e.g., the NK cells, which are close to the T cells)?
+
+Does our simple SVD-based integration perform worse here than Seurat's CCA method?

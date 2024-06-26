@@ -39,8 +39,8 @@ sleepwalk::sleepwalk(
 
 
 # Perform CCA integration (This takes a few minutes)
-# ifnbs <- IntegrateLayers( object = ifnbs, method = CCAIntegration, 
-#             orig.reduction = "pca", new.reduction = "integrated.cca" )
+ifnbs <- IntegrateLayers( object = ifnbs, method = CCAIntegration, 
+            orig.reduction = "pca", new.reduction = "integrated.cca" )
 
 # Save result of this lengthy calculation
 #save( ifnbs, file="~/tmp/ifnbs_integrated.rda" )
@@ -143,6 +143,11 @@ sleepwalk::sleepwalk(
   list( Embeddings(ifnb,"umap"), Embeddings(ifnb,"umap.svd") ),
   list( Embeddings(ifnb,"integrated.cca"), Embeddings(ifnb,"svd"))
 )
+
+
+plot( density( Embeddings(ifnb,"integrated.cca")[ifnb$stim=="CTRL",1] ) )
+plot( density( Embeddings(ifnb,"integrated.cca")[ifnb$stim=="STIM",1] ) )
+
 
 ### Integration via mutual nearest neighbours
 

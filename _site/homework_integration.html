@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Mathematics of single-cell omics - Mathematics of Single-cell Omics</title>
+<title>Mathematics of single-cell omics - Homework: Integration with lack of balance</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -76,7 +76,7 @@ ul.task-list li input[type="checkbox"] {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Mathematics of Single-cell Omics</h1>
+<h1 class="title">Homework: Integration with lack of balance</h1>
 </div>
 
 
@@ -91,135 +91,19 @@ ul.task-list li input[type="checkbox"] {
 
 </header>
 
-<style>
-.quarto-title > h1.title {
-  display: none;
-}
-</style>
-<p style="text-align:right">
-<a href="https://www.bioquant.uni-heidelberg.de"> <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:30%;padding:3%"></a> <a href="https://uni-heidelberg.de"> <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:30%;padding:3%"></a>
-</p>
-<h3 class="anchored">
-Applied mathematics for Biology:
-</h3>
-<h2 style="margin-top:0px" class="anchored">
-Single-cell omics
-</h2>
-<h4 class="anchored">
-Lecture Notes (summer term 2024)
-</h4>
-<h5 class="anchored">
-<a href="mailto:simon.anders@bioquant.uni-heidelberg.de">Simon Anders</a>, Universität Heidelberg
-</h5>
-<hr>
-<section id="dates-and-times" class="level2">
-<h2 class="anchored" data-anchor-id="dates-and-times">Dates and times</h2>
-<p>Lecture times/dates:</p>
-<ul>
-<li>on <strong>Mondays</strong>, 10-12 am c.t.</li>
-<li>on <strong>Wednesdays</strong>, 16-18 pm s.t.</li>
-<li><em>no lecture</em> on Mon 29 Apr, Wed 1 May, Wed 12 Jun</li>
-</ul>
-<p>Place:</p>
-<ul>
-<li>normally: seminar room <em>SR 042</em> in BioQuant (INF 267)</li>
-<li>exceptions:
-<ul>
-<li>Wed 05 Jun: SR 043</li>
-<li>Wed 26 Jun: SR 041</li>
-</ul></li>
-</ul>
+<section id="background" class="level3">
+<h3 class="anchored" data-anchor-id="background">Background</h3>
+<p>In the “ifnb” example data set that we used when discussing Seurat’s <a href="cca.html">CCA integration</a>, the two conditions, <em>control</em> and <em>stimulated</em> where balanced, in the sense that the same cell types appeared in the same proportions in both conditions. This was the case because both experiments were performed with aliquots from the same mixture of cells, and the duration of the experiment was to short for cells to die or to divide.</p>
+<p>Often, such balance is not given. Consider, e.g., a comparison of blood from healthy subjects with blood from patients with leukemia. There, the cancer samples will contain tumour cells, the healthy samples will not.</p>
+<p>For unbalanced data, integration methods often tend to fail because they try to find corresponding cells in the other samples for all kinds of cells, unless the method contains steps to avoid that.</p>
+<p>Here, we want to see whether Seurat’s CCA integration deals well with lack of balance, and whether our simple SVD-based integration does.</p>
 </section>
-<section id="material-and-video-recodings" class="level2">
-<h2 class="anchored" data-anchor-id="material-and-video-recodings">Material and Video Recodings</h2>
-<ul>
-<li>Lecture of 2024-04-22:
-<ul>
-<li><a href="https://youtu.be/Xr7AeQp-ceA">Video</a></li>
-<li><a href="biology_primer.html">Biology Primer</a></li>
-<li><a href="overview_hts.html">Overview High-throughput Sequencing</a></li>
-<li><a href="seurat.html">A simple analysis with Seurat</a></li>
-<li>Example data: PBMC3k (available on 10X web site, and Moodle)</li>
-</ul></li>
-<li>Exercise class of 2024-04-24
-<ul>
-<li><a href="https://youtu.be/MoqG0GlzExc">Video</a></li>
-<li><a href="pedestrian.html">Doing the Seurat analysis “on foot”</a></li>
-</ul></li>
-<li>Lecture of 2024-05-06
-<ul>
-<li><a href="https://youtu.de/5EGlihUE8FE">Video</a></li>
-<li>Modularity clustering</li>
-<li><a href="https://raw.githubusercontent.com/anders-biostat/sco24/master/images/blackboard_modularity.jpeg">blackboard photo</a></li>
-</ul></li>
-<li>Exercise class of 2024-05-08
-<ul>
-<li><a href="https://youtu.be/QQeXGoebWqs">Video</a><br>
-</li>
-<li>Implementing modularity score in Python</li>
-<li><a href="louvain.py">louvain.py</a></li>
-</ul></li>
-<li>Lecture of 2024-05-13
-<ul>
-<li><a href="https://youtu.be/55jgeLzbLgQ">Video</a></li>
-<li><a href="pca.html">Mathematics of PCA</a></li>
-<li>Blackboard photos: <a href="images/pca_1.jpeg">1</a> <a href="images/pca_2.jpeg">2</a></li>
-</ul></li>
-<li>Exercise class of 2024-05-15
-<ul>
-<li><a href="https://youtu.be/1uCcugEhJfM">Video</a>:</li>
-<li>fitting pseudotimes and splines</li>
-<li>R code: <a href="pseudotime_1.R">pseudotime_1.R</a>, <a href="splines_1.R">splines_1.R</a></li>
-<li>example data: cmss.rda (on Moodle)</li>
-</ul></li>
-<li>Lecture of 2024-05-22
-<ul>
-<li><a href="https://youtu.be/guufHqBEh7U">Video</a></li>
-<li><a href="trajectory.html">Expression dynamics along pseudotime trajectories</a></li>
-<li><a href="smoothing.html">Smoothing</a></li>
-<li><a href="images/blackboard_smooth.jpeg">blackboard photo</a></li>
-</ul></li>
-<li>Lecture of 2024-05-27
-<ul>
-<li><a href="https://youtu.be/UQJhgegLuMU">Video</a></li>
-<li><a href="principal_curves.html">Smoothing with principal curves</a></li>
-</ul></li>
-<li>Lecture of 2024-06-03
-<ul>
-<li><a href="https://youtu.be/AFocVSfeju0">Video</a></li>
-<li>Blackboard photos: <a href="images/blackboard_graph_spectra_1.jpeg">1</a> <a href="images/blackboard_graph_spectra_2.jpeg">2</a></li>
-<li>Spectra of graphs (Skript still missing)</li>
-<li><a href="graph_diffusion.html">Diffusion on graphs</a></li>
-</ul></li>
-<li>Lecture of 2024-06-10
-<ul>
-<li><a href="https://youtu.be/UuRyUlCO-4M">Video</a></li>
-<li><a href="laplacian_eigenmap.html">Laplacian eigenmaps</a></li>
-</ul></li>
-<li>Lecture of 2024-06-17
-<ul>
-<li><a href="https://youtu.be/i8uBfNQaQGE">Video</a></li>
-<li><a href="umap_vs_tsne.html">Comparison of t-SNE and UMAP for our example data</a></li>
-<li><a href="tsne_umap_math.html">Mathematics of t-SNE and UMAP</a></li>
-</ul></li>
-<li>Lecture of 2024-06-24
-<ul>
-<li><a href="https://youtu.be/mC14eUOdd54">Video</a></li>
-<li>Blackboard photo: <a href="images/blackboard_cca.jpeg">1</a></li>
-<li><a href="UMAP_pedestrian.html">Reimplementing UMAP in Python</a></li>
-<li><a href="cca.html">CCA Integration</a> (preliminary)</li>
-<li><a href="homework_smoothing.html">Homework: Smoothing</a></li>
-</ul></li>
-<li>prepared for following lectures
-<ul>
-<li><a href="homework_integration.html">Homework: Integration</a></li>
-<li><a href="cell_cycle.html">Cell cycle regression</a></li>
-</ul></li>
-</ul>
-</section>
-<section id="source-code" class="level2">
-<h2 class="anchored" data-anchor-id="source-code">Source code</h2>
-<p>The source code for the R/Markdown (Quarto) files used above can be found in the GitHub repository <a href="https://github.com/anders-biostat/sco24">anders-biostat/sco24</a>.</p>
+<section id="task" class="level3">
+<h3 class="anchored" data-anchor-id="task">Task</h3>
+<p>Load the “ifnb” dataset. First perform the integration as we did in the <a href="cca.html">lecture</a>. Produce UMAP plots with colouring and facetting suitable to see whether cells from different conditions that have been put together by the integration are always (or at least mostly) of the same cell type. Use the cell-type annotation provided in the “ifnb” example data object (in the cell data column <code>ifnb$seurat_annotations</code>) for this.</p>
+<p>Then, chose one cell type and remove from the data set all cells of this type in one of the conditions (say, “stim”), but keep them in the other. Perform the integration again, redo the UMAP plots. Are the now “lonely cells of that type now still by themselves, or have they been”intermixed” with cells of the other condition from other cell types?</p>
+<p>How does this depend on whether you remove a cell type that is isolated from the others (e.g., all B cells), or a cell type that is connected to another similar type (e.g., the NK cells, which are close to the T cells)?</p>
+<p>Does our simple SVD-based integration perform worse here than Seurat’s CCA method?</p>
 
 
 </section>
