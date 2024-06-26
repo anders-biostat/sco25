@@ -88,7 +88,7 @@ library( glmGamPoi )  # available from Bioconductor
 fit <- glmGamPoi::glm_gp( t(k), ~ group, size_factors = s )
 glmGamPoi::test_de( fit, contrast="groupB" )
 ```
-Now, the p values is much lower.
+Now, the p value is much lower.
 
 To understand what this package is doing, we will recapitulate its computations manually below.
 
@@ -123,36 +123,34 @@ $$\begin{align}
 \end{align}$$
 Note that here we have used that variance equals mean for the Poisson, but no assumption on the shape of the distribution for $Q$ except for it having finite first and second moment.
 
-The random variable $Q_i$, on which $K_i$ is conditional, cannot be observed. Hence we might want to integrate it out and find the marginal probability mass function, i.e., the marginal probability that $K_i=k$, which is
+The random variable $Q_i$, on which $K_i$ is conditional, cannot be observed. Hence we might want to integrate it out and find the marginal probability mass function, i.e., the marginal probability that $K_i=k$, which is (now setting $s=1$ to simplify things)
 $$ f(k)=\int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{log-normal}(q;\eta,\sigma^2)\,\text{d}q,$$
 where $f_\text{Pois}(k,q)$ is the probability mass function of a Poisson distribution the expected value $q$ and $f_\text{log-normal}(x;\eta,\sigma^2)$ is the probability density function of a log-normal with logscale mean $\eta$ and log-scale variance $\sigma^2$.
 
 Unfortunately, there is no closed form for this integral. This is a problem as we will later have to maximize a likelihood based on this function, and a numerical integration of an integral in each optimization step would not be efficient.
 
-The traditional solution for this is to replace the log-normal distribution with a Gamma distribution. These two distributions look quite similar for not too large coefficients of variations, but more importantly, the Gamma distribution is [conjugate](https://en.wikipedia.org/wiki/Conjugate_prior) to the Poisson in the sense of Bayesian statistics.
+The traditional solution for this is to replace the log-normal distribution with a Gamma distribution. These two distributions look quite similar for not too large coefficients of variations, but more importantly, the Gamma distribution is [conjugate](https://en.wikipedia.org/wiki/Conjugate_prior) to the Poisson in the sense of Bayesian statistics. Therefore, we will get a distribution with a closed form proabability mass function that we call the "Gamma-Poisson (GP) distribution"
 
 We have
 $$ \int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{Ga}(q;\mu,\sigma^2)\,\text{d}q=f_\text{GP}\left(k;\mu,\frac{\sigma^2}{\mu^2}\right),
 $$
 where 
 $$ f_\text{Pois}(k;q) = e^{-q} \frac{q^k }{k!}, $$
-is the pmf of a Poisson distribution with mean $q$,
+is the pmf of a Poisson distribution with mean $q$, and
 $$f_\text{Ga}(q;\mu,\sigma^2)=\frac{1}{\Gamma(\kappa)\theta^\kappa}x^{\kappa-1} e^{-x/\theta}$$
-is the pdf of a Gamma distribution with mean $\mu=\kappa\theta$ and variance $\sigma^2=\kappa\theta^2$.
-After one carries out the reparametrization of $f_\text{Ga}$ from $(\kappa,\theta)$ to $(\mu,\sigma^2)$, one
-can figure out the integral and get
+is the pdf of a Gamma distribution with shape parameter $\kappa$ and scale parameter $\theta$. Instead of parametrizing the distribution family with $kappa$ and $theta$, we already now introduce the alternative parametrization with the distribution's mean $\mu=\kappa\theta$ and its variance $\sigma^2=\kappa\theta^2$, thatw e will need later.
+
+If one inserts these distribution functions into the integral above (and recalls some integration tricks from undergrad time), one finds the probability mass function of the Gamma-Poisson distribution.
 
 $$ f_\text{GP}\left(k;\mu,\alpha\right)=\frac{\Gamma(k+r)}{\Gamma(k+1)\Gamma(r)}(1-p)^kp^{r}, $$
-with $\mu=rp/(1-p)$ and $\alpha=1/r$.
+with $\mu=rp/(1-p)$ and $\alpha=1/r$. (Here, the $\mu$ in $f_\text{Ga}$ and $f_\text{GP}$ is the same, and the $\alpha$ of the GP is the squared CV, $\sigma^2/\mu^2$, of the Gamma. Use this to find the relationship between $(\kappa,\theta)$ and $(p,r)$ if needed.)
 
-This is the probability mass function of a distribution that is called the *negative-binomial (NB)
-distribution* or the *Gamma-Poisson (GP) distribution*. 
+Note that Gamma-Poisson (GP) distribution is more commonly called the negative-binomial (NB) distribution.
+The term "negative binomial" is merely due to the fact that the pmf looks similar to the pmf of the binomial distribution with an extra minus sign somewhere in the binomial coefficient. As this name is misleading, the alternative name "Gamma-Poisson", referring to its provenance from the integral above, is preferred by some authors.
 
-The term "negative binomial" is merely due to the fact that the pmf looks similar to the pmf of the binomial distribution with an extra minus sign somewhere in the binomial coefficient. As this term is misleading, the alternative name "Gamma-Poisson", referring to its provenance from the integral above, is preferred by some authors.
+The GP distribution also arises as the answer to the following question: Bernoulli trials, i.i.d. with success probability $p$, are performed until $r$ successes have been observed. What is the probability that until then, $k$ failures have happened (i.e., that the $r$-th success happens in the $(k+r)$-th trial)?
 
-The GP distribution also arised as the answer to the following question: Bernoulli trials, which are i.i.d. with success probability $p$, are performed until $r$ successes have been observed. What is the probability that until then, $k$ failures have happened (i.e., that the $r$-th success happends in the $(k+r)$-th trial)?
-
-Therefore, the parameter $r$ is often referred to as the "size parameter" and $p$ as the probability parameter.
+For this reason, the parameter $r$ is often referred to as the "size parameter" and $p$ as the probability parameter.
 
 When using the GP distribution as marginal of a hierarchical Gamma-Poisson mixture, it is advantageous to instead parametrize the distribution with its mean $\mu=rp/(1-p)$, which is also the mean of the underlying Gamma, and the "overdispersion parameter" $\alpha=1/r$. The latter is so called because the GP's variance is
 $$v=\mu+\alpha\mu^2$$
@@ -161,11 +159,11 @@ According to the law of total variance, this arises as sum of the contributions 
 The limit $\alpha\rightarrow 0$ corresponds to a Gamma with zero variance, i.e., the "hidden" random
 variable $Q$ is constant and the distribution of $K$ becomes "pure Poisson".
 
-A distribution of counts is called "overdispersion" if its variance exceeds the expectation from Poisson, and hence, $\alpha$ describes the degree of overdispersion.
+A distribution of counts is called "overdispersed" if its variance exceeds the expectation from Poisson, and hence, $\alpha$ is said to describe the amount of overdispersion.
 
 When comparing the Gamma with the log-normal, we also notice that the CV becomes the variance when a random variable is log-transformed. Hence, $\alpha$ corresponds to the $\sigma^2$ in our orginal log-normal distribution.
 
-### Fitting GP distribution
+### Fitting a GP distribution
 
 Let us simulate 1000 log-normal random variates:
 ```{r}
@@ -249,8 +247,8 @@ $$K_i \sim \text{GP}(\mu_i,\alpha),$$
 where the overdispersion $\alpha$ is the same
 for all samples and the expectations $\mu_i$ depend on the sample's group as follows:
 $$ \log \mu_i =: \eta_i = \beta_0 + x_i \beta_1 + \log s_i,$$
-where $x_i$ is an indicator variable that is 0 for samples from one group and 1 for 
-samples from the other group.
+where $x_i$ is an indicator variable that is 0 for samples from group A and 1 for 
+samples from group B.
 
 We wish to test the null hypothesis that there is no difference in expectation between the two
 groups, i.e., that $\beta_1=0$.

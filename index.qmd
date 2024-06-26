@@ -95,6 +95,7 @@ Place:
   - [Homework: Smoothing](homework_smoothing.html)
 - prepared for following lectures 
   - [Homework: Integration](homework_integration.html)
+  - [Gamma-Poisson regression](gamma_poisson.html)
   - [Cell cycle regression](cell_cycle.html)
 
 ## Source code
