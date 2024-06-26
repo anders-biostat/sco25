@@ -1,0 +1,476 @@
+---
+title: "Testing for differential expression with Gamma-Poisson regression"
+---
+
+## Bulk RNA-Seq and pseudobulks
+
+Before the advent of single-cell RNA-Seq assays, RNA sequencing was always performed in "bulk", i.e. on RNA obtained from a large number of samples. In a typical bulk RNA-Seq experiment, we may have two groups of samples -- e.g., tissue samples from patients with a certain disease and, foc comparison, "control samples" of the same tissue, taken from healthy subjects --, and we quantify the abundance of each RNA species (i.e., the number of reads seen from each gene) for each sample. Our count matrix contains one column per sample. The counts are much higher as in RNA-Seq, as now, all the reads from the sample are assigned to only one column.
+
+Our aim is to test for each gene the null hypothesis "The expression strength of this gene does not differ between the to samples".
+
+As we wills ee below, we can readily generalize this to experimentald esigns that are more complex than a simple comparison between two sample groups. We will, however, start with this simple case.
+
+### Simple toy example: data generation
+
+To make things even simpler, we start by looking at only one gene. We will first generate simulated example data.
+
+We assume that the expected fraction of all the reads that map to this gene is $10^{-5}$ in group A and $2\cdot 10^{-5}$ in group B. We specify this by the logarithms of these fractions:
+
+```{r}
+true_mean_log_fractions <- log( c( A = 1e-5, B = 2e-5 ) )
+true_mean_log_fractions
+```
+
+We further assume that we have $n=10$ samples, 5 per group:
+```{r}
+n <- 10
+```
+
+We assign the 10 samples to the two groups as follows
+
+```{r}
+group <- rep( c( "A", "B" ), each=n/2 )
+group
+```
+
+Let's also assume that the actual fraction of the gene's RNA among all the RNA in the sample varies within each group, following a log-normal distribution with a standard deviation of .5 on the log scale
+
+```{r}
+set.seed( 13245768 )
+
+true_fractions <- exp( rnorm( n, true_mean_log_fractions[group], .5 ) )
+true_fractions
+```
+
+Next, we need to set for each sample a total number of reads. We draw these from
+a log-normal, too:
+
+```{r}
+s <- round( 10^rnorm( n, 6, .3 ) )
+s
+```
+
+Now, we can obtain the counts for our reads, by multiplying the fractions with the totals and pushing this through a Poisson distribution:
+
+```{r}
+k <- rpois( n, s * true_fractions )
+k
+```
+
+### Simple t test
+
+Is the difference between the two groups statistically significant? 
+
+As a first try, we perform log-normalization and then a t-test:
+
+The log-normalization (with scaling factor $10^6$, as this is the center of the distribution we have drawn `s` from)
+
+```{r}
+y <- log( k/s * 1e6 + 1 )
+y
+```
+
+Now the t test
+
+```{r}
+t.test( y ~ group, var.equal=TRUE )
+```
+
+As we can see, it is just barely significant.
+
+Next, we will describe a more powerful statistical test, namely a generalized linear model (GLM) of the Gamma-Poisson family.
+
+We try this out already now, using functionality from the glmGamPoi package:
+
+```{r}
+library( glmGamPoi )  # available from Bioconductor
+
+fit <- glmGamPoi::glm_gp( t(k), ~ group, size_factors = s )
+glmGamPoi::test_de( fit, contrast="groupB" )
+```
+Now, the p values is much lower.
+
+To understand what this package is doing, we will recapitulate its computations manually below.
+
+Before, however, we need to discuss the Gamma-Poisson distribution.
+
+### The Gamma-Poisson distribution (a.k.a. the negative bionomial distribution)
+
+When simulating our count data above, we used the following generative model:
+
+$$ \begin{align}
+K_i | Q_i &\sim \text{Pois}(s_i Q_i) \\
+\log Q_i &\sim \mathcal{N}( \eta_{g(i)}, \sigma_0^2 )
+\end{align}$$
+
+In words: $Q_i$ is the fraction of all the mRNA molecules in sample $i$ that originate from the gene under consideration. $Q_i$ is drawn from a log-normal distribution with a (log-scale) mean $\eta_{g(i)}$ which depends
+on the group $g(i)$ to which sample $i$ belong and a variance $\sigma_0^2$, which is considered the same for all samples. Multiplying $Q_i$ with the total number $s_i$ of reads seen from sample $i$ gives the expected number of reads for the gene. The actual number, $K_i$, is drawn from a Poisson distribution using $s_iQ_i$ as rate parameter.
+
+Note: In the following, we shall drop the index $i$.
+
+What is the expected mean and variance of $K$ after marginalizing over $Q$?
+
+For the mean, we use the [law of total expectation](https://en.wikipedia.org/wiki/Law_of_total_expectation):
+
+$$ \operatorname{E}(K) = \operatorname{E}(\operatorname{E}(K|Q)) = s\operatorname{E}(Q).$$
+
+For the variance, we use the [law of total variance](https://en.wikipedia.org/wiki/Law_of_total_variance):
+
+$$\begin{align}
+\operatorname{Var}(K|Q) &= \operatorname{E}(\operatorname{Var}(K|Q)) + \operatorname{Var}(\operatorname{E}(K|Q)) \\
+& = \operatorname{E}(sQ) +  \operatorname{Var}(sQ) \\
+&= s \operatorname{E}(Q) + s^2 \operatorname{Var}(Q)
+\end{align}$$
+Note that here we have used that variance equals mean for the Poisson, but no assumption on the shape of the distribution for $Q$ except for it having finite first and second moment.
+
+The random variable $Q_i$, on which $K_i$ is conditional, cannot be observed. Hence we might want to integrate it out and find the marginal probability mass function, i.e., the marginal probability that $K_i=k$, which is
+$$ f(k)=\int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{log-normal}(q;\eta,\sigma^2)\,\text{d}q,$$
+where $f_\text{Pois}(k,q)$ is the probability mass function of a Poisson distribution the expected value $q$ and $f_\text{log-normal}(x;\eta,\sigma^2)$ is the probability density function of a log-normal with logscale mean $\eta$ and log-scale variance $\sigma^2$.
+
+Unfortunately, there is no closed form for this integral. This is a problem as we will later have to maximize a likelihood based on this function, and a numerical integration of an integral in each optimization step would not be efficient.
+
+The traditional solution for this is to replace the log-normal distribution with a Gamma distribution. These two distributions look quite similar for not too large coefficients of variations, but more importantly, the Gamma distribution is [conjugate](https://en.wikipedia.org/wiki/Conjugate_prior) to the Poisson in the sense of Bayesian statistics.
+
+We have
+$$ \int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{Ga}(q;\mu,\sigma^2)\,\text{d}q=f_\text{GP}\left(k;\mu,\frac{\sigma^2}{\mu^2}\right),
+$$
+where 
+$$ f_\text{Pois}(k;q) = e^{-q} \frac{q^k }{k!}, $$
+is the pmf of a Poisson distribution with mean $q$,
+$$f_\text{Ga}(q;\mu,\sigma^2)=\frac{1}{\Gamma(\kappa)\theta^\kappa}x^{\kappa-1} e^{-x/\theta}$$
+is the pdf of a Gamma distribution with mean $\mu=\kappa\theta$ and variance $\sigma^2=\kappa\theta^2$.
+After one carries out the reparametrization of $f_\text{Ga}$ from $(\kappa,\theta)$ to $(\mu,\sigma^2)$, one
+can figure out the integral and get
+
+$$ f_\text{GP}\left(k;\mu,\alpha\right)=\frac{\Gamma(k+r)}{\Gamma(k+1)\Gamma(r)}(1-p)^kp^{r}, $$
+with $\mu=rp/(1-p)$ and $\alpha=1/r$.
+
+This is the probability mass function of a distribution that is called the *negative-binomial (NB)
+distribution* or the *Gamma-Poisson (GP) distribution*. 
+
+The term "negative binomial" is merely due to the fact that the pmf looks similar to the pmf of the binomial distribution with an extra minus sign somewhere in the binomial coefficient. As this term is misleading, the alternative name "Gamma-Poisson", referring to its provenance from the integral above, is preferred by some authors.
+
+The GP distribution also arised as the answer to the following question: Bernoulli trials, which are i.i.d. with success probability $p$, are performed until $r$ successes have been observed. What is the probability that until then, $k$ failures have happened (i.e., that the $r$-th success happends in the $(k+r)$-th trial)?
+
+Therefore, the parameter $r$ is often referred to as the "size parameter" and $p$ as the probability parameter.
+
+When using the GP distribution as marginal of a hierarchical Gamma-Poisson mixture, it is advantageous to instead parametrize the distribution with its mean $\mu=rp/(1-p)$, which is also the mean of the underlying Gamma, and the "overdispersion parameter" $\alpha=1/r$. The latter is so called because the GP's variance is
+$$v=\mu+\alpha\mu^2$$
+According to the law of total variance, this arises as sum of the contributions from the two underlying distributions: $\mu$ is the variance of the Poisson, $\alpha\mu^2$ the variance of the Gamma, or, $\sqrt{\alpha}$ is its coefficient of variation (CV, ratio of standard deviation to mean).
+
+The limit $\alpha\rightarrow 0$ corresponds to a Gamma with zero variance, i.e., the "hidden" random
+variable $Q$ is constant and the distribution of $K$ becomes "pure Poisson".
+
+A distribution of counts is called "overdispersion" if its variance exceeds the expectation from Poisson, and hence, $\alpha$ describes the degree of overdispersion.
+
+When comparing the Gamma with the log-normal, we also notice that the CV becomes the variance when a random variable is log-transformed. Hence, $\alpha$ corresponds to the $\sigma^2$ in our orginal log-normal distribution.
+
+### Fitting GP distribution
+
+Let us simulate 1000 log-normal random variates:
+```{r}
+eta <- rnorm( 1000, mean=2.5, sd=.3 )
+```
+
+Now exponentiate them and push them through a Poisson:
+```{r}
+k <- rpois( 1000, exp( eta ) )
+```
+
+Here's a histogram of our counts
+
+```{r}
+plot( (0:max(k)), tabulate(1+k), type="h", xlab="k", ylab="frequency" )
+```
+We find the best-fitting GP distribution via maximum likelihood (ML) parameter estimation:
+```{r}
+optim(
+  c( mu=10, size=1 ),
+  function(x) -sum( dnbinom( k, mu=x[1], size=x[2], log=TRUE ) )
+)  
+```
+
+This fits well to the expected mean (using the formula for the mean of a log-normal)
+```{r}
+exp( 2.5 + .3/2 )
+```
+
+and the expected size
+```{r}
+1/.3^2
+```
+
+Instead of maximum likelihood, we could also have used the method of moments, i.e.,
+simply taking the mean
+```{r}
+mean(k)
+```
+
+and getting the size $1/alpha$ from $v=\mu+\alpha\mu^2$:
+```{r}
+1/ ( ( var(k) - mean(k) ) / mean(k)^2 )
+```
+
+For smaller sample sizes, the method of moments often runs into trouble (sample variance might be smaller than sample mean) and ensuring convergence of the maximum-likelihood optimization requires a few tricks. The glmGamPoi packages knows these:
+
+```{r}
+fit <- glm_gp( k, do_cox_reid_adjustment=FALSE, overdispersion_shrinkage=FALSE )
+fit$Beta  # log mean
+fit$overdispersions  # alpha
+```
+
+Similar to the case of estimating variance via ML, which has a negative bias that is compensated with [Bessel's correction](https://en.wikipedia.org/wiki/Bessel%27s_correction), the ML estimator for $\alpha$ also has
+a downwards bias. `glm_gp` can compensate using a so-called Cox-Reid adjustment:
+```{r}
+fit <- glm_gp( k, do_cox_reid_adjustment=TRUE, overdispersion_shrinkage=FALSE )
+fit$Beta  # log mean
+fit$overdispersions  # alpha
+```
+
+### Generalized linear models
+
+Let's get back to our initial simulation: We have two groups of samples, each sample $i$ 
+with a total read count of $s_i$ and a read count $K_i$ for the gene of interest. We have generated
+the counts with the following code (copied from above):
+
+```{r}
+set.seed( 13245768 )
+n <- 10
+group <- rep( c( "A", "B" ), each=n/2 )
+true_fractions <- exp( rnorm( n, true_mean_log_fractions[group], .5 ) )
+s <- round( 10^rnorm( n, 6, .3 ) )
+k <- rpois( n, s * true_fractions )
+```
+
+We now model our counts with a Gamma-Poisson (even though we have generated with a lognormal-Poisson):
+We assume that
+
+$$K_i \sim \text{GP}(\mu_i,\alpha),$$
+where the overdispersion $\alpha$ is the same
+for all samples and the expectations $\mu_i$ depend on the sample's group as follows:
+$$ \log \mu_i =: \eta_i = \beta_0 + x_i \beta_1 + \log s_i,$$
+where $x_i$ is an indicator variable that is 0 for samples from one group and 1 for 
+samples from the other group.
+
+We wish to test the null hypothesis that there is no difference in expectation between the two
+groups, i.e., that $\beta_1=0$.
+
+We use `glm_gp` to fit the model:
+
+```{r}
+fit <- glm_gp( k, ~ group )
+```
+
+Here's the coefficients $\beta_0$ and $\beta_1$:
+
+```{r}
+fit$Beta
+```
+
+and here's the overdispersion $\alpha$
+```{r}
+fit$overdispersions
+```
+
+To get p values for the null hypothesis $\beta_0=0$, we use `test_de`:
+
+```{r}
+test_de( fit, "groupB" )
+```
+
+To see whether this model has more statistical power than the simple t-test we tried initially,
+we rerun the data generation (with slightly different true means) and fitting 300 times:
+
+```{r}
+n <- 10
+group <- rep( c( "A", "B" ), each=n/2 )
+true_mean_log_fractions <- log( c( A = 1e-5, B = 1.5e-5 ) )
+
+
+t(replicate( 300, {
+  true_fractions <- exp( rnorm( n, true_mean_log_fractions[group], .5 ) )
+  s <- round( 10^rnorm( n, 6, .3 ) )
+  k <- rpois( n, s * true_fractions )
+
+  fit <- glm_gp( k, ~ group, size_factors=s )
+  ttres <- t.test( log( k/s*1e6 + 1 ) ~ group )
+  
+  c( 
+    pval_glm = test_de( fit, "groupB" )$pval,
+    pval_ttest = ttres$p.value ) 
+} )) -> p
+
+head(p)  
+```
+
+A plot shows that the GLM gives low p values more often.
+
+```{r}
+plot( -log10(p), asp=1 )
+abline( 0, 1 )
+```
+
+We should also check whether both tests hold their size, i.e, give uniform p values
+when there is really no difference:
+
+```{r}
+n <- 10
+group <- rep( c( "A", "B" ), each=n/2 )
+true_mean_log_fractions <- log( c( A = 5e-5, B = 5e-5 ) )  # <- no difference
+
+
+t(replicate( 300, {
+  true_fractions <- exp( rnorm( n, true_mean_log_fractions[group], .5 ) )
+  s <- round( 10^rnorm( n, 6, .3 ) )
+  k <- rpois( n, s * true_fractions )
+
+  fit <- glm_gp( k, ~ group, size_factors = s )
+  ttres <- t.test( log( k/s*1e6 + 1 ) ~ group )
+  
+  c( 
+    pval_glm = test_de( fit, "groupB" )$pval,
+    pval_ttest = ttres$p.value ) 
+} )) -> p
+
+head(p)  
+```
+
+We use a log-scaled QQ plot to check for uniformity:
+
+```{r}
+plot( -log10( ppoints(nrow(p)) ), -log10( sort(p[,"pval_glm"]) ), asp=1 )
+abline( 0, 1 )
+```
+
+```{r}
+plot( -log10( ppoints(nrow(p)) ), -log10( sort(p[,"pval_ttest"]) ), asp=1 )
+abline( 0, 1 )
+```
+### Testing many genes
+
+Let us apply all this to the "ifnb" dataset
+
+```{r}
+suppressPackageStartupMessages( {
+  library(Seurat)
+  library( tidyverse ) })
+
+ifnb <- SeuratData::LoadData( "ifnb" )
+```
+
+The cells in this data set have been taken from a number of donors, as described in the  [paper](https://www.nature.com/articles/nbt.4042) from which the data set orginates. A mapping of cells to donor
+can be found in the table "GSE96583_batch2.total.tsne.df.tsv.gz" deposited on GEO with accession GSE96583.
+
+```{r}
+read.delim( "~/Downloads/GSE96583_batch2.total.tsne.df.tsv.gz", row.names=1 ) -> cell_meta
+rownames(cell_meta) <- str_replace( rownames(cell_meta), "-", "." )
+head( cell_meta )
+```
+
+The donor ID is in column `ind`. We add this to the Seurat object:
+
+```{r}
+ifnb$donor <- factor( cell_meta[ colnames(ifnb), "ind" ] )
+```
+
+Let us siumulate bulk-sequencing by adding up all counts from cells of the same donor,
+but split by condition:
+
+```{r}
+sapply( levels(ifnb$donor), function(donor)
+  rowSums( LayerData( ifnb, "count" )[ , 
+      ifnb$donor == donor & ifnb$stim=="CTRL", drop=FALSE ] ) ) -> bulk_counts_ctrl
+
+colnames(bulk_counts_ctrl) <- str_c( colnames(bulk_counts_ctrl), "_", "ctrl" )
+
+sapply( levels(ifnb$donor), function(donor)
+  rowSums( LayerData( ifnb, "count" )[ , 
+      ifnb$donor == donor & ifnb$stim=="STIM", drop=FALSE ] ) ) -> bulk_counts_stim
+
+colnames(bulk_counts_stim) <- str_c( colnames(bulk_counts_stim), "_", "stim" )
+
+cbind( bulk_counts_ctrl, bulk_counts_stim ) -> bulk_counts
+
+head( bulk_counts )
+```
+
+Let's also construct a sample table
+
+```{r}
+tibble( sample = colnames(bulk_counts) ) %>%
+mutate( donor = factor( str_split_i( sample, "_", 1 ) ) ) %>%
+mutate( condition = factor( str_split_i( sample, "_", 2 ) ) ) -> sampleTable
+
+sampleTable
+```
+
+Now, fit a GP GLM for each gene:
+
+```{r}
+glm_gp( bulk_counts, ~ 0 + donor + condition, sampleTable, size_factors="ratio" ) -> fit
+```
+
+Here are the fit coefficients:
+```{r}
+head( fit$Beta )
+```
+
+```{r}
+deres <- test_de( fit, "conditionstim" )
+
+head( deres )
+```
+
+The following is called an MA plot:
+
+```{r}
+plot(
+  rowMeans(fit$Beta[,1:8]) + fit$Beta[,9]/2,
+  fit$Beta[,9],
+  col = ifelse( deres$adj_pval < .1, "red", "black" ),
+  xlab = "mean log expression",
+  ylab = "log ratio stim/ctrl", cex=.1 )
+
+```
+The same, with clamping
+```{r}
+plot(
+  pmax( 0, rowMeans(fit$Beta[,1:8]) + fit$Beta[,9]/2 ),
+  pmax( -4, pmin( 4, fit$Beta[,9] ) ),
+  col = ifelse( deres$adj_pval < .1, "red", "black" ),
+  xlab = "mean log expression",
+  ylab = "log ratio stim/ctrl", cex=.1 )
+
+```
+
+### Size factor estimation
+
+[...]
+
+### Dispersion shrinkage
+
+[...]
+
+```{r}
+plot( 
+  pmax( 0, rowMeans(fit$Beta[,1:8]) + fit$Beta[,9]/2 ),
+  fit$overdispersion_shrinkage_list$ql_disp_estimate, 
+  log="y", pch="." ) 
+
+plot( 
+  pmax( 0, rowMeans(fit$Beta[,1:8]) + fit$Beta[,9]/2 ),
+  fit$overdispersions,
+  log="y", pch="." ) 
+
+```
+
+### Literature
+
+- The classical text-book on GLMs is *Generalized linear models* by Peter McCullagh and John Nelder
+
+- A more modern one is *Generalized linear models with examples in R* by Peter K. Dunn and Gordon K. Smyth
+
+- The first R package made for the use of GP GLMs for analysis of differential expression data was "edgeR", by Gordon Smyth an colleagues, originally described in [this paper](https://doi.org/10.1093/bioinformatics/btp616). There are [several](https://doi.org/10.1093/nar/gks042) [papers](https://doi.org/10.12688/f1000research.8987.2) [describing](https://doi.org/10.1101/2024.01.21.576131) further improvements.
+
+- Another R package, similar in functionality, was [DESeq](https://doi.org/10.1186/gb-2010-11-10-r106), developed by Wolfgang Huber and me. We, together with Mike Love, later developed [DESeq2](https://doi.org/10.1186/s13059-014-0550-8). A more recent one, also from the Huber research group, is [glmGamPoi](https://doi.org/10.1093/bioinformatics/btaa1009), that we have used above.
+  

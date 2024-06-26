@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Mathematics of single-cell omics - Testing for differential expression with Gamma-Poisson regression</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Testing for differential expression with Gamma-Poisson regression</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="bulk-rna-seq-and-pseudobulks" class="level2">
+<h2 class="anchored" data-anchor-id="bulk-rna-seq-and-pseudobulks">Bulk RNA-Seq and pseudobulks</h2>
+<p>Before the advent of single-cell RNA-Seq assays, RNA sequencing was always performed in “bulk”, i.e.&nbsp;on RNA obtained from a large number of samples. In a typical bulk RNA-Seq experiment, we may have two groups of samples – e.g., tissue samples from patients with a certain disease and, foc comparison, “control samples” of the same tissue, taken from healthy subjects –, and we quantify the abundance of each RNA species (i.e., the number of reads seen from each gene) for each sample. Our count matrix contains one column per sample. The counts are much higher as in RNA-Seq, as now, all the reads from the sample are assigned to only one column.</p>
+<p>Our aim is to test for each gene the null hypothesis “The expression strength of this gene does not differ between the to samples”.</p>
+<p>As we wills ee below, we can readily generalize this to experimentald esigns that are more complex than a simple comparison between two sample groups. We will, however, start with this simple case.</p>
+<section id="simple-toy-example-data-generation" class="level3">
+<h3 class="anchored" data-anchor-id="simple-toy-example-data-generation">Simple toy example: data generation</h3>
+<p>To make things even simpler, we start by looking at only one gene. We will first generate simulated example data.</p>
+<p>We assume that the expected fraction of all the reads that map to this gene is <span class="math inline">\(10^{-5}\)</span> in group A and <span class="math inline">\(2\cdot 10^{-5}\)</span> in group B. We specify this by the logarithms of these fractions:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-1_082447956eb27d297c0694c49bf21195">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>true_mean_log_fractions <span class="ot">&lt;-</span> <span class="fu">log</span>( <span class="fu">c</span>( <span class="at">A =</span> <span class="fl">1e-5</span>, <span class="at">B =</span> <span class="fl">2e-5</span> ) )</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>true_mean_log_fractions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        A         B 
+-11.51293 -10.81978 </code></pre>
+</div>
+</div>
+<p>We further assume that we have <span class="math inline">\(n=10\)</span> samples, 5 per group:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-2_50cd8d55108dd9fecc0654245743ae46">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We assign the 10 samples to the two groups as follows</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-3_6baa9986858c39a11f60524350c6a74a">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>group <span class="ot">&lt;-</span> <span class="fu">rep</span>( <span class="fu">c</span>( <span class="st">"A"</span>, <span class="st">"B"</span> ), <span class="at">each=</span>n<span class="sc">/</span><span class="dv">2</span> )</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>group</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "A" "A" "A" "A" "A" "B" "B" "B" "B" "B"</code></pre>
+</div>
+</div>
+<p>Let’s also assume that the actual fraction of the gene’s RNA among all the RNA in the sample varies within each group, following a log-normal distribution with a standard deviation of .5 on the log scale</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-4_1a0b558dfc7da49344a66320008c7c5d">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>( <span class="dv">13245768</span> )</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>true_fractions <span class="ot">&lt;-</span> <span class="fu">exp</span>( <span class="fu">rnorm</span>( n, true_mean_log_fractions[group], .<span class="dv">5</span> ) )</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>true_fractions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 7.564091e-06 5.627647e-06 6.852141e-06 1.381749e-05 4.462885e-06
+ [6] 3.525964e-05 2.882550e-05 1.277045e-05 2.373163e-05 2.297746e-05</code></pre>
+</div>
+</div>
+<p>Next, we need to set for each sample a total number of reads. We draw these from a log-normal, too:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-5_2deb4e398ecc9623974785a59d0e71a3">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">round</span>( <span class="dv">10</span><span class="sc">^</span><span class="fu">rnorm</span>( n, <span class="dv">6</span>, .<span class="dv">3</span> ) )</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>s</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 1826476  474672 5280081  672316  453857 1764398 4221048  932948  531548
+[10]  557209</code></pre>
+</div>
+</div>
+<p>Now, we can obtain the counts for our reads, by multiplying the fractions with the totals and pushing this through a Poisson distribution:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-6_c59137cac506075c4c821c24753bd540">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">rpois</span>( n, s <span class="sc">*</span> true_fractions )</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>k</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1]  16   1  40   9   4  64 131   9  14   8</code></pre>
+</div>
+</div>
+</section>
+<section id="simple-t-test" class="level3">
+<h3 class="anchored" data-anchor-id="simple-t-test">Simple t test</h3>
+<p>Is the difference between the two groups statistically significant?</p>
+<p>As a first try, we perform log-normalization and then a t-test:</p>
+<p>The log-normalization (with scaling factor <span class="math inline">\(10^6\)</span>, as this is the center of the distribution we have drawn <code>s</code> from)</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-7_2cc71605ec94e6cafb364b15e0dcbc63">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">log</span>( k<span class="sc">/</span>s <span class="sc">*</span> <span class="fl">1e6</span> <span class="sc">+</span> <span class="dv">1</span> )</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] 2.278296 1.133567 2.148926 2.666295 2.283744 3.618269 3.466827 2.365263
+ [9] 3.308284 2.731589</code></pre>
+</div>
+</div>
+<p>Now the t test</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-8_aa7e6eed53625ba6466950d19cdae647">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>( y <span class="sc">~</span> group, <span class="at">var.equal=</span><span class="cn">TRUE</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Two Sample t-test
+
+data:  y by group
+t = -2.8485, df = 8, p-value = 0.02153
+alternative hypothesis: true difference in means between group A and group B is not equal to 0
+95 percent confidence interval:
+ -1.8021086 -0.1896535
+sample estimates:
+mean in group A mean in group B 
+       2.102165        3.098046 </code></pre>
+</div>
+</div>
+<p>As we can see, it is just barely significant.</p>
+<p>Next, we will describe a more powerful statistical test, namely a generalized linear model (GLM) of the Gamma-Poisson family.</p>
+<p>We try this out already now, using functionality from the glmGamPoi package:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-9_f7b96d54c56021aa71d2e1de63cbe0f4">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>( glmGamPoi )  <span class="co"># available from Bioconductor</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> glmGamPoi<span class="sc">::</span><span class="fu">glm_gp</span>( <span class="fu">t</span>(k), <span class="sc">~</span> group, <span class="at">size_factors =</span> s )</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>glmGamPoi<span class="sc">::</span><span class="fu">test_de</span>( fit, <span class="at">contrast=</span><span class="st">"groupB"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   name         pval     adj_pval f_statistic df1 df2      lfc
+1 row_1 0.0005157753 0.0005157753    12.05775   1 Inf 1.555168</code></pre>
+</div>
+</div>
+<p>Now, the p values is much lower.</p>
+<p>To understand what this package is doing, we will recapitulate its computations manually below.</p>
+<p>Before, however, we need to discuss the Gamma-Poisson distribution.</p>
+</section>
+<section id="the-gamma-poisson-distribution-a.k.a.-the-negative-bionomial-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="the-gamma-poisson-distribution-a.k.a.-the-negative-bionomial-distribution">The Gamma-Poisson distribution (a.k.a. the negative bionomial distribution)</h3>
+<p>When simulating our count data above, we used the following generative model:</p>
+<p><span class="math display">\[ \begin{align}
+K_i | Q_i &amp;\sim \text{Pois}(s_i Q_i) \\
+\log Q_i &amp;\sim \mathcal{N}( \eta_{g(i)}, \sigma_0^2 )
+\end{align}\]</span></p>
+<p>In words: <span class="math inline">\(Q_i\)</span> is the fraction of all the mRNA molecules in sample <span class="math inline">\(i\)</span> that originate from the gene under consideration. <span class="math inline">\(Q_i\)</span> is drawn from a log-normal distribution with a (log-scale) mean <span class="math inline">\(\eta_{g(i)}\)</span> which depends on the group <span class="math inline">\(g(i)\)</span> to which sample <span class="math inline">\(i\)</span> belong and a variance <span class="math inline">\(\sigma_0^2\)</span>, which is considered the same for all samples. Multiplying <span class="math inline">\(Q_i\)</span> with the total number <span class="math inline">\(s_i\)</span> of reads seen from sample <span class="math inline">\(i\)</span> gives the expected number of reads for the gene. The actual number, <span class="math inline">\(K_i\)</span>, is drawn from a Poisson distribution using <span class="math inline">\(s_iQ_i\)</span> as rate parameter.</p>
+<p>Note: In the following, we shall drop the index <span class="math inline">\(i\)</span>.</p>
+<p>What is the expected mean and variance of <span class="math inline">\(K\)</span> after marginalizing over <span class="math inline">\(Q\)</span>?</p>
+<p>For the mean, we use the <a href="https://en.wikipedia.org/wiki/Law_of_total_expectation">law of total expectation</a>:</p>
+<p><span class="math display">\[ \operatorname{E}(K) = \operatorname{E}(\operatorname{E}(K|Q)) = s\operatorname{E}(Q).\]</span></p>
+<p>For the variance, we use the <a href="https://en.wikipedia.org/wiki/Law_of_total_variance">law of total variance</a>:</p>
+<p><span class="math display">\[\begin{align}
+\operatorname{Var}(K|Q) &amp;= \operatorname{E}(\operatorname{Var}(K|Q)) + \operatorname{Var}(\operatorname{E}(K|Q)) \\
+&amp; = \operatorname{E}(sQ) +  \operatorname{Var}(sQ) \\
+&amp;= s \operatorname{E}(Q) + s^2 \operatorname{Var}(Q)
+\end{align}\]</span> Note that here we have used that variance equals mean for the Poisson, but no assumption on the shape of the distribution for <span class="math inline">\(Q\)</span> except for it having finite first and second moment.</p>
+<p>The random variable <span class="math inline">\(Q_i\)</span>, on which <span class="math inline">\(K_i\)</span> is conditional, cannot be observed. Hence we might want to integrate it out and find the marginal probability mass function, i.e., the marginal probability that <span class="math inline">\(K_i=k\)</span>, which is <span class="math display">\[ f(k)=\int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{log-normal}(q;\eta,\sigma^2)\,\text{d}q,\]</span> where <span class="math inline">\(f_\text{Pois}(k,q)\)</span> is the probability mass function of a Poisson distribution the expected value <span class="math inline">\(q\)</span> and <span class="math inline">\(f_\text{log-normal}(x;\eta,\sigma^2)\)</span> is the probability density function of a log-normal with logscale mean <span class="math inline">\(\eta\)</span> and log-scale variance <span class="math inline">\(\sigma^2\)</span>.</p>
+<p>Unfortunately, there is no closed form for this integral. This is a problem as we will later have to maximize a likelihood based on this function, and a numerical integration of an integral in each optimization step would not be efficient.</p>
+<p>The traditional solution for this is to replace the log-normal distribution with a Gamma distribution. These two distributions look quite similar for not too large coefficients of variations, but more importantly, the Gamma distribution is <a href="https://en.wikipedia.org/wiki/Conjugate_prior">conjugate</a> to the Poisson in the sense of Bayesian statistics.</p>
+<p>We have <span class="math display">\[ \int_\limits0^\infty f_\text{Pois}(k;q)\, f_\text{Ga}(q;\mu,\sigma^2)\,\text{d}q=f_\text{GP}\left(k;\mu,\frac{\sigma^2}{\mu^2}\right),
+\]</span> where <span class="math display">\[ f_\text{Pois}(k;q) = e^{-q} \frac{q^k }{k!}, \]</span> is the pmf of a Poisson distribution with mean <span class="math inline">\(q\)</span>, <span class="math display">\[f_\text{Ga}(q;\mu,\sigma^2)=\frac{1}{\Gamma(\kappa)\theta^\kappa}x^{\kappa-1} e^{-x/\theta}\]</span> is the pdf of a Gamma distribution with mean <span class="math inline">\(\mu=\kappa\theta\)</span> and variance <span class="math inline">\(\sigma^2=\kappa\theta^2\)</span>. After one carries out the reparametrization of <span class="math inline">\(f_\text{Ga}\)</span> from <span class="math inline">\((\kappa,\theta)\)</span> to <span class="math inline">\((\mu,\sigma^2)\)</span>, one can figure out the integral and get</p>
+<p><span class="math display">\[ f_\text{GP}\left(k;\mu,\alpha\right)=\frac{\Gamma(k+r)}{\Gamma(k+1)\Gamma(r)}(1-p)^kp^{r}, \]</span> with <span class="math inline">\(\mu=rp/(1-p)\)</span> and <span class="math inline">\(\alpha=1/r\)</span>.</p>
+<p>This is the probability mass function of a distribution that is called the <em>negative-binomial (NB) distribution</em> or the <em>Gamma-Poisson (GP) distribution</em>.</p>
+<p>The term “negative binomial” is merely due to the fact that the pmf looks similar to the pmf of the binomial distribution with an extra minus sign somewhere in the binomial coefficient. As this term is misleading, the alternative name “Gamma-Poisson”, referring to its provenance from the integral above, is preferred by some authors.</p>
+<p>The GP distribution also arised as the answer to the following question: Bernoulli trials, which are i.i.d. with success probability <span class="math inline">\(p\)</span>, are performed until <span class="math inline">\(r\)</span> successes have been observed. What is the probability that until then, <span class="math inline">\(k\)</span> failures have happened (i.e., that the <span class="math inline">\(r\)</span>-th success happends in the <span class="math inline">\((k+r)\)</span>-th trial)?</p>
+<p>Therefore, the parameter <span class="math inline">\(r\)</span> is often referred to as the “size parameter” and <span class="math inline">\(p\)</span> as the probability parameter.</p>
+<p>When using the GP distribution as marginal of a hierarchical Gamma-Poisson mixture, it is advantageous to instead parametrize the distribution with its mean <span class="math inline">\(\mu=rp/(1-p)\)</span>, which is also the mean of the underlying Gamma, and the “overdispersion parameter” <span class="math inline">\(\alpha=1/r\)</span>. The latter is so called because the GP’s variance is <span class="math display">\[v=\mu+\alpha\mu^2\]</span> According to the law of total variance, this arises as sum of the contributions from the two underlying distributions: <span class="math inline">\(\mu\)</span> is the variance of the Poisson, <span class="math inline">\(\alpha\mu^2\)</span> the variance of the Gamma, or, <span class="math inline">\(\sqrt{\alpha}\)</span> is its coefficient of variation (CV, ratio of standard deviation to mean).</p>
+<p>The limit <span class="math inline">\(\alpha\rightarrow 0\)</span> corresponds to a Gamma with zero variance, i.e., the “hidden” random variable <span class="math inline">\(Q\)</span> is constant and the distribution of <span class="math inline">\(K\)</span> becomes “pure Poisson”.</p>
+<p>A distribution of counts is called “overdispersion” if its variance exceeds the expectation from Poisson, and hence, <span class="math inline">\(\alpha\)</span> describes the degree of overdispersion.</p>
+<p>When comparing the Gamma with the log-normal, we also notice that the CV becomes the variance when a random variable is log-transformed. Hence, <span class="math inline">\(\alpha\)</span> corresponds to the <span class="math inline">\(\sigma^2\)</span> in our orginal log-normal distribution.</p>
+</section>
+<section id="fitting-gp-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="fitting-gp-distribution">Fitting GP distribution</h3>
+<p>Let us simulate 1000 log-normal random variates:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-10_0e0b5d9932289d03285228f02654dfcd">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>eta <span class="ot">&lt;-</span> <span class="fu">rnorm</span>( <span class="dv">1000</span>, <span class="at">mean=</span><span class="fl">2.5</span>, <span class="at">sd=</span>.<span class="dv">3</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now exponentiate them and push them through a Poisson:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-11_24796d856c43e384019feba62d622e5f">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">rpois</span>( <span class="dv">1000</span>, <span class="fu">exp</span>( eta ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here’s a histogram of our counts</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-12_13bc94c6be6b0c09e8dda0feac85040b">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( (<span class="dv">0</span><span class="sc">:</span><span class="fu">max</span>(k)), <span class="fu">tabulate</span>(<span class="dv">1</span><span class="sc">+</span>k), <span class="at">type=</span><span class="st">"h"</span>, <span class="at">xlab=</span><span class="st">"k"</span>, <span class="at">ylab=</span><span class="st">"frequency"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We find the best-fitting GP distribution via maximum likelihood (ML) parameter estimation:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-13_b7c5928b86f3d4b0ffd4bcbf155c9982">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">optim</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>( <span class="at">mu=</span><span class="dv">10</span>, <span class="at">size=</span><span class="dv">1</span> ),</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">function</span>(x) <span class="sc">-</span><span class="fu">sum</span>( <span class="fu">dnbinom</span>( k, <span class="at">mu=</span>x[<span class="dv">1</span>], <span class="at">size=</span>x[<span class="dv">2</span>], <span class="at">log=</span><span class="cn">TRUE</span> ) )</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$par
+      mu     size 
+12.54444 10.77800 
+
+$value
+[1] 3027.768
+
+$counts
+function gradient 
+      53       NA 
+
+$convergence
+[1] 0
+
+$message
+NULL</code></pre>
+</div>
+</div>
+<p>This fits well to the expected mean (using the formula for the mean of a log-normal)</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-14_d3d016f68ccfda1e9a7e3bdaf2630153">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">exp</span>( <span class="fl">2.5</span> <span class="sc">+</span> .<span class="dv">3</span><span class="sc">/</span><span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 14.15404</code></pre>
+</div>
+</div>
+<p>and the expected size</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-15_12c1bdf9c299e92ff44d8f107ad1920e">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="sc">/</span>.<span class="dv">3</span><span class="sc">^</span><span class="dv">2</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 11.11111</code></pre>
+</div>
+</div>
+<p>Instead of maximum likelihood, we could also have used the method of moments, i.e., simply taking the mean</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-16_415a49a0d53986b0cad426fc5d0a0d38">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(k)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 12.544</code></pre>
+</div>
+</div>
+<p>and getting the size <span class="math inline">\(1/alpha\)</span> from <span class="math inline">\(v=\mu+\alpha\mu^2\)</span>:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-17_e0b420e4383eb47cc75b856e750facc4">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="sc">/</span> ( ( <span class="fu">var</span>(k) <span class="sc">-</span> <span class="fu">mean</span>(k) ) <span class="sc">/</span> <span class="fu">mean</span>(k)<span class="sc">^</span><span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10.10598</code></pre>
+</div>
+</div>
+<p>For smaller sample sizes, the method of moments often runs into trouble (sample variance might be smaller than sample mean) and ensuring convergence of the maximum-likelihood optimization requires a few tricks. The glmGamPoi packages knows these:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-18_d08d75c31bcc4e8acfe5212527b999b5">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm_gp</span>( k, <span class="at">do_cox_reid_adjustment=</span><span class="cn">FALSE</span>, <span class="at">overdispersion_shrinkage=</span><span class="cn">FALSE</span> )</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>Beta  <span class="co"># log mean</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Intercept
+[1,]  2.529242</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>overdispersions  <span class="co"># alpha</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.09280296</code></pre>
+</div>
+</div>
+<p>Similar to the case of estimating variance via ML, which has a negative bias that is compensated with <a href="https://en.wikipedia.org/wiki/Bessel%27s_correction">Bessel’s correction</a>, the ML estimator for <span class="math inline">\(\alpha\)</span> also has a downwards bias. <code>glm_gp</code> can compensate using a so-called Cox-Reid adjustment:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-19_e6e31dd92f7e63ef9e1542689e51c488">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm_gp</span>( k, <span class="at">do_cox_reid_adjustment=</span><span class="cn">TRUE</span>, <span class="at">overdispersion_shrinkage=</span><span class="cn">FALSE</span> )</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>Beta  <span class="co"># log mean</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Intercept
+[1,]  2.529242</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>overdispersions  <span class="co"># alpha</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.09297406</code></pre>
+</div>
+</div>
+</section>
+<section id="generalized-linear-models" class="level3">
+<h3 class="anchored" data-anchor-id="generalized-linear-models">Generalized linear models</h3>
+<p>Let’s get back to our initial simulation: We have two groups of samples, each sample <span class="math inline">\(i\)</span> with a total read count of <span class="math inline">\(s_i\)</span> and a read count <span class="math inline">\(K_i\)</span> for the gene of interest. We have generated the counts with the following code (copied from above):</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-20_305095546cc0b357d367ee5e4ea7235e">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>( <span class="dv">13245768</span> )</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>group <span class="ot">&lt;-</span> <span class="fu">rep</span>( <span class="fu">c</span>( <span class="st">"A"</span>, <span class="st">"B"</span> ), <span class="at">each=</span>n<span class="sc">/</span><span class="dv">2</span> )</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>true_fractions <span class="ot">&lt;-</span> <span class="fu">exp</span>( <span class="fu">rnorm</span>( n, true_mean_log_fractions[group], .<span class="dv">5</span> ) )</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>s <span class="ot">&lt;-</span> <span class="fu">round</span>( <span class="dv">10</span><span class="sc">^</span><span class="fu">rnorm</span>( n, <span class="dv">6</span>, .<span class="dv">3</span> ) )</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>k <span class="ot">&lt;-</span> <span class="fu">rpois</span>( n, s <span class="sc">*</span> true_fractions )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We now model our counts with a Gamma-Poisson (even though we have generated with a lognormal-Poisson): We assume that</p>
+<p><span class="math display">\[K_i \sim \text{GP}(\mu_i,\alpha),\]</span> where the overdispersion <span class="math inline">\(\alpha\)</span> is the same for all samples and the expectations <span class="math inline">\(\mu_i\)</span> depend on the sample’s group as follows: <span class="math display">\[ \log \mu_i =: \eta_i = \beta_0 + x_i \beta_1 + \log s_i,\]</span> where <span class="math inline">\(x_i\)</span> is an indicator variable that is 0 for samples from one group and 1 for samples from the other group.</p>
+<p>We wish to test the null hypothesis that there is no difference in expectation between the two groups, i.e., that <span class="math inline">\(\beta_1=0\)</span>.</p>
+<p>We use <code>glm_gp</code> to fit the model:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-21_6301a30538c4521b74092bce4cec8577">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm_gp</span>( k, <span class="sc">~</span> group )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here’s the coefficients <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span>:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-22_d9a7de780621ecad3471c5d00cd53252">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>Beta</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     Intercept  groupB
+[1,]  2.639057 1.17204</code></pre>
+</div>
+</div>
+<p>and here’s the overdispersion <span class="math inline">\(\alpha\)</span></p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-23_16a44ef8fbd32349be2abcc746155e08">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>fit<span class="sc">$</span>overdispersions</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1.225823</code></pre>
+</div>
+</div>
+<p>To get p values for the null hypothesis <span class="math inline">\(\beta_0=0\)</span>, we use <code>test_de</code>:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-24_d5d3b3fd6dbcfc22c892218311731bcd">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">test_de</span>( fit, <span class="st">"groupB"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   name      pval  adj_pval f_statistic df1 df2      lfc
+1 row_1 0.1088443 0.1088443    2.570921   1 Inf 1.690896</code></pre>
+</div>
+</div>
+<p>To see whether this model has more statistical power than the simple t-test we tried initially, we rerun the data generation (with slightly different true means) and fitting 300 times:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-25_7c8a0ceb021a8856a5259cbfae0020c9">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>group <span class="ot">&lt;-</span> <span class="fu">rep</span>( <span class="fu">c</span>( <span class="st">"A"</span>, <span class="st">"B"</span> ), <span class="at">each=</span>n<span class="sc">/</span><span class="dv">2</span> )</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>true_mean_log_fractions <span class="ot">&lt;-</span> <span class="fu">log</span>( <span class="fu">c</span>( <span class="at">A =</span> <span class="fl">1e-5</span>, <span class="at">B =</span> <span class="fl">1.5e-5</span> ) )</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a><span class="fu">t</span>(<span class="fu">replicate</span>( <span class="dv">300</span>, {</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>  true_fractions <span class="ot">&lt;-</span> <span class="fu">exp</span>( <span class="fu">rnorm</span>( n, true_mean_log_fractions[group], .<span class="dv">5</span> ) )</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">round</span>( <span class="dv">10</span><span class="sc">^</span><span class="fu">rnorm</span>( n, <span class="dv">6</span>, .<span class="dv">3</span> ) )</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">&lt;-</span> <span class="fu">rpois</span>( n, s <span class="sc">*</span> true_fractions )</span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">glm_gp</span>( k, <span class="sc">~</span> group, <span class="at">size_factors=</span>s )</span>
+<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>  ttres <span class="ot">&lt;-</span> <span class="fu">t.test</span>( <span class="fu">log</span>( k<span class="sc">/</span>s<span class="sc">*</span><span class="fl">1e6</span> <span class="sc">+</span> <span class="dv">1</span> ) <span class="sc">~</span> group )</span>
+<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>( </span>
+<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval_glm =</span> <span class="fu">test_de</span>( fit, <span class="st">"groupB"</span> )<span class="sc">$</span>pval,</span>
+<span id="cb47-16"><a href="#cb47-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval_ttest =</span> ttres<span class="sc">$</span>p.value ) </span>
+<span id="cb47-17"><a href="#cb47-17" aria-hidden="true" tabindex="-1"></a>} )) <span class="ot">-&gt;</span> p</span>
+<span id="cb47-18"><a href="#cb47-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb47-19"><a href="#cb47-19" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(p)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         pval_glm pval_ttest
+[1,] 3.989270e-01 0.37993188
+[2,] 3.197510e-07 0.05888683
+[3,] 2.220293e-01 0.24582777
+[4,] 4.130410e-02 0.09076260
+[5,] 8.318204e-03 0.03887266
+[6,] 1.252043e-01 0.20487778</code></pre>
+</div>
+</div>
+<p>A plot shows that the GLM gives low p values more often.</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-26_8490c985f2a3a8c7301d15dfb2fa949e">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( <span class="sc">-</span><span class="fu">log10</span>(p), <span class="at">asp=</span><span class="dv">1</span> )</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="dv">0</span>, <span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>We should also check whether both tests hold their size, i.e, give uniform p values when there is really no difference:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-27_e543fbb5f3e7611ce882e3ab3a6f3526">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>group <span class="ot">&lt;-</span> <span class="fu">rep</span>( <span class="fu">c</span>( <span class="st">"A"</span>, <span class="st">"B"</span> ), <span class="at">each=</span>n<span class="sc">/</span><span class="dv">2</span> )</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>true_mean_log_fractions <span class="ot">&lt;-</span> <span class="fu">log</span>( <span class="fu">c</span>( <span class="at">A =</span> <span class="fl">5e-5</span>, <span class="at">B =</span> <span class="fl">5e-5</span> ) )  <span class="co"># &lt;- no difference</span></span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a><span class="fu">t</span>(<span class="fu">replicate</span>( <span class="dv">300</span>, {</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>  true_fractions <span class="ot">&lt;-</span> <span class="fu">exp</span>( <span class="fu">rnorm</span>( n, true_mean_log_fractions[group], .<span class="dv">5</span> ) )</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">round</span>( <span class="dv">10</span><span class="sc">^</span><span class="fu">rnorm</span>( n, <span class="dv">6</span>, .<span class="dv">3</span> ) )</span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>  k <span class="ot">&lt;-</span> <span class="fu">rpois</span>( n, s <span class="sc">*</span> true_fractions )</span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">glm_gp</span>( k, <span class="sc">~</span> group, <span class="at">size_factors =</span> s )</span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  ttres <span class="ot">&lt;-</span> <span class="fu">t.test</span>( <span class="fu">log</span>( k<span class="sc">/</span>s<span class="sc">*</span><span class="fl">1e6</span> <span class="sc">+</span> <span class="dv">1</span> ) <span class="sc">~</span> group )</span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">c</span>( </span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval_glm =</span> <span class="fu">test_de</span>( fit, <span class="st">"groupB"</span> )<span class="sc">$</span>pval,</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval_ttest =</span> ttres<span class="sc">$</span>p.value ) </span>
+<span id="cb50-17"><a href="#cb50-17" aria-hidden="true" tabindex="-1"></a>} )) <span class="ot">-&gt;</span> p</span>
+<span id="cb50-18"><a href="#cb50-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-19"><a href="#cb50-19" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(p)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       pval_glm pval_ttest
+[1,] 0.33658243  0.2442447
+[2,] 0.93420799  0.5684110
+[3,] 0.90239586  0.7101600
+[4,] 0.35327992  0.4739532
+[5,] 0.72994463  0.7105911
+[6,] 0.07604844  0.2078610</code></pre>
+</div>
+</div>
+<p>We use a log-scaled QQ plot to check for uniformity:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-28_dd31ef0911126afcbe7e92102272797a">
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( <span class="sc">-</span><span class="fu">log10</span>( <span class="fu">ppoints</span>(<span class="fu">nrow</span>(p)) ), <span class="sc">-</span><span class="fu">log10</span>( <span class="fu">sort</span>(p[,<span class="st">"pval_glm"</span>]) ), <span class="at">asp=</span><span class="dv">1</span> )</span>
+<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="dv">0</span>, <span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-29_decaf3401f516c346a8cd96ebcbc5445">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( <span class="sc">-</span><span class="fu">log10</span>( <span class="fu">ppoints</span>(<span class="fu">nrow</span>(p)) ), <span class="sc">-</span><span class="fu">log10</span>( <span class="fu">sort</span>(p[,<span class="st">"pval_ttest"</span>]) ), <span class="at">asp=</span><span class="dv">1</span> )</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="dv">0</span>, <span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="testing-many-genes" class="level3">
+<h3 class="anchored" data-anchor-id="testing-many-genes">Testing many genes</h3>
+<p>Let us apply all this to the “ifnb” dataset</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-30_9ab0492ece617f71948371318432d37e">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>( {</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>(Seurat)</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( tidyverse ) })</span>
+<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb54-5"><a href="#cb54-5" aria-hidden="true" tabindex="-1"></a>ifnb <span class="ot">&lt;-</span> SeuratData<span class="sc">::</span><span class="fu">LoadData</span>( <span class="st">"ifnb"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Validating object structure</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updating object slots</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Ensuring keys are in the proper structure</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Assay RNA changing from Assay to Assay</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Ensuring keys are in the proper structure</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Ensuring feature names don't have underscores or pipes</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Updating slots in RNA</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Validating object structure for Assay 'RNA'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Object representation is consistent with the most current Seurat version</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Assay RNA changing from Assay to Assay5</code></pre>
+</div>
+</div>
+<p>The cells in this data set have been taken from a number of donors, as described in the <a href="https://www.nature.com/articles/nbt.4042">paper</a> from which the data set orginates. A mapping of cells to donor can be found in the table “GSE96583_batch2.total.tsne.df.tsv.gz” deposited on GEO with accession GSE96583.</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-31_653f13e3a68883bf8abb47516120c5fe">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">read.delim</span>( <span class="st">"~/Downloads/GSE96583_batch2.total.tsne.df.tsv.gz"</span>, <span class="at">row.names=</span><span class="dv">1</span> ) <span class="ot">-&gt;</span> cell_meta</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(cell_meta) <span class="ot">&lt;-</span> <span class="fu">str_replace</span>( <span class="fu">rownames</span>(cell_meta), <span class="st">"-"</span>, <span class="st">"."</span> )</span>
+<span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( cell_meta )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                      tsne1      tsne2  ind stim cluster            cell
+AAACATACAATGCC.1  -4.277833 -19.294709  107 ctrl       5     CD4 T cells
+AAACATACATTTCC.1 -27.640373  14.966629 1016 ctrl       9 CD14+ Monocytes
+AAACATACCAGAAA.1 -27.493646  28.924885 1256 ctrl       9 CD14+ Monocytes
+AAACATACCAGCTA.1 -28.132584  24.925484 1256 ctrl       9 CD14+ Monocytes
+AAACATACCATGCA.1 -10.468194  -5.984389 1488 ctrl       3     CD4 T cells
+AAACATACCTCGCT.1 -24.367997  20.429285 1256 ctrl       9 CD14+ Monocytes
+                 multiplets
+AAACATACAATGCC.1    doublet
+AAACATACATTTCC.1    singlet
+AAACATACCAGAAA.1    singlet
+AAACATACCAGCTA.1    doublet
+AAACATACCATGCA.1    singlet
+AAACATACCTCGCT.1    singlet</code></pre>
+</div>
+</div>
+<p>The donor ID is in column <code>ind</code>. We add this to the Seurat object:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-32_d3affc39c1842977139fc0c2719d2ccc">
+<div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a>ifnb<span class="sc">$</span>donor <span class="ot">&lt;-</span> <span class="fu">factor</span>( cell_meta[ <span class="fu">colnames</span>(ifnb), <span class="st">"ind"</span> ] )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Let us siumulate bulk-sequencing by adding up all counts from cells of the same donor, but split by condition:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-33_f1617b124651eff8dfcf880e686912e4">
+<div class="sourceCode cell-code" id="cb68"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb68-1"><a href="#cb68-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( <span class="fu">levels</span>(ifnb<span class="sc">$</span>donor), <span class="cf">function</span>(donor)</span>
+<span id="cb68-2"><a href="#cb68-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowSums</span>( <span class="fu">LayerData</span>( ifnb, <span class="st">"count"</span> )[ , </span>
+<span id="cb68-3"><a href="#cb68-3" aria-hidden="true" tabindex="-1"></a>      ifnb<span class="sc">$</span>donor <span class="sc">==</span> donor <span class="sc">&amp;</span> ifnb<span class="sc">$</span>stim<span class="sc">==</span><span class="st">"CTRL"</span>, <span class="at">drop=</span><span class="cn">FALSE</span> ] ) ) <span class="ot">-&gt;</span> bulk_counts_ctrl</span>
+<span id="cb68-4"><a href="#cb68-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-5"><a href="#cb68-5" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(bulk_counts_ctrl) <span class="ot">&lt;-</span> <span class="fu">str_c</span>( <span class="fu">colnames</span>(bulk_counts_ctrl), <span class="st">"_"</span>, <span class="st">"ctrl"</span> )</span>
+<span id="cb68-6"><a href="#cb68-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-7"><a href="#cb68-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( <span class="fu">levels</span>(ifnb<span class="sc">$</span>donor), <span class="cf">function</span>(donor)</span>
+<span id="cb68-8"><a href="#cb68-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowSums</span>( <span class="fu">LayerData</span>( ifnb, <span class="st">"count"</span> )[ , </span>
+<span id="cb68-9"><a href="#cb68-9" aria-hidden="true" tabindex="-1"></a>      ifnb<span class="sc">$</span>donor <span class="sc">==</span> donor <span class="sc">&amp;</span> ifnb<span class="sc">$</span>stim<span class="sc">==</span><span class="st">"STIM"</span>, <span class="at">drop=</span><span class="cn">FALSE</span> ] ) ) <span class="ot">-&gt;</span> bulk_counts_stim</span>
+<span id="cb68-10"><a href="#cb68-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-11"><a href="#cb68-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(bulk_counts_stim) <span class="ot">&lt;-</span> <span class="fu">str_c</span>( <span class="fu">colnames</span>(bulk_counts_stim), <span class="st">"_"</span>, <span class="st">"stim"</span> )</span>
+<span id="cb68-12"><a href="#cb68-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-13"><a href="#cb68-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cbind</span>( bulk_counts_ctrl, bulk_counts_stim ) <span class="ot">-&gt;</span> bulk_counts</span>
+<span id="cb68-14"><a href="#cb68-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb68-15"><a href="#cb68-15" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( bulk_counts )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              101_ctrl 107_ctrl 1015_ctrl 1016_ctrl 1039_ctrl 1244_ctrl
+AL627309.1           0        0         0         1         0         1
+RP11-206L10.2        0        0         0         2         0         0
+LINC00115            3        1        11         6         0         6
+NOC2L               34       26       139        50        24        98
+KLHL17               0        0         3         1         1         3
+PLEKHN1              2        1         4         3         1         2
+              1256_ctrl 1488_ctrl 101_stim 107_stim 1015_stim 1016_stim
+AL627309.1            1         1        0        0         0         0
+RP11-206L10.2         1         1        0        0         0         0
+LINC00115             6         8        3        0         7         2
+NOC2L               104        93       44       29        81        48
+KLHL17                4         0        1        1         1         1
+PLEKHN1               3         4       11        0        21         7
+              1039_stim 1244_stim 1256_stim 1488_stim
+AL627309.1            0         0         0         0
+RP11-206L10.2         0         0         0         0
+LINC00115             2         3         5         6
+NOC2L                36        85       100        99
+KLHL17                0         0         1         1
+PLEKHN1               4         6         3         9</code></pre>
+</div>
+</div>
+<p>Let’s also construct a sample table</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-34_9188fccb62be30138df0c40db12d7351">
+<div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( <span class="at">sample =</span> <span class="fu">colnames</span>(bulk_counts) ) <span class="sc">%&gt;%</span></span>
+<span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">donor =</span> <span class="fu">factor</span>( <span class="fu">str_split_i</span>( sample, <span class="st">"_"</span>, <span class="dv">1</span> ) ) ) <span class="sc">%&gt;%</span></span>
+<span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">condition =</span> <span class="fu">factor</span>( <span class="fu">str_split_i</span>( sample, <span class="st">"_"</span>, <span class="dv">2</span> ) ) ) <span class="ot">-&gt;</span> sampleTable</span>
+<span id="cb70-4"><a href="#cb70-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb70-5"><a href="#cb70-5" aria-hidden="true" tabindex="-1"></a>sampleTable</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 16 × 3
+   sample    donor condition
+   &lt;chr&gt;     &lt;fct&gt; &lt;fct&gt;    
+ 1 101_ctrl  101   ctrl     
+ 2 107_ctrl  107   ctrl     
+ 3 1015_ctrl 1015  ctrl     
+ 4 1016_ctrl 1016  ctrl     
+ 5 1039_ctrl 1039  ctrl     
+ 6 1244_ctrl 1244  ctrl     
+ 7 1256_ctrl 1256  ctrl     
+ 8 1488_ctrl 1488  ctrl     
+ 9 101_stim  101   stim     
+10 107_stim  107   stim     
+11 1015_stim 1015  stim     
+12 1016_stim 1016  stim     
+13 1039_stim 1039  stim     
+14 1244_stim 1244  stim     
+15 1256_stim 1256  stim     
+16 1488_stim 1488  stim     </code></pre>
+</div>
+</div>
+<p>Now, fit a GP GLM for each gene:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-35_8a875a79b86de70f2c2dad3f4e220c33">
+<div class="sourceCode cell-code" id="cb72"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb72-1"><a href="#cb72-1" aria-hidden="true" tabindex="-1"></a><span class="fu">glm_gp</span>( bulk_counts, <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> donor <span class="sc">+</span> condition, sampleTable, <span class="at">size_factors=</span><span class="st">"ratio"</span> ) <span class="ot">-&gt;</span> fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here are the fit coefficients:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-36_20e1016d04eca99864ff5093b48c18c5">
+<div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( fit<span class="sc">$</span>Beta )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                 donor101   donor1015  donor1016   donor1039    donor107
+AL627309.1    -25.0011831 -25.2338418 0.02288187 -24.9461568 -25.1661864
+RP11-206L10.2 -25.9427862 -26.0514273 0.71602905 -25.9206888 -26.1200160
+LINC00115       1.4290414   1.6171427 1.59948399   0.9586417   0.3263743
+NOC2L           3.8344172   3.9840096 3.97882870   4.1918979   4.2029521
+KLHL17         -0.2573035   0.1829422 0.31030053   0.3686145   0.4231668
+PLEKHN1         1.2688477   1.1319120 1.01571468   0.9261402  -0.4784155
+                donor1244   donor1256  donor1488 conditionstim
+AL627309.1     -0.3759923 -0.52587842 -0.2122554  -25.01914118
+RP11-206L10.2 -26.1031316 -0.52587842 -0.2122554  -25.79452179
+LINC00115       1.3769919  1.39216122  1.7509083   -0.36824756
+NOC2L           4.2702352  4.17546472  4.2085385   -0.05326926
+KLHL17          0.3439216  0.67329687 -0.7767260   -0.60180319
+PLEKHN1         0.4850074 -0.01027775  0.7508398    1.07933377</code></pre>
+</div>
+</div>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-37_1b48b902e6619b85ede520fa99c76b77">
+<div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>deres <span class="ot">&lt;-</span> <span class="fu">test_de</span>( fit, <span class="st">"conditionstim"</span> )</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( deres )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           name        pval    adj_pval f_statistic df1      df2          lfc
+1    AL627309.1 0.033179845 0.096093594   5.1323476   1 23.07005 -10.00000000
+2 RP11-206L10.2 0.031359481 0.092253461   5.2533175   1 23.07005 -10.00000000
+3     LINC00115 0.202097253 0.365282662   1.7239445   1 23.07005  -0.53126892
+4         NOC2L 0.519658527 0.689004744   0.4275504   1 23.07005  -0.07685129
+5        KLHL17 0.265167731 0.441150956   1.3041703   1 23.07005  -0.86821847
+6       PLEKHN1 0.001200722 0.007223347  13.6295691   1 23.07005   1.55714947</code></pre>
+</div>
+</div>
+<p>The following is called an MA plot:</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-38_22206ed3b1092013ef13264cbf302d4d">
+<div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb77-2"><a href="#cb77-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowMeans</span>(fit<span class="sc">$</span>Beta[,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]) <span class="sc">+</span> fit<span class="sc">$</span>Beta[,<span class="dv">9</span>]<span class="sc">/</span><span class="dv">2</span>,</span>
+<span id="cb77-3"><a href="#cb77-3" aria-hidden="true" tabindex="-1"></a>  fit<span class="sc">$</span>Beta[,<span class="dv">9</span>],</span>
+<span id="cb77-4"><a href="#cb77-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">ifelse</span>( deres<span class="sc">$</span>adj_pval <span class="sc">&lt;</span> .<span class="dv">1</span>, <span class="st">"red"</span>, <span class="st">"black"</span> ),</span>
+<span id="cb77-5"><a href="#cb77-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"mean log expression"</span>,</span>
+<span id="cb77-6"><a href="#cb77-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"log ratio stim/ctrl"</span>, <span class="at">cex=</span>.<span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-38-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>The same, with clamping</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-39_89f1f14c1b31706a7db54d23e25d7fc7">
+<div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmax</span>( <span class="dv">0</span>, <span class="fu">rowMeans</span>(fit<span class="sc">$</span>Beta[,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]) <span class="sc">+</span> fit<span class="sc">$</span>Beta[,<span class="dv">9</span>]<span class="sc">/</span><span class="dv">2</span> ),</span>
+<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmax</span>( <span class="sc">-</span><span class="dv">4</span>, <span class="fu">pmin</span>( <span class="dv">4</span>, fit<span class="sc">$</span>Beta[,<span class="dv">9</span>] ) ),</span>
+<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">ifelse</span>( deres<span class="sc">$</span>adj_pval <span class="sc">&lt;</span> .<span class="dv">1</span>, <span class="st">"red"</span>, <span class="st">"black"</span> ),</span>
+<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"mean log expression"</span>,</span>
+<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"log ratio stim/ctrl"</span>, <span class="at">cex=</span>.<span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-39-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="size-factor-estimation" class="level3">
+<h3 class="anchored" data-anchor-id="size-factor-estimation">Size factor estimation</h3>
+<p>[…]</p>
+</section>
+<section id="dispersion-shrinkage" class="level3">
+<h3 class="anchored" data-anchor-id="dispersion-shrinkage">Dispersion shrinkage</h3>
+<p>[…]</p>
+<div class="cell" data-hash="gamma_poisson_cache/html/unnamed-chunk-40_85fbddae669e4af494acbee8a0a9e96e">
+<div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( </span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmax</span>( <span class="dv">0</span>, <span class="fu">rowMeans</span>(fit<span class="sc">$</span>Beta[,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]) <span class="sc">+</span> fit<span class="sc">$</span>Beta[,<span class="dv">9</span>]<span class="sc">/</span><span class="dv">2</span> ),</span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  fit<span class="sc">$</span>overdispersion_shrinkage_list<span class="sc">$</span>ql_disp_estimate, </span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">log=</span><span class="st">"y"</span>, <span class="at">pch=</span><span class="st">"."</span> ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( </span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmax</span>( <span class="dv">0</span>, <span class="fu">rowMeans</span>(fit<span class="sc">$</span>Beta[,<span class="dv">1</span><span class="sc">:</span><span class="dv">8</span>]) <span class="sc">+</span> fit<span class="sc">$</span>Beta[,<span class="dv">9</span>]<span class="sc">/</span><span class="dv">2</span> ),</span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  fit<span class="sc">$</span>overdispersions,</span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">log=</span><span class="st">"y"</span>, <span class="at">pch=</span><span class="st">"."</span> ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in xy.coords(x, y, xlabel, ylabel, log): 2608 y values &lt;= 0 omitted
+from logarithmic plot</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="gamma_poisson_files/figure-html/unnamed-chunk-40-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="literature" class="level3">
+<h3 class="anchored" data-anchor-id="literature">Literature</h3>
+<ul>
+<li><p>The classical text-book on GLMs is <em>Generalized linear models</em> by Peter McCullagh and John Nelder</p></li>
+<li><p>A more modern one is <em>Generalized linear models with examples in R</em> by Peter K. Dunn and Gordon K. Smyth</p></li>
+<li><p>The first R package made for the use of GP GLMs for analysis of differential expression data was “edgeR”, by Gordon Smyth an colleagues, originally described in <a href="https://doi.org/10.1093/bioinformatics/btp616">this paper</a>. There are <a href="https://doi.org/10.1093/nar/gks042">several</a> <a href="https://doi.org/10.12688/f1000research.8987.2">papers</a> <a href="https://doi.org/10.1101/2024.01.21.576131">describing</a> further improvements.</p></li>
+<li><p>Another R package, similar in functionality, was <a href="https://doi.org/10.1186/gb-2010-11-10-r106">DESeq</a>, developed by Wolfgang Huber and me. We, together with Mike Love, later developed <a href="https://doi.org/10.1186/s13059-014-0550-8">DESeq2</a>. A more recent one, also from the Huber research group, is <a href="https://doi.org/10.1093/bioinformatics/btaa1009">glmGamPoi</a>, that we have used above.</p></li>
+</ul>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
