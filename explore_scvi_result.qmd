@@ -1,0 +1,212 @@
+---
+title: "Untitled"
+---
+
+Preparations
+
+```{r}
+suppressPackageStartupMessages({
+  library( tidyverse )
+  library( Seurat )
+  library( rhdf5 ) })
+
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+         "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+         "~/Downloads/ifnagrko/ifnagrko_var.csv",
+         cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+         mtx.transpose=TRUE) -> count_matrix
+```
+
+Usual analysis
+
+```{r}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+Here is the UMAP plot, that we've seen before:
+
+```{r}
+UMAPPlot( seu, label=TRUE ) + coord_equal()
+```
+
+Load output from scVI
+
+```{r}
+h5_file = "~/sds/sd17l002/u/anders/tmp/ifnagrko_denoised.h5"
+denoised <- h5read( h5_file, "data" )
+colnames(denoised) <- h5read( h5_file, "row_names" )
+rownames(denoised) <- h5read( h5_file, "col_names" )
+denoised[1:5,1:5]
+```
+
+```{r}
+denoised_rescaled <- t( t(denoised) * 
+    ( colSums(LayerData(seu,"counts")[VariableFeatures(seu),]) / colSums(LayerData(seu,"counts")) ) )
+```
+
+```{r}
+pca_denoised <- Loadings(seu,"pca") %*% t(Embeddings(seu,"pca"))
+```
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( 
+  exp( LayerData(seu,"data")["Slc1a3",] ) / 1e4, 
+  "cell", "expr" )  ) %>%
+ggplot + 
+  geom_point( aes( x=umap_1, y=umap_2, col=expr ), size=.1 ) +
+  scale_color_viridis_c( direction=-1, limits=c(1e-4,1e-2), 
+      oob=scales::oob_squish, trans="log10" ) +
+  coord_equal() + ggtitle("Slc1a3: raw data")
+
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( denoised_rescaled["Slc1a3",], "cell", "expr" ) ) %>%
+ggplot + 
+  geom_point( aes( x=umap_1, y=umap_2, col=expr ), size=.1 ) +
+  scale_color_viridis_c( direction=-1, limits=c(1e-4,1e-2), 
+      oob=scales::oob_squish, trans="log10" ) +
+  coord_equal() + ggtitle("Slc1a3: scVI-denoised")
+
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( pca_denoised["Slc1a3",], "cell", "expr" ) ) %>%
+ggplot + 
+  geom_point( aes( x=umap_1, y=umap_2, col=expr ), size=.1 ) +
+  scale_color_viridis_c( direction=-1, #limits=log(c(1e-4,1e-2)*1e4), 
+      oob=scales::oob_squish ) +
+  coord_equal() + ggtitle("Slc1a3: pca-denoised")
+```
+
+```{r fig.width=7,fig.height=7,f}
+
+plot( 
+  exp(LayerData(seu,"data")["Slc1a3",])/1e4, 
+  denoised_rescaled["Slc1a3",], cex=.1, asp=1 )
+abline( 0, 1, col="red" )
+
+plot( 
+  exp(LayerData(seu,"data")["Slc1a3",])/1e4, 
+  denoised_rescaled["Slc1a3",], cex=.1, log="xy" )
+abline( 0, 1, col="red")
+
+```
+
+```{r}
+hist( log10(denoised_rescaled["Slc1a3",]), 100 )
+```
+
+Check residuals
+
+```{r}
+observed_counts <- LayerData(seu,"counts")["Slc1a3",]
+denoised_expected_counts <- denoised_rescaled["Slc1a3",] * colSums(LayerData(seu,"counts"))
+
+alpha <- .16^2   # <- best guess to make deviance histogram (below) standard normal
+deviance <- -2*(
+  dnbinom(
+    observed_counts,
+    mu = denoised_expected_counts, size=1/alpha,
+    log=TRUE ) -
+  dnbinom(
+    observed_counts,
+    mu = observed_counts, size=1/alpha,
+    log=TRUE )
+)  
+
+dev_res <- sqrt(deviance) * sign( observed_counts - denoised_expected_counts )
+```
+
+```{r}
+plot( denoised_expected_counts, dev_res, cex=.2, col="#00000020" )
+abline(h=0)
+```
+
+```{r}
+xg <- seq( -6, 6, length.out=1000 )
+hist( dev_res[denoised_expected_counts<10], 50, xlim=c(-6,6), freq=FALSE )
+lines( xg, dnorm(xg) )
+hist( dev_res[denoised_expected_counts>20], 50, xlim=c(-6,6), freq=FALSE )
+lines( xg, dnorm(xg) )
+```
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( dev_res, "cell", "devres" ) ) %>%
+ggplot + 
+  geom_point( aes( x=umap_1, y=umap_2, col=devres ), size=.1 ) +
+  scale_color_gradient2() +
+  coord_equal()
+```
+
+Make pseudotime
+
+```{r}
+seu$lineage <- seu$seurat_clusters %in% c( 0, 3, 5, 1, 2, 7 )
+prc <- princurve::principal_curve( 
+  Embeddings(seu,"pca")[seu$lineage,], df=10, approx_points=1000 )
+```
+
+```{r}
+Embeddings(seu,"umap") %>%
+as_tibble( rownames="cell" ) %>%
+left_join( enframe( prc$lambda, "cell", "lambda" ) ) %>%
+ggplot + 
+  geom_point( aes( x=umap_1, y=umap_2, col=lambda ), size=.1 ) +
+  scale_color_viridis_c() +
+  coord_equal()
+```
+
+```{r}
+enframe( prc$lambda, "cell", "lambda" ) %>%
+left_join( enframe( 
+  LayerData(seu,"data")["Slc1a3",], 
+  "cell", "expr" )  ) %>%
+ggplot() +
+  geom_point( aes(x=-lambda, y=expr), size=.3 )
+  
+enframe( prc$lambda, "cell", "lambda" ) %>%
+left_join( enframe( 
+  log(denoised_rescaled["Slc1a3",]), 
+  "cell", "expr" )  ) %>%
+left_join( enframe( 
+  colSums(LayerData(seu,"counts")),
+  "cell", "total" )  ) %>%
+mutate( se = sqrt( alpha + 1/(total*exp(expr)) ) ) %>%
+ggplot() +
+  geom_point( aes(x=-lambda, y=expr, col=se), size=.3 ) +
+  scale_color_viridis_c(option="M", trans="log10")
+```
+
+
+
+Overall deviance:
+
+```{r}
+observed_counts <- as.matrix( LayerData(seu,"counts")[as.vector(rownames(denoised_rescaled)),] )
+denoised_expected_counts <- t( t(denoised_rescaled) * colSums(LayerData(seu,"counts")) )
+
+alpha <- .16^2
+deviance <- -2*(
+  dnbinom(
+    observed_counts,
+    mu = denoised_expected_counts, size=1/alpha,
+    log=TRUE ) -
+  dnbinom(
+    observed_counts,
+    mu = observed_counts, size=1/alpha,
+    log=TRUE )
+)  
+
+dev_res <- sqrt(deviance) * sign( observed_counts - denoised_expected_counts )
+```
