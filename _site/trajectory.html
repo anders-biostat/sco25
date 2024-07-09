@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,6 +93,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -123,12 +130,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <section id="standard-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="standard-analysis">Standard analysis</h3>
 <p>We load our usual example data</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-1_0ed53809a9007234ab1a2848db7f73d0">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( tidyverse )</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Matrix )</span>
@@ -141,7 +150,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">cell.sep=</span><span class="st">","</span>, <span class="at">feature.sep=</span><span class="st">","</span>, <span class="at">skip.cell=</span><span class="dv">1</span>, <span class="at">skip.feature=</span><span class="dv">1</span>, </span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mtx.transpose=</span><span class="cn">TRUE</span>) <span class="ot">-&gt;</span> count_matrix</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-2_46812a47bdd1a2dbbe34c3cb17cf33ac">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>count_matrix <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CreateSeuratObject</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">NormalizeData</span>() <span class="sc">%&gt;%</span></span>
@@ -216,7 +225,7 @@ Number of edges: 616069
 Running Louvain algorithm...
 Maximum modularity in 10 random starts: 0.9191
 Number of communities: 19
-Elapsed time: 5 seconds</code></pre>
+Elapsed time: 4 seconds</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
@@ -224,16 +233,16 @@ To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to
 This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:04:48 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+<pre><code>15:25:54 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:04:48 Read 18302 rows and found 20 numeric columns</code></pre>
+<pre><code>15:25:54 Read 18302 rows and found 20 numeric columns</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:04:48 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+<pre><code>15:25:54 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>12:04:48 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+<pre><code>15:25:54 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
@@ -243,35 +252,43 @@ This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>**************************************************|
-12:04:51 Writing NN index file to temp file /tmp/Rtmp4gTY5z/file33b7e39258597
-12:04:51 Searching Annoy index using 1 thread, search_k = 3000
-12:05:01 Annoy recall = 100%
-12:05:01 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-12:05:02 Initializing from normalized Laplacian + noise (using RSpectra)
-12:05:07 Commencing optimization for 200 epochs, with 776086 positive edges
-12:05:18 Optimization finished</code></pre>
+15:25:56 Writing NN index file to temp file /tmp/Rtmpb71oOy/file3b880298aed9c
+15:25:56 Searching Annoy index using 1 thread, search_k = 3000
+15:26:03 Annoy recall = 100%
+15:26:04 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:26:05 Initializing from normalized Laplacian + noise (using RSpectra)
+15:26:08 Commencing optimization for 200 epochs, with 776086 positive edges
+15:26:17 Optimization finished</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-3_56e8ac8b5fbd8f311cb476bf68f80687">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">UMAPPlot</span>( seu, <span class="at">label=</span><span class="cn">TRUE</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>This time, we will concetrate on the long elongated main structure, which we will call the “lineage” in the following. It is a snapshot of the development of astrocytes that act as neural stem cells and become transient amplifying progenitors (TAPs) which undergo cell cycle, i.e., divide and multiply, and the turn into neuroblasts and finally neurons.</p>
 <p>To orient us in the plot, we highlight the expression of Aqp4 (aquaporin-4, a marker for astrocytes), Mki67 (a marker for prliferating, i.e., dividing cells), Dcx (doublecortin, a marker for neuroblasts) and Gria1 (Glutamate ionotropic receptor, AMPA type, subunit 1; a marker for mature neurons)</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-4_659b756cad37dfd481529e314f14df12">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">FeaturePlot</span>( seu, <span class="fu">c</span>( <span class="st">"Aqp4"</span>, <span class="st">"Mki67"</span>, <span class="st">"Dcx"</span>, <span class="st">"Gria1"</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We conclude that the lineage is well covered by the following clusters</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-5_1d61e6943730ea340037e9a17055aded">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>lineage_clusters <span class="ot">&lt;-</span>  <span class="fu">c</span>( <span class="dv">10</span>, <span class="dv">9</span>, <span class="dv">0</span>, <span class="dv">13</span>, <span class="dv">14</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">11</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span> ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Just out of curiosity, we also try to identify clusters 4 and 8:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-6_0d246930e9692030c10ad8b237cea633">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>presto<span class="sc">::</span><span class="fu">wilcoxauc</span>(</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">LayerData</span>(seu),</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">factor</span>(<span class="fu">case_when</span>(</span>
@@ -297,7 +314,7 @@ This message will be shown once per session</code></pre>
 6 7.320138e-01 3.0259366  2.86066584</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-7_1109ee201e12a4ced644ea778253096d">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>presto<span class="sc">::</span><span class="fu">top_markers</span>( wa )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 10 × 4
@@ -324,19 +341,19 @@ This message will be shown once per session</code></pre>
 <p>The “principal curve” method is described in detail in <a href="principal_curves.html">this section of the lecture notes</a>.</p>
 <p>Here, we will use the function from the <code>princurve</code> package.</p>
 <p>As preparation, we first explore distances with sleepwalk:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-8_76dfba74dabb711b9706bbfe7f69ef22">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>sleepwalk<span class="sc">::</span><span class="fu">sleepwalk</span>( <span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>), <span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We notice that the cycling cells have a lot of distance to the non-cycling lineage cells. This will cause problems because the principal curve alorithm cannot deal with loops, i.e., the curve should pass besides the cell-cycle loop. However, the distances to the curve will then become large right in the middle, deflecting the curve.</p>
 <p>Therefore, let’s exclude clusters 6 and 11:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-9_1c4cd0fc533607217de4ebc091844355">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>lineage_clusters_2 <span class="ot">&lt;-</span> <span class="fu">setdiff</span>( lineage_clusters, <span class="fu">c</span>( <span class="dv">6</span>, <span class="dv">11</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="fitting-the-principal-curve" class="level3">
 <h3 class="anchored" data-anchor-id="fitting-the-principal-curve">Fitting the principal curve</h3>
 <p>Now, we could the <code>princomp</code> package to fit the principal curve</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-10_ddeaecb2571f48a4ea0a63c5fc9391c6">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>princurve<span class="sc">::</span><span class="fu">principal_curve</span>( </span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>)[ seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters_2, ], </span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">df=</span><span class="dv">10</span>, <span class="at">trace=</span><span class="cn">TRUE</span>, <span class="at">approx_points=</span><span class="dv">1000</span> ) <span class="ot">-&gt;</span> prc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -355,7 +372,7 @@ Iteration 10---distance^2: 524569.8</code></pre>
 </div>
 </div>
 <p>This function returns for each cell a pseudotime value <code>lambda</code> and a projected position on the curve in PCA space, <code>s</code>.</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-11_57e002fc9a099cf800c1463dbc04c6e9">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( <span class="at">rownames=</span><span class="st">"cell"</span> ) <span class="sc">%&gt;%</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">left_join</span>( <span class="fu">enframe</span>( prc<span class="sc">$</span>lambda, <span class="st">"cell"</span>, <span class="st">"lambda"</span> ) ) <span class="sc">%&gt;%</span></span>
@@ -366,11 +383,15 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <pre><code>Joining with `by = join_by(cell)`</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We can assign a pseudotime to the remaining cells by finding the closest curve point:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-12_6eeb9a7e37fa2eeb77712adf3fb34336">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knnx</span>( prc<span class="sc">$</span>s, <span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>), <span class="dv">1</span> ) <span class="ot">-&gt;</span> nnres</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>prc<span class="sc">$</span>lambda[ nnres<span class="sc">$</span>nn.index[,<span class="dv">1</span>] ] <span class="sc">%&gt;%</span></span>
@@ -378,7 +399,7 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_names</span>( <span class="fu">rownames</span>(<span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>)) ) <span class="ot">-&gt;</span> seu<span class="sc">$</span>pt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Her we have rescaled the pseudotime to [0;1] and also reversed the dirction, so thjat it now increases from stem cells towards neuroblasts.</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-13_062ed1d6ac9badc62955f58d64f0d288">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( <span class="at">rownames=</span><span class="st">"cell"</span> ) <span class="sc">%&gt;%</span></span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a><span class="fu">left_join</span>( <span class="fu">enframe</span>( seu<span class="sc">$</span>pt, <span class="st">"cell"</span>, <span class="st">"pt"</span> ) ) <span class="sc">%&gt;%</span></span>
@@ -389,11 +410,15 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <pre><code>Joining with `by = join_by(cell)`</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We should also check how for each cell is from the curve</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-14_d093140f8bf65bf89cba9f9eeaf5a342">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>nnres<span class="sc">$</span>nn.dist[,<span class="dv">1</span>] <span class="sc">%&gt;%</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">set_names</span>( <span class="fu">rownames</span>(<span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>)) ) <span class="ot">-&gt;</span> seu<span class="sc">$</span>dist_to_curve</span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -407,14 +432,18 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <pre><code>Joining with `by = join_by(cell)`</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="expression-dynamics" class="level3">
 <h3 class="anchored" data-anchor-id="expression-dynamics">Expression dynamics</h3>
 <p>Here is a plot showing the expression of one gene, Slc1a3 (Glast), along the pseudotime:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-15_2e6f035c654de005fd907f50a25d3bb7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> seu<span class="sc">$</span>dist_to_curve,</span>
@@ -428,25 +457,40 @@ Iteration 10---distance^2: 524569.8</code></pre>
 <span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt, <span class="at">y=</span>expr, <span class="at">col=</span>dist ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span></span>
 <span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>In order to make more apparent how many point are on the zero line, this line has been broadened.</p>
 <p>We now fit a smooth curve through this scatter plot. As we want to do this properly, we use locfit with Poisson GLM, i.e., wo don’t use the log-normalized values but the raw counts. (Details <a href="smoothing.html">here</a>.)</p>
 <p>First we assemble the data</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-16_b4fb20b71c858f9bbe17908ba0be4324">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>( locfit )</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> seu<span class="sc">$</span>dist_to_curve,</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">in_lineage =</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters,</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">count =</span> <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[<span class="st">"Slc1a3"</span>,],</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">total =</span> <span class="fu">colSums</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>) ),</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">expr =</span> <span class="fu">LayerData</span>(seu)[<span class="st">"Slc1a3"</span>,] ) <span class="sc">%&gt;%</span></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">expr =</span> <span class="fu">ifelse</span>( expr<span class="sc">&gt;</span><span class="dv">0</span>, expr, <span class="fu">runif</span>( <span class="fu">n</span>(), <span class="sc">-</span>.<span class="dv">2</span>, <span class="dv">0</span> ) ) ) <span class="ot">-&gt;</span> tbl</span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>( locfit )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>locfit 1.5-9.9   2024-03-01</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'locfit'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:purrr':
+
+    none</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt =</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">dist =</span> seu<span class="sc">$</span>dist_to_curve,</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">in_lineage =</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters,</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">count =</span> <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[<span class="st">"Slc1a3"</span>,],</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">total =</span> <span class="fu">colSums</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>) ),</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">expr =</span> <span class="fu">LayerData</span>(seu)[<span class="st">"Slc1a3"</span>,] ) <span class="sc">%&gt;%</span></span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">expr =</span> <span class="fu">ifelse</span>( expr<span class="sc">&gt;</span><span class="dv">0</span>, expr, <span class="fu">runif</span>( <span class="fu">n</span>(), <span class="sc">-</span>.<span class="dv">2</span>, <span class="dv">0</span> ) ) ) <span class="ot">-&gt;</span> tbl</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 6
       pt  dist in_lineage count total   expr
@@ -460,10 +504,10 @@ Iteration 10---distance^2: 524569.8</code></pre>
 </div>
 </div>
 <p>The we run <code>lucfit</code>:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-17_400d15cc8cbaeafc2fb9a4828e237f6d">
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( count <span class="sc">~</span> pt, tbl, <span class="at">weight=</span>total, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( count <span class="sc">~</span> pt, tbl, <span class="at">weight=</span>total, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>fit</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Call:
 locfit(formula = count ~ pt, data = tbl, weights = total, family = "poisson")
@@ -475,11 +519,11 @@ Residual scale:                  1 </code></pre>
 </div>
 </div>
 <p>We evaluate the fitted curve along a value grid:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-18_eb2cd6ff74efbccbd62c7ff50931ec97">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( <span class="at">pt =</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">1000</span> ) ) <span class="sc">%&gt;%</span></span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">y =</span> <span class="fu">predict</span>( fit, pt ) ) <span class="ot">-&gt;</span> tbl_fit</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl_fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( <span class="at">pt =</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">1000</span> ) ) <span class="sc">%&gt;%</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">y =</span> <span class="fu">predict</span>( fit, pt ) ) <span class="ot">-&gt;</span> tbl_fit</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tbl_fit)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 2
        pt       y
@@ -493,38 +537,42 @@ Residual scale:                  1 </code></pre>
 </div>
 </div>
 <p>Now we can do the plot:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-19_12aa29e8550a3f94513c9f717159aac8">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>tbl <span class="sc">%&gt;%</span></span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>( in_lineage ) <span class="sc">%&gt;%</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt ) ) <span class="sc">+</span></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">y =</span> count<span class="sc">/</span>total <span class="sc">+</span> <span class="fl">1e-4</span>, <span class="at">col=</span>dist ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>( <span class="fu">aes</span>( <span class="at">y =</span> y ), <span class="at">data=</span>tbl_fit, <span class="at">col=</span><span class="st">"magenta"</span> ) <span class="sc">+</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> <span class="fu">scale_y_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>tbl <span class="sc">%&gt;%</span></span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">filter</span>( in_lineage ) <span class="sc">%&gt;%</span></span>
+<span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt ) ) <span class="sc">+</span></span>
+<span id="cb48-4"><a href="#cb48-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">y =</span> count<span class="sc">/</span>total <span class="sc">+</span> <span class="fl">1e-4</span>, <span class="at">col=</span>dist ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span></span>
+<span id="cb48-5"><a href="#cb48-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>( <span class="fu">aes</span>( <span class="at">y =</span> y ), <span class="at">data=</span>tbl_fit, <span class="at">col=</span><span class="st">"magenta"</span> ) <span class="sc">+</span></span>
+<span id="cb48-6"><a href="#cb48-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> <span class="fu">scale_y_log10</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <section id="many-genes" class="level4">
 <h4 class="anchored" data-anchor-id="many-genes">Many genes</h4>
 <p>We can run this for several genes. We pick the 10 genes with the highest variance of expression along the lineage:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-20_bc40b96046a0234d7aa70f41cc185ab7">
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>tg2 <span class="ot">&lt;-</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">300</span> )</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb45-11"><a href="#cb45-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
-<span id="cb45-12"><a href="#cb45-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
-<span id="cb45-13"><a href="#cb45-13" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">10</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>tg2 <span class="ot">&lt;-</span> <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="dv">300</span> )</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>..........</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>fits[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fits[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>              [,1]        [,2]        [,3]        [,4]        [,5]
 Cst3   0.035855217 0.036309867 0.036712272 0.037061176 0.037355581
@@ -536,54 +584,70 @@ Mt1    0.009045342 0.008951637 0.008849940 0.008740681 0.008624301</code></pre>
 </div>
 <p>This time, we have evaluated the smoothed curve at a grid of 300 values and got a matrix with one row per gene and one column for each of the 300 time points.</p>
 <p>To visualize this, we use a heatmap:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-21_e23d66e010a469c6ba7a3c40aed1b39b">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fits) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fits) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The genes have different dynamic range. Hence, we should divide each row by its maximum:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-22_2c5198ef3ca729250341b21774abef3b">
-<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
-<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitsz), <span class="at">yaxt=</span><span class="st">"n"</span> )</span>
-<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitsz) ), <span class="fu">rownames</span>(fitsz), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitsz), <span class="at">yaxt=</span><span class="st">"n"</span> )</span>
+<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitsz) ), <span class="fu">rownames</span>(fitsz), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Now, let’s also sort the rows by the positions of these maxima, and replace the colour scale:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-23_2401544b96859706ed7e2c1ecf292bac">
-<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
-<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
-<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The same now with the top hundred genes:</p>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-24_05d66f13d3c32193dee9ea78ca2d0bd0">
-<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
-<span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
-<span id="cb52-4"><a href="#cb52-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
-<span id="cb52-5"><a href="#cb52-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb52-6"><a href="#cb52-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
-<span id="cb52-7"><a href="#cb52-7" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
-<span id="cb52-8"><a href="#cb52-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
-<span id="cb52-9"><a href="#cb52-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
-<span id="cb52-10"><a href="#cb52-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
-<span id="cb52-11"><a href="#cb52-11" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a><span class="fu">LayerData</span>(seu)[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> lineage_clusters ] <span class="sc">%&gt;%</span></span>
+<span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a><span class="fu">rowVars</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb56-3"><a href="#cb56-3" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>( <span class="at">decreasing=</span><span class="cn">TRUE</span> ) <span class="sc">%&gt;%</span></span>
+<span id="cb56-4"><a href="#cb56-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="dv">100</span>) <span class="sc">%&gt;%</span> <span class="fu">names</span>() <span class="ot">-&gt;</span> genes</span>
+<span id="cb56-5"><a href="#cb56-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb56-6"><a href="#cb56-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sapply</span>( genes, <span class="cf">function</span>(gene) {</span>
+<span id="cb56-7"><a href="#cb56-7" aria-hidden="true" tabindex="-1"></a>  fit <span class="ot">&lt;-</span> <span class="fu">locfit</span>( <span class="fu">LayerData</span>(seu,<span class="st">"count"</span>)[gene,] <span class="sc">~</span> seu<span class="sc">$</span>pt, </span>
+<span id="cb56-8"><a href="#cb56-8" aria-hidden="true" tabindex="-1"></a>          <span class="at">weight=</span>seu<span class="sc">$</span>nCount_RNA, <span class="at">family=</span><span class="st">"poisson"</span> )</span>
+<span id="cb56-9"><a href="#cb56-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"."</span>) </span>
+<span id="cb56-10"><a href="#cb56-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg2 )</span>
+<span id="cb56-11"><a href="#cb56-11" aria-hidden="true" tabindex="-1"></a>} ) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="ot">-&gt;</span> fits</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>....................................................................................................</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="trajectory_cache/html/unnamed-chunk-25_c56bb6ab6890a9360a5a37d2dea25c98">
-<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
-<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
-<span id="cb54-3"><a href="#cb54-3" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
-<span id="cb54-4"><a href="#cb54-4" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a>fitsz <span class="ot">&lt;-</span> fits <span class="sc">/</span> <span class="fu">rowMaxs</span>(fits)</span>
+<span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>fitszs <span class="ot">&lt;-</span> fitsz[ <span class="fu">order</span>( <span class="sc">-</span><span class="fu">apply</span>( fitsz, <span class="dv">1</span>, which.max ) ), ]</span>
+<span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>( <span class="fu">t</span>(fitszs), <span class="at">yaxt=</span><span class="st">"n"</span>, <span class="at">col=</span>viridisLite<span class="sc">::</span><span class="fu">viridis</span>(<span class="dv">300</span>) )</span>
+<span id="cb58-4"><a href="#cb58-4" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>( <span class="dv">2</span>, <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">length.out=</span><span class="fu">nrow</span>(fitszs) ), <span class="fu">rownames</span>(fitszs), <span class="at">las=</span><span class="dv">2</span>, <span class="at">cex.axis=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="trajectory_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="576"></p>
+<div>
+<figure class="figure">
+<p><img src="trajectory_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="576"></p>
+</figure>
+</div>
 </div>
 </div>
 
@@ -671,10 +735,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -684,8 +765,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -697,7 +787,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -741,6 +954,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -766,6 +980,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -826,6 +1066,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 

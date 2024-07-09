@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,6 +93,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -95,6 +102,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -125,14 +159,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <p>Laplacian eigenmaps were introduced by Belkin and Niyogi in ther 2003 paper <em>Laplacian Eigenmaps for Dimensionality Reduction and Data Representation</em> (<a href="https://doi.org/10.1162/089976603321780317">doi:10.1162/089976603321780317</a>)</p>
 <p>We will try out this method here.</p>
 <section id="load-example-data" class="level4">
 <h4 class="anchored" data-anchor-id="load-example-data">Load example data</h4>
 <p>Before getting into the topic, we load the usual example data and performing standard preprocessing</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-1_b421dce2d589d92e17f1944502162e2d">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( tidyverse )</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Matrix )</span>
@@ -145,7 +181,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">cell.sep=</span><span class="st">","</span>, <span class="at">feature.sep=</span><span class="st">","</span>, <span class="at">skip.cell=</span><span class="dv">1</span>, <span class="at">skip.feature=</span><span class="dv">1</span>, </span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mtx.transpose=</span><span class="cn">TRUE</span>) <span class="ot">-&gt;</span> count_matrix</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-2_555e189ac5cfe19f6bdba6b638f648bf">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>count_matrix <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CreateSeuratObject</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">NormalizeData</span>() <span class="sc">%&gt;%</span></span>
@@ -220,7 +256,7 @@ Number of edges: 616069
 Running Louvain algorithm...
 Maximum modularity in 10 random starts: 0.9191
 Number of communities: 19
-Elapsed time: 4 seconds</code></pre>
+Elapsed time: 5 seconds</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
@@ -228,16 +264,16 @@ To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to
 This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:44:19 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+<pre><code>18:37:10 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:44:19 Read 18302 rows and found 20 numeric columns</code></pre>
+<pre><code>18:37:10 Read 18302 rows and found 20 numeric columns</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:44:19 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+<pre><code>18:37:10 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:44:19 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+<pre><code>18:37:10 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
@@ -247,23 +283,27 @@ This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>**************************************************|
-15:44:22 Writing NN index file to temp file /tmp/RtmpwAT4Yy/file50c1b7a618495
-15:44:22 Searching Annoy index using 1 thread, search_k = 3000
-15:44:29 Annoy recall = 100%
-15:44:29 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-15:44:31 Initializing from normalized Laplacian + noise (using RSpectra)
-15:44:34 Commencing optimization for 200 epochs, with 776086 positive edges
-15:44:44 Optimization finished</code></pre>
+18:37:14 Writing NN index file to temp file /tmp/RtmpRSPnMX/file14b2c74635519
+18:37:14 Searching Annoy index using 1 thread, search_k = 3000
+18:37:25 Annoy recall = 100%
+18:37:25 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+18:37:26 Initializing from normalized Laplacian + noise (using RSpectra)
+18:37:35 Commencing optimization for 200 epochs, with 776086 positive edges
+18:37:49 Optimization finished</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-3_b518bb320c548b4d9254ca30f3dbbdf6">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">UMAPPlot</span>( seu, <span class="at">label=</span><span class="cn">TRUE</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We subset the object to only the “lineage”:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-4_c70784686fdf5a35b7de3cc608bdc233">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>seu[ , seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">11</span> ) ] <span class="ot">-&gt;</span> seul</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>seul</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -292,11 +332,11 @@ Active assay: RNA (20830 features, 2000 variable features)
 <section id="calculating-the-neighborhood-graph" class="level4">
 <h4 class="anchored" data-anchor-id="calculating-the-neighborhood-graph">Calculating the neighborhood graph</h4>
 <p>We get for each cell its <span class="math inline">\(k=50\)</span> nearest neighbors:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-5_bec37ded94ac7f1e287e79c087ddbbc5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knn</span>( <span class="fu">Embeddings</span>(seul,<span class="st">"pca"</span>), <span class="at">k=</span><span class="dv">50</span> ) <span class="ot">-&gt;</span> nn</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We set <span class="math inline">\(k'=20\)</span> and hence take the <span class="math inline">\(sigma_i\)</span> from the 20th column of the NN distance table.</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-6_aae0c5b53ae6f0cc4f09cbcf4d71f286">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>sigma <span class="ot">&lt;-</span> nn<span class="sc">$</span>nn.dist[,<span class="dv">20</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we obtain the adjacency matrix as follows:</p>
@@ -312,7 +352,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </ul></li>
 </ul>
 <p>Here is the code:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-7_a9a9e724b78489d21dfbf5ccda4d4b79">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">nrow</span>(nn<span class="sc">$</span>nn.index)</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">map_dfr</span>( <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(nn<span class="sc">$</span>nn.index), <span class="cf">function</span>(i) </span>
@@ -331,7 +371,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 <p>Writing <span class="math inline">\(A\)</span> for this adjacency matrix and <span class="math inline">\(D\)</span> for the diagonal matrix of vertex degrees (<span class="math inline">\(D_{ij}=\delta_{ij}\sum_{j'}A_{ij'}\)</span>), we obtain the scaled graph Laplacian as <span class="math inline">\(L = I - D^{-1/2} A D^{-1/2}\)</span>.</p>
 <p>We get the smallest (by magnitude) eigenvalues and their eigenvectors.</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-8_0364c462a0b08b1f1ca1d254f4553704">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(adjm)), <span class="at">symmetric=</span><span class="cn">TRUE</span> )</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>scaled_laplacian <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span>, <span class="at">symmetric=</span><span class="cn">TRUE</span> ) <span class="sc">-</span> </span>
@@ -340,14 +380,14 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>RSpectra<span class="sc">::</span><span class="fu">eigs_sym</span>( scaled_laplacian, <span class="dv">5</span>, <span class="at">which=</span><span class="st">"SM"</span> ) <span class="ot">-&gt;</span> eig</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The smallest eigenvalue is, as expected, 0:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-9_075719ac3164fead1380ba7c942b2fd8">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>eig<span class="sc">$</span>values</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 6.819817e-03 2.641315e-03 2.175909e-03 4.455835e-04 4.656835e-16</code></pre>
 </div>
 </div>
 <p>Here is a plot of the data points, using as 2D coordinates the eigenvectors corresponding to the two smallest non-zero eigenvalues. We colour by Leiden cluster.</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-10_685288df0d8112b7fc7f3dce5f1465f2">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster=</span>seul<span class="sc">$</span>seurat_clusters) <span class="sc">%&gt;%</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -358,18 +398,26 @@ Active assay: RNA (20830 features, 2000 variable features)
 ℹ Using compatibility `.name_repair`.</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>For comparison, the UMAP, with the same colouring:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-11_da6344744aa5ef3f564b9be9f280b54b">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seul,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster=</span>seul<span class="sc">$</span>seurat_clusters) <span class="sc">%&gt;%</span></span>
 <span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>cluster), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -378,7 +426,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 <p>To make a Swiss role, prepare a biscuit batter and bake it in a tray to obtain a spongy rectangular biscuit cake. Put a layer of jam, then a thick layer of cream on top, the roll up the layered cake.</p>
 <p>The Swiss role has inspired a standard “test manifold” to study dimension reduction:</p>
 <p>First, we sample point from a 2D rectangle:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-12_37206a5ff9ff1a62786e79fc3f9f2ed1">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>( <span class="dv">1324</span> )</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -386,7 +434,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>y0 <span class="ot">&lt;-</span> <span class="fu">runif</span>( n, <span class="dv">0</span>, <span class="dv">6</span><span class="sc">*</span>pi )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, roll up the rectangle, using <span class="math inline">\(y_0\)</span> both as rolling angle and as radius. For the radius, add some noise to make the biscuit fluffy.</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-13_b055862842c32444e0c4412c7c88c45c">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>r <span class="ot">&lt;-</span> y0 <span class="sc">+</span> <span class="fu">runif</span>( n, <span class="dv">0</span>, <span class="dv">1</span> )</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="fu">cbind</span>(</span>
@@ -395,29 +443,37 @@ Active assay: RNA (20830 features, 2000 variable features)
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  r <span class="sc">*</span> <span class="fu">sin</span>( y0 ) ) <span class="ot">-&gt;</span> x3</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here’s a plot of the roll, looking head-on:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-14_d57304b68648989c1c1d7a6203b285f7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x3[,<span class="dv">2</span>], x3[,<span class="dv">3</span>], <span class="at">cex=</span>.<span class="dv">1</span>, <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>and from the side:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-15_f55971d39338487415e95c1986dc3ea6">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x3[,<span class="dv">1</span>], x3[,<span class="dv">2</span>], <span class="at">cex=</span>.<span class="dv">1</span>, <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Now, let’s embed this 3D object into a 7D space, by chosing three random but orthonormal basis vectors. To do so, we chose three random vectors</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-16_d148320f4c1ec86ba9131f62b6d2aa9d">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>random_vecs <span class="ot">&lt;-</span> <span class="fu">matrix</span>( <span class="fu">rnorm</span>(<span class="dv">21</span>), <span class="at">nrow =</span> <span class="dv">7</span>, <span class="at">ncol =</span> <span class="dv">3</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>then orthogonalize them using QR decomposition (which is essentially a sophisticated variant of Gram-Schmidt)</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-17_9d18971ee87349d3b94d4d82f831029c">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>random_orthonormal_basis <span class="ot">&lt;-</span> <span class="fu">qr.Q</span>( <span class="fu">qr</span>( random_vecs ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, let’s</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-18_f65bf9d05bf508ddc9ed624f52782115">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>x3 <span class="sc">%*%</span> <span class="fu">t</span>(random_orthonormal_basis) <span class="ot">-&gt;</span> x</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(x)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -432,7 +488,7 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>Can we recover the initial 2D sheet (x0, y0) using eigenmaps?</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-19_ed0fead580f08a8cdca5a9f8f8cdc7fc">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knn</span>( x, <span class="at">k=</span><span class="dv">30</span> ) <span class="ot">-&gt;</span> nn</span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>nn<span class="sc">$</span>nn.dist[,<span class="dv">18</span>] <span class="ot">-&gt;</span> sigma</span>
@@ -464,47 +520,63 @@ Active assay: RNA (20830 features, 2000 variable features)
 </div>
 </div>
 <p>The eigenmap, coloured by y0:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-20_4b1ff21db86fce78a857836d0d8cb5d5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>V4, <span class="at">y=</span>V3, <span class="at">col=</span>y0), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The eigenmap, coloured by x0:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-21_9a88865222752fc5559409f436b768b7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(eig<span class="sc">$</span>vectors) <span class="sc">%&gt;%</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>V4, <span class="at">y=</span>V3, <span class="at">col=</span>x0), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>How does UMAP fare?</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-22_194bae17f34f057ab2534cba85ce6584">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>uwot<span class="sc">::</span><span class="fu">umap</span>(x) <span class="ot">-&gt;</span> ump</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Colour by x0:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-23_cd80183199dcf8ecd4ca43ab3d58c4d1">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(ump) <span class="sc">%&gt;%</span></span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>V1, <span class="at">y=</span>V2, <span class="at">col=</span>x0), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>and by y0:</p>
-<div class="cell" data-hash="laplacian_eigenmap_cache/html/unnamed-chunk-24_32c13d228daddc9440276be62011970a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>(ump) <span class="sc">%&gt;%</span></span>
 <span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( x0, y0 ) <span class="sc">%&gt;%</span></span>
 <span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>V1, <span class="at">y=</span>V2, <span class="at">col=</span>y0), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="laplacian_eigenmap_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 
@@ -591,10 +663,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -604,8 +693,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -617,7 +715,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -661,6 +882,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -686,6 +908,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -746,6 +994,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 

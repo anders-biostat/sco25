@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,6 +93,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -95,6 +102,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -125,10 +159,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
 
+
 <p>Load example data</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-1_16e561aa8255bbd10075987593976b82">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>( {</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Seurat )</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Matrix )</span>
@@ -138,20 +174,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>count_matrix <span class="ot">&lt;-</span> <span class="fu">Read10X</span>( <span class="st">"data/pbmc3k/filtered_gene_bc_matrices/hg19/"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Log-normalize</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-2_7070ed509aa6b33077d646247a511ef5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>fractions <span class="ot">&lt;-</span> <span class="fu">t</span>( <span class="fu">t</span>(count_matrix) <span class="sc">/</span> <span class="fu">colSums</span>(count_matrix) )</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>expr <span class="ot">&lt;-</span> <span class="fu">log1p</span>( fractions <span class="sc">*</span> <span class="fl">1e4</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Highly variable genes:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-3_f1552e5d6bb400ecac3494ffbae2c869">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>hvg <span class="ot">&lt;-</span> <span class="fu">names</span>( <span class="fu">head</span>( <span class="fu">sort</span>( <span class="fu">rowVars</span>(fractions) <span class="sc">/</span> <span class="fu">rowMeans</span>(fractions), <span class="at">decreasing=</span><span class="cn">TRUE</span> ), <span class="dv">1000</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>As a preparation for PCA, subset expression to HVGs, then center:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-4_e17c24ef26db2c3ca3bd33301e3ef50a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>expr_centered <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>( expr[hvg,] <span class="sc">-</span> <span class="fu">rowMeans</span>( expr[hvg,] ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Centering means that all genes now have mean 0:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-5_09fe72130e712c8204926c9ba7562df0">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rowMeans</span>( expr_centered ) <span class="sc">%&gt;%</span> <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>         PPBP         FCRL2        CEP128          DOK3         ARVCF 
@@ -161,53 +197,53 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Optionally, we can also standardize the genes (i.e., divide by the standard deviation) so that they all have the same chance to influence the PCA. This point is optional in the sense that it is not required for the validity of the points we make below.</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-6_1442b7b457e3efefb698cb63226c68c3">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>expr_centered <span class="sc">/</span> <span class="fu">rowSds</span>( expr_centered ) <span class="ot">-&gt;</span> expr_stdd</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The centered expression matrix is what we supply to the PCA:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-7_ce56ffbcaec344321717ff75f4e34485">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> irlba<span class="sc">::</span><span class="fu">prcomp_irlba</span>( <span class="fu">t</span>( expr_stdd ), <span class="dv">20</span>, <span class="at">scale.=</span><span class="cn">FALSE</span>, <span class="at">center=</span><span class="cn">FALSE</span> )</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(pca<span class="sc">$</span>x) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(expr_stdd)</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(pca<span class="sc">$</span>rotation) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(expr_stdd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To remind us what the PCA does, let’s check that the PC score matrix <span class="math inline">\(X\)</span> (<code>pca$x</code>) can relly be obtained from the expression matrix <span class="math inline">\(Y\)</span> (<code>t(expr_stdd)</code>) via the loadings matrix <span class="math inline">\(R\)</span> (<code>pca$rotation</code>): <span class="math inline">\(YR=X\)</span></p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-8_454c113d2c6429c8ce2e7367b70c87d7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>( <span class="fu">t</span>(expr_stdd) <span class="sc">%*%</span> pca<span class="sc">$</span>rotation )[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>                        PC1        PC2         PC3        PC4        PC5
-AAACATACAACCAC-1 -4.4561722  0.5435771  0.18664296 -2.4192526 -0.1511151
-AAACATTGAGCTAC-1 -0.8250185  2.3765237  4.00707855  6.8221179  2.6804905
-AAACATTGATCAGC-1 -2.3312564 -1.3021276 -2.35138861 -2.1671548  3.3980910
-AAACCGTGCTTCCG-1 10.5114431  2.0959988 -0.09797461  0.2043448  0.3759040
-AAACCGTGTATGCG-1  1.6880213 -4.8213875 -6.75849700  4.1443049 -5.9821060</code></pre>
+<pre><code>                         PC1        PC2         PC3        PC4        PC5
+AAACATACAACCAC-1   4.4561722 -0.5435771 -0.18664296 -2.4192526 -0.1511151
+AAACATTGAGCTAC-1   0.8250185 -2.3765237 -4.00707855  6.8221179  2.6804905
+AAACATTGATCAGC-1   2.3312564  1.3021276  2.35138861 -2.1671548  3.3980910
+AAACCGTGCTTCCG-1 -10.5114431 -2.0959988  0.09797461  0.2043448  0.3759040
+AAACCGTGTATGCG-1  -1.6880213  4.8213875  6.75849700  4.1443049 -5.9821060</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>pca<span class="sc">$</span>x[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>                        PC1        PC2         PC3        PC4        PC5
-AAACATACAACCAC-1 -4.4561722  0.5435771  0.18664296 -2.4192526 -0.1511151
-AAACATTGAGCTAC-1 -0.8250185  2.3765237  4.00707855  6.8221179  2.6804905
-AAACATTGATCAGC-1 -2.3312564 -1.3021276 -2.35138861 -2.1671548  3.3980910
-AAACCGTGCTTCCG-1 10.5114431  2.0959988 -0.09797461  0.2043448  0.3759040
-AAACCGTGTATGCG-1  1.6880213 -4.8213875 -6.75849700  4.1443049 -5.9821060</code></pre>
+<pre><code>                         PC1        PC2         PC3        PC4        PC5
+AAACATACAACCAC-1   4.4561722 -0.5435771 -0.18664296 -2.4192526 -0.1511151
+AAACATTGAGCTAC-1   0.8250185 -2.3765237 -4.00707855  6.8221179  2.6804905
+AAACATTGATCAGC-1   2.3312564  1.3021276  2.35138861 -2.1671548  3.3980910
+AAACCGTGCTTCCG-1 -10.5114431 -2.0959988  0.09797461  0.2043448  0.3759040
+AAACCGTGTATGCG-1  -1.6880213  4.8213875  6.75849700  4.1443049 -5.9821060</code></pre>
 </div>
 </div>
 <p>If we rotate in the other direction, we can reconstruct the expression matrix: <span class="math inline">\(\hat Y=XR^\top\)</span></p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-9_04ca50101f4e2a68cd86462f6872d807">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">t</span>( ( pca<span class="sc">$</span>x <span class="sc">%*%</span> <span class="fu">t</span>(pca<span class="sc">$</span>rotation) ) )[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span> ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       AAACATACAACCAC-1 AAACATTGAGCTAC-1 AAACATTGATCAGC-1 AAACCGTGCTTCCG-1
-PPBP       -0.000254819       -0.1202796      -0.06299039       0.17825774
-FCRL2      -0.109199553        1.2709282      -0.09809186      -0.19768285
-CEP128      0.048676874        0.1927019      -0.01869790      -0.05543508
-DOK3       -0.305134607        0.1725547      -0.09066065       0.52251219
-ARVCF      -0.192669191       -0.2390528       0.14138719      -0.26052343
+PPBP       -0.000248572       -0.1202714      -0.06298759       0.17825671
+FCRL2      -0.109228782        1.2709143      -0.09810687      -0.19770283
+CEP128      0.048696357        0.1927259      -0.01868288      -0.05539346
+DOK3       -0.305141723        0.1725313      -0.09067840       0.52249741
+ARVCF      -0.192703935       -0.2391313       0.14135028      -0.26067403
        AAACCGTGTATGCG-1
-PPBP         0.05361365
-FCRL2        0.07628163
-CEP128      -0.04273337
-DOK3        -0.02864379
-ARVCF        0.20478180</code></pre>
+PPBP         0.05362323
+FCRL2        0.07637500
+CEP128      -0.04277980
+DOK3        -0.02862818
+ARVCF        0.20481912</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>expr_stdd[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -227,35 +263,47 @@ ARVCF       -0.03920291</code></pre>
 </div>
 <p>This reconstruction is, unsurprisingly, quite imperfect. After all, we truncated <span class="math inline">\(R\)</span> to only 20 PCs.</p>
 <p>Let’s compare epxression and reconstruction for a random cell:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-10_593bfd40e23b6fcff1da3d26eeaa23c7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cell <span class="ot">&lt;-</span> <span class="dv">123</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( expr_centered[,cell], ( pca<span class="sc">$</span>x <span class="sc">%*%</span> <span class="fu">t</span>(pca<span class="sc">$</span>rotation) )[cell,], <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Could be better. But let’s undo standardization and centering:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-11_37228fc3f2702412366f8c086fff0e53">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( </span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  expr[hvg,cell], </span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  ( pca<span class="sc">$</span>x <span class="sc">%*%</span> <span class="fu">t</span>(pca<span class="sc">$</span>rotation) )[cell,] <span class="sc">*</span> <span class="fu">rowSds</span>( expr_centered ) <span class="sc">+</span>  <span class="fu">rowMeans</span>( expr[hvg,] ), </span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Much better…</p>
 <p>Still, the preceding plot is actually the best one can get in some sense, and this is the reason we use the PCA.</p>
 <p>Maybe, we should make a plot, comparing one gene over all cells</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-12_1c0f3517d8c261e288e312852cdf2480">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>gene <span class="ot">&lt;-</span> hvg[<span class="dv">1</span>]</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( </span>
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>( expr[gene,]<span class="sc">&gt;</span><span class="dv">0</span>, expr[gene,], <span class="fu">runif</span>( <span class="fu">ncol</span>(expr), <span class="sc">-</span>.<span class="dv">3</span>, <span class="dv">0</span> ) ),</span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  ( pca<span class="sc">$</span>x <span class="sc">%*%</span> <span class="fu">t</span>(pca<span class="sc">$</span>rotation) )[,gene], <span class="at">main=</span>gene, <span class="at">cex=</span>.<span class="dv">3</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <section id="power-methods" class="level3">
@@ -264,7 +312,7 @@ ARVCF       -0.03920291</code></pre>
 <div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> irlba<span class="sc">::</span><span class="fu">prcomp_irlba</span>( <span class="fu">t</span>( expr_stdd ), <span class="dv">20</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>to ask the IRLBA package to perform a PCA on <code>t(expr_stdd)</code>.</p>
 <p>A PCA on a matrix <span class="math inline">\(Y\)</span> is performed by getting the eigenvectors of <span class="math inline">\(Y^\top Y\)</span>:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-13_d9de18ce2cdf6602e208c7a8c57c669f">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>yty <span class="ot">&lt;-</span> expr_stdd[hvg,] <span class="sc">%*%</span> <span class="fu">t</span>(expr_stdd[hvg,])</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>eig <span class="ot">&lt;-</span> irlba<span class="sc">::</span><span class="fu">partial_eigen</span>( yty, <span class="at">n=</span><span class="dv">20</span> )</span>
@@ -277,10 +325,14 @@ ARVCF       -0.03920291</code></pre>
 </div>
 </div>
 <p>The eigenvectors make up the rotation matrix. To check, let’s compare one column of the rotation matrix (say, the 3rd) with the corresponding eigenvector.</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-14_54258d3c5efaf9a509b2bb0ddfe08ee5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( pca<span class="sc">$</span>rotation[,<span class="dv">3</span>], eig<span class="sc">$</span>vectors[,<span class="dv">3</span>], <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The <code>irlba</code> function did not compute a full eigendecomposition but only calculated the first 20 eigenvectors. How can such a partial eigendecomposition be done?</p>
@@ -290,7 +342,7 @@ ARVCF       -0.03920291</code></pre>
 <p>We start with a random vector <span class="math inline">\(\mathbf{v}\)</span>. If we already knew the eigendecomposition of <span class="math inline">\(M\)</span>, we could use it as basis to expand <span class="math inline">\(\mathbf{v}\)</span> in it: <span class="math inline">\(\mathbf{v}=\sum_l v_l \mathbf{r}_l\)</span>.</p>
 <p>Applying <span class="math inline">\(M\)</span> gives <span class="math inline">\(m\mathbf{v}=\sum_l \lambda_l v_l \mathbf{r}_l\)</span> and applying <span class="math inline">\(M\)</span> <span class="math inline">\(n\)</span> times yields <span class="math display">\[ M^n\mathbf{v}=\sum_l \lambda_l^nv_l\mathbf{r}_l\]</span> As <span class="math inline">\(\lambda_1\)</span> is the largest eigenvalue, the first component of <span class="math inline">\(M^n\mathbf{v}\)</span> will grow faster with <span class="math inline">\(n\)</span> than the other components, and with increasing <span class="math inline">\(n\)</span>, the vector <span class="math inline">\(M^n\mathbf{v}\)</span> will become more and more collinear with the first eigenvector.</p>
 <p>We try this by starting with a random vector, and applying the matrix 5 times. To avoid numerical overflow, we normalize the vector to unit length after each operation. Then, we compare the vector with the actual first eigenvector (as calculated by irlba) with a scatter plot.</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-15_340398b1e31982e37befd091718cb6a2">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">rnorm</span>( <span class="fu">length</span>(hvg) )</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span> ) {</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> <span class="fu">as.vector</span>( yty <span class="sc">%*%</span> v )</span>
@@ -298,39 +350,79 @@ ARVCF       -0.03920291</code></pre>
 <span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>( pca<span class="sc">$</span>rotation[,<span class="st">"PC1"</span>], v, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">pch=</span><span class="st">"."</span> )</span>
 <span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-2.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-2.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-3.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-3.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-4.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-4.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-5.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-5.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-6.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-6.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-7.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-7.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-8.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-8.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-9.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-9.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-15-10.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-15-10.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>v1 <span class="ot">&lt;-</span> v</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>To get the second eigenvector, we do the same as before, but after each operation we subtract the vector’s projection onto the first eigenvector.</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-16_d100c05601b07231ba81186abc1d6624">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">rnorm</span>( <span class="fu">length</span>(hvg) )</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span> ) {</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> <span class="fu">as.vector</span>( yty <span class="sc">%*%</span> v )</span>
@@ -339,39 +431,79 @@ ARVCF       -0.03920291</code></pre>
 <span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>( pca<span class="sc">$</span>rotation[,<span class="st">"PC2"</span>], v, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-2.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-2.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-3.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-3.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-4.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-4.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-5.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-5.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-6.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-6.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-7.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-7.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-8.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-8.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-9.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-9.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-16-10.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-16-10.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>v2 <span class="ot">&lt;-</span> v</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>By projecting out the first two eigenvectors, we can get the third eigenvector:</p>
-<div class="cell" data-hash="pca_cache/html/unnamed-chunk-17_d819cb0e6837c2fd5de70d0526a6cd17">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>v <span class="ot">&lt;-</span> <span class="fu">rnorm</span>( <span class="fu">length</span>(hvg) )</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span> ) {</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  v <span class="ot">&lt;-</span> <span class="fu">as.vector</span>( yty <span class="sc">%*%</span> v )</span>
@@ -381,34 +513,74 @@ ARVCF       -0.03920291</code></pre>
 <span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>( pca<span class="sc">$</span>rotation[,<span class="st">"PC3"</span>], v, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-2.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-3.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-3.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-4.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-4.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-5.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-5.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-6.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-6.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-7.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-7.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-8.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-8.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-9.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-9.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="pca_files/figure-html/unnamed-chunk-17-10.png" class="img-fluid" width="288"></p>
+<div>
+<figure class="figure">
+<p><img src="pca_files/figure-html/unnamed-chunk-17-10.png" class="img-fluid figure-img" width="288"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>As states, this simple method tends to become numerically unstable quickly. However, most partial eigendecomposition algorithms actually used build onto this basic idea.</p>
@@ -496,10 +668,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -509,8 +698,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -522,7 +720,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -566,6 +887,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -591,6 +913,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -651,6 +999,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 

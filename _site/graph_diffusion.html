@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,6 +93,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -95,6 +102,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -125,12 +159,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <section id="load-example-data" class="level4">
 <h4 class="anchored" data-anchor-id="load-example-data">Load example data</h4>
 <p>Before getting into the topic, we load the usual example data and performing standard preprocessing</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-1_151db53ec94798c641b2d07f465f530b">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">suppressPackageStartupMessages</span>({</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( tidyverse )</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">library</span>( Matrix )</span>
@@ -143,7 +179,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">cell.sep=</span><span class="st">","</span>, <span class="at">feature.sep=</span><span class="st">","</span>, <span class="at">skip.cell=</span><span class="dv">1</span>, <span class="at">skip.feature=</span><span class="dv">1</span>, </span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">mtx.transpose=</span><span class="cn">TRUE</span>) <span class="ot">-&gt;</span> count_matrix</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-2_19751042025da3da4a76564a20aa302f">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>count_matrix <span class="sc">%&gt;%</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">CreateSeuratObject</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">NormalizeData</span>() <span class="sc">%&gt;%</span></span>
@@ -226,16 +262,16 @@ To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to
 This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:40:30 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+<pre><code>18:11:10 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:40:30 Read 18302 rows and found 20 numeric columns</code></pre>
+<pre><code>18:11:10 Read 18302 rows and found 20 numeric columns</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:40:30 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+<pre><code>18:11:10 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
-<pre><code>15:40:30 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+<pre><code>18:11:10 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
@@ -245,26 +281,30 @@ This message will be shown once per session</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>**************************************************|
-15:40:33 Writing NN index file to temp file /tmp/Rtmpj9yoNW/file5089569a3f4f5
-15:40:33 Searching Annoy index using 1 thread, search_k = 3000
-15:40:41 Annoy recall = 100%
-15:40:41 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
-15:40:42 Initializing from normalized Laplacian + noise (using RSpectra)
-15:40:47 Commencing optimization for 200 epochs, with 776086 positive edges
-15:40:59 Optimization finished</code></pre>
+18:11:13 Writing NN index file to temp file /tmp/RtmpfckbIP/file3e5711d0ee75d
+18:11:13 Searching Annoy index using 1 thread, search_k = 3000
+18:11:22 Annoy recall = 100%
+18:11:23 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+18:11:24 Initializing from normalized Laplacian + noise (using RSpectra)
+18:11:29 Commencing optimization for 200 epochs, with 776086 positive edges
+18:11:41 Optimization finished</code></pre>
 </div>
 </div>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-3_859bde0acba646fdd724555a47467f13">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">UMAPPlot</span>( seu, <span class="at">label=</span><span class="cn">TRUE</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="nearest-neighbors" class="level4">
 <h4 class="anchored" data-anchor-id="nearest-neighbors">Nearest neighbors</h4>
 <p>In this lesson, we will mainly work with the nearest neighbor data. Seurat has already calculated this but we do this again here:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-4_d1e6bfd9bd98333ad79b4b9c1ea4f419">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knn</span>( <span class="fu">Embeddings</span>( seu, <span class="st">"pca"</span> ), <span class="at">k=</span><span class="dv">15</span> ) <span class="ot">-&gt;</span> nn</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( nn<span class="sc">$</span>nn.index)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -289,7 +329,7 @@ This message will be shown once per session</code></pre>
 <section id="adjacency-matrix" class="level4">
 <h4 class="anchored" data-anchor-id="adjacency-matrix">Adjacency matrix</h4>
 <p>We next construct the adjacency matrix of the undirected nearest neighbor graph. To connect each vertex to its <span class="math inline">\(i\)</span>th nearest neighbor, we need the following edges:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-5_d6af7dde76679fc94c576781a19e1865">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">ncol</span>(seu)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>i <span class="ot">&lt;-</span> <span class="dv">3</span></span>
@@ -305,7 +345,7 @@ This message will be shown once per session</code></pre>
 </div>
 </div>
 <p>We can use this as indices of the matrix cells we want to set to one and thus construct a sparse matrix</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-6_8d3c075fb711e4fe5a464e599f191a1a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sparseMatrix</span>(  <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span>nn<span class="sc">$</span>nn.index[,i], <span class="at">x=</span><span class="dv">1</span>, <span class="at">dims=</span><span class="fu">c</span>(ncells,ncells) ) <span class="sc">%&gt;%</span> <span class="fu">summary</span>() <span class="sc">%&gt;%</span> <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>18302 x 18302 sparse Matrix of class "dgCMatrix", with 18302 entries
@@ -319,7 +359,7 @@ This message will be shown once per session</code></pre>
 </div>
 </div>
 <p>Adding up on such matrix for i running from 1 to 15 gives us the adjacency matrix</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-7_85d5edf332f863ebae5d34f24eeab7c8">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>adjm <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="fu">integer</span>(), <span class="at">j=</span><span class="fu">integer</span>(), <span class="at">x=</span><span class="fu">numeric</span>(), <span class="at">dims=</span><span class="fu">c</span>(ncells,ncells) ) <span class="co"># zero matrix</span></span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(nn<span class="sc">$</span>nn.index) ) {</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>   adjm <span class="ot">&lt;-</span> adjm <span class="sc">+</span> <span class="fu">sparseMatrix</span>(  <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span>nn<span class="sc">$</span>nn.index[,i], <span class="at">x=</span><span class="dv">1</span>, <span class="at">dims=</span><span class="fu">c</span>(ncells,ncells) ) }</span>
@@ -336,11 +376,11 @@ This message will be shown once per session</code></pre>
 </div>
 </div>
 <p>We make the matrix symmetric</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-8_b3b716d5f41f0b9c8770905582edf4bb">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>adjm <span class="ot">&lt;-</span>  adjm <span class="sc">+</span> <span class="fu">t</span>(adjm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, some matrix entries have become 2 rather than 1. We set everything back to 1:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-9_7815ec4159abab8315e2bb5c11a74ec7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>adjm<span class="sc">@</span>x[] <span class="ot">&lt;-</span> <span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we have an adjacency matrix for our nearest neighbor graph.</p>
@@ -350,18 +390,18 @@ This message will be shown once per session</code></pre>
 <p>We now define a random walk on our graph as follows: A “walker” (or: “token”) starts at a vertex <span class="math inline">\(i\)</span>. In each time step, it choses one of the vertex’s neighbors at random and moves there. What is the probability of the walker being on vertex <span class="math inline">\(j\)</span> after <span class="math inline">\(\ell\)</span> steps?</p>
 <p>We represent the walker being at vertex <span class="math inline">\(i\)</span> with the unit vector in direction <span class="math inline">\(i\)</span>, i.e., the vector <span class="math inline">\(\vec e_i\)</span>, with a 1 at component <span class="math inline">\(i\)</span> and zero elsewhere. The transition matrix <span class="math inline">\(T\)</span> with elements <span class="math inline">\(T_{ij}\)</span> tells us the probability of the walker moving to vertex <span class="math inline">\(j\)</span> in a step if it was before at vertex <span class="math inline">\(i\)</span>:</p>
 <p><span class="math display">\[ T_{ij} = A_{ij} \Big/ \sum_{j'}{A_{ij'}}. \]</span> The division normalizes the probabiliities by dividing by the number of neighbors that the walker can chose from.</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-10_ae7985852227286ff3ddae0a5b3c7f93">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>trm <span class="ot">&lt;-</span> adjm <span class="sc">/</span> <span class="fu">rowSums</span>(adjm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Check normalization:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-11_f7cd3062dc7d5d6963309668c8c1c453">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rowSums</span>(trm) <span class="sc">%&gt;%</span> <span class="fu">head</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1 1 1 1 1 1</code></pre>
 </div>
 </div>
 <p>To try this out, we pick a cell close to the point (-6,6) in the UMAP:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-12_116df8deca76840795df196661843836">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>cell <span class="ot">&lt;-</span> <span class="fu">which.min</span>( ( <span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>)[,<span class="dv">1</span>] <span class="sc">+</span> <span class="dv">6</span> )<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> ( <span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>)[,<span class="dv">2</span>] <span class="sc">-</span> <span class="dv">6</span> )<span class="sc">^</span><span class="dv">2</span> )</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>cell</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
@@ -370,7 +410,7 @@ This message will be shown once per session</code></pre>
 </div>
 </div>
 <p>Here’s a UMAP plot of this cell and it’s neighbors:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-13_ef029edaac5f779630f753615b19b752">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">w =</span> <span class="fu">case_when</span>(</span>
@@ -382,24 +422,28 @@ This message will be shown once per session</code></pre>
 <span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>w ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>( <span class="at">values=</span><span class="fu">c</span>(<span class="st">"darkgreen"</span>,<span class="st">"magenta"</span>,<span class="st">"#00000006"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Let’s perform 10 steps. We start with a sparse vector with a single 1 at the chosen cell’s index and 0 elsewhere, then multiply this 10 times with <span class="math inline">\(T\)</span>:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-14_8c27edaddfedcc268aeeda1769c800a8">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>u <span class="ot">&lt;-</span> <span class="fu">sparseVector</span>( <span class="at">i=</span>cell, <span class="at">x=</span><span class="dv">1</span>, <span class="at">length=</span>ncells )</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span> )</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  u <span class="ot">&lt;-</span> u <span class="sc">%*%</span> trm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We first check whether <code>u</code> is still normalized:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-15_a2114dd08265b0b9eb44d593320c86f8">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(u)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1</code></pre>
 </div>
 </div>
 <p>Here’s a plot of <span class="math inline">\(\vec{u}=\vec{e}_i^\top T^{10}\)</span>.</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-16_d3e6d8aa1965ec8bc23a31d14794a6af">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">u =</span> <span class="fu">as.vector</span>(u) ) <span class="sc">%&gt;%</span> </span>
@@ -407,7 +451,11 @@ This message will be shown once per session</code></pre>
 <span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>u ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -426,22 +474,22 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 &amp;= \underbrace{D^{-1/2} U \Lambda^\ell}_{=X_\ell} U^T D^{1/2}.
 \end{align} \]</span></p>
 <p>We construct <span class="math inline">\(D\)</span></p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-17_d4e5faf8f10a457ba2185aaa03110453">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>degdiag <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="fu">rowSums</span>(adjm) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We also write down <span class="math inline">\(D^{-1}\)</span>, <span class="math inline">\(D^{1/2}\)</span> and <span class="math inline">\(D^{-1/2}\)</span>:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-18_260e0160d97994dba812b1437953c95e">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>invdegdiag     <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span><span class="sc">/</span><span class="fu">rowSums</span>(adjm) )</span>
 <span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>sqrtdegdiag    <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(adjm)) )</span>
 <span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="ot">&lt;-</span> <span class="fu">sparseMatrix</span>( <span class="at">i=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">j=</span><span class="dv">1</span><span class="sc">:</span>ncells, <span class="at">x=</span><span class="dv">1</span><span class="sc">/</span><span class="fu">sqrt</span>(<span class="fu">rowSums</span>(adjm)) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now we get the eigensystem of <span class="math inline">\(\tilde T\)</span>, requesting the 100 eigenvalues that are largest by magnitude:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-19_a38239cda0444521b04b90f2667d3b5b">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>eigtrm <span class="ot">&lt;-</span> RSpectra<span class="sc">::</span><span class="fu">eigs_sym</span>( invsqrtdegdiag <span class="sc">%*%</span> adjm <span class="sc">%*%</span> invsqrtdegdiag, <span class="at">k=</span><span class="dv">100</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we can calculate <span class="math inline">\(\vec e_i^\top T^\ell\)</span> as follows:</p>
 <p>We calculate first <span class="math inline">\(X_\ell = D^{-1/2} U \Lambda^\ell\)</span>:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-20_541e9b18351860596f075e0e7ea1786d">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="sc">%*%</span> eigtrm<span class="sc">$</span>vectors <span class="sc">%*%</span> <span class="fu">diag</span>( eigtrm<span class="sc">$</span>values<span class="sc">^</span><span class="dv">10</span> ) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>() <span class="ot">-&gt;</span> x10</span>
 <span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(x10)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -450,19 +498,23 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 </div>
 </div>
 <p>Note that the matrix <span class="math inline">\(X_\ell\)</span> has been trimmed to only the first 50 columns. That is ok because the factor <span class="math inline">\(\Lambda^\ell\)</span> gets small quickly and therefore, the columns stay close to zero once we get past the first few on the left:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-21_9708f733d37b2e08ae8c22517e95dc85">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( <span class="fu">colSums</span>(x10<span class="sc">^</span><span class="dv">2</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Of course, this only works for <span class="math inline">\(\ell \gg 1\)</span> and with <span class="math inline">\(\ell=10\)</span> we may have only just enough steps for the approximation becoming valid.</p>
 <p>We take the row of <span class="math inline">\(X_\ell\)</span> that corresponds to our cell and multiply this with <span class="math inline">\(U^\top D^{1/2}\)</span> to get <span class="math inline">\(e_i^\top X_\ell U^\top D^{1/2}=e_i^\top T^\ell\)</span>:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-22_545e0a8138d0ba4a3ce8e76a542d4f51">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>x10[cell,] <span class="sc">%*%</span> <span class="fu">t</span>(eigtrm<span class="sc">$</span>vectors) <span class="sc">%*%</span> sqrtdegdiag <span class="sc">%&gt;%</span> <span class="fu">as.vector</span>() <span class="ot">-&gt;</span> u10</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here is a plot of that vector:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-23_939772416d8f833845016a1ec75bf884">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">u =</span> u10 ) <span class="sc">%&gt;%</span> </span>
@@ -470,17 +522,25 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>u ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>This looks quite similar as the plot we made before.</p>
 <p>Here’s a comparison of the two results</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-24_9e060da8f9c12673139c3a5c13e06a01">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( u, u10, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">cex=</span>.<span class="dv">2</span>, <span class="at">xlab=</span><span class="st">"exact calculation"</span>, <span class="at">ylab=</span><span class="st">"using top 100 eigenvectors"</span> )</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">col=</span><span class="st">"#00000020"</span> )</span>
 <span id="cb48-3"><a href="#cb48-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h=</span><span class="dv">0</span>, <span class="at">v=</span><span class="dv">0</span>, <span class="at">col=</span><span class="st">"#00000020"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -495,7 +555,7 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <p>The <em><span class="math inline">\(\ell\)</span>-steps diffusion distance</em> between cells <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span> is <span class="math display">\[ d_{\ell,ij} = \left\| e_i^\top X_\ell - e_j^\top X_\ell \right\|_2, \]</span></p>
 <p>Note that this is also <span class="math display">\[ d_{\ell,ij} = \left\| \left( e_i^\top T^\ell  - e_i^\top T^\ell\right) D^{-1/2} \right\|_2, \]</span> i.e., the components of the resulting probability vectors get reweighted by <span class="math inline">\(D^{-1/2}\)</span> before calculating the norm of the difference. If we accept this (somewhat unmotivated) reweighting, because it does not change much (as the vertex degrees do not differ that much from each other), we have a computationally efficient way of calculating <span class="math inline">\(d_{\ell,ij}\)</span>: All we need is <span class="math inline">\(X_\ell\)</span>.</p>
 <p>By calculating the Euclidean distance of every row of <span class="math inline">\(X_\ell\)</span> to the row for our selected cell, we get the <span class="math inline">\(\ell\)</span>-step diffusion distance of that cell to all other cells:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-25_32ea54101ce037c23c3b22f315d22460">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mutate</span>( <span class="at">d =</span> <span class="fu">sqrt</span>( <span class="fu">rowSums</span>( <span class="fu">t</span>( <span class="fu">t</span>(x10) <span class="sc">-</span> x10[cell,] )<span class="sc">^</span><span class="dv">2</span> ) ) ) <span class="sc">%&gt;%</span> </span>
@@ -504,11 +564,15 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>d ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Below, this plot is repeated for several values of <span class="math inline">\(\ell\)</span>. (But remember that our approximation error is larger for <span class="math inline">\(\ell \lesssim 10\)</span>.)</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-26_7910aed424f8cf5a7fcb575ac5bb3ab7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( l <span class="cf">in</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">100</span>, <span class="dv">300</span>, <span class="dv">1000</span> ) ) {</span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>  invsqrtdegdiag <span class="sc">%*%</span> eigtrm<span class="sc">$</span>vectors <span class="sc">%*%</span> <span class="fu">diag</span>( eigtrm<span class="sc">$</span>values<span class="sc">^</span>l ) <span class="sc">%&gt;%</span> <span class="fu">as.matrix</span>() <span class="ot">-&gt;</span> xm</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(</span>
@@ -521,22 +585,46 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>      <span class="fu">scale_color_viridis_c</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> <span class="fu">ggtitle</span>( <span class="fu">sprintf</span>( <span class="st">"%d steps"</span>, l ) ) )</span>
 <span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-2.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-3.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-4.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-5.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-6.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-26-6.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -545,41 +633,49 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <p>We now want to define a pseudotime along the lineage, from cluster 0 to cluster 2 and on to 7.</p>
 <p>We define a start cell and an end cell, by taking our cell (which is arguably somewhere in the middle) and find the cell with the largest distance to it within cluster 0 and 7, respectivelty.</p>
 <p>We will work with <span class="math inline">\(\ell=300\)</span>:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-27_05a35b911106a8e4a9e7a6a2184fdb90">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="dv">300</span></span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>xm <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>( invsqrtdegdiag <span class="sc">%*%</span> eigtrm<span class="sc">$</span>vectors <span class="sc">%*%</span> <span class="fu">diag</span>( eigtrm<span class="sc">$</span>values<span class="sc">^</span>l ) )</span>
 <span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="co"># distances to "intermediate" cell:</span></span>
 <span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">sqrt</span>( <span class="fu">rowSums</span>( <span class="fu">t</span>( <span class="fu">t</span>(xm) <span class="sc">-</span> xm[cell,] )<span class="sc">^</span><span class="dv">2</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here is the distance of the cells in cluster 0 (the astrocyte / neuronal stem cell cluster, where the lineage starts) to our intermediate cell:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-28_a58c5cd3a9976dc15d743806962cf3a5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>( d[seu<span class="sc">$</span>seurat_clusters<span class="sc">==</span><span class="dv">0</span>], <span class="dv">100</span> )</span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v=</span><span class="fl">0.0013</span>, <span class="at">col=</span><span class="st">"orange"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>It seems reasonable to assume that the cells at the steep cliff are the actual start of the lineage and the cells further out or some outliers (perhaps cells that started into another direction)</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-29_a7a47680f8370a05fba2b40796a141a0">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>start_cell <span class="ot">&lt;-</span> <span class="fu">which.min</span>( ( d <span class="sc">*</span> (seu<span class="sc">$</span>seurat_clusters<span class="sc">==</span><span class="dv">0</span>) <span class="sc">-</span> <span class="fl">0.0013</span> )<span class="sc">^</span><span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s also find a reasonable “end cell” in the neuron cluster 7:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-30_d96ab5d05d20dd7baff44e26069b95af">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>( d[seu<span class="sc">$</span>seurat_clusters<span class="sc">==</span><span class="dv">7</span>], <span class="dv">100</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Here’ let’s simply take the last cell:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-31_f160d6c8b038c3b5d205c25ed31d21d0">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>end_cell <span class="ot">&lt;-</span> <span class="fu">which.max</span>( d <span class="sc">*</span> (seu<span class="sc">$</span>seurat_clusters<span class="sc">==</span><span class="dv">7</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, get distances to these two cells:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-32_378df29800baa98a6e659de917e22e74">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>dist_to_start <span class="ot">&lt;-</span> <span class="fu">sqrt</span>( <span class="fu">rowSums</span>( <span class="fu">t</span>( <span class="fu">t</span>(xm) <span class="sc">-</span> xm[start_cell,] )<span class="sc">^</span><span class="dv">2</span> ) )</span>
 <span id="cb56-2"><a href="#cb56-2" aria-hidden="true" tabindex="-1"></a>dist_to_end <span class="ot">&lt;-</span> <span class="fu">sqrt</span>( <span class="fu">rowSums</span>( <span class="fu">t</span>( <span class="fu">t</span>(xm) <span class="sc">-</span> xm[end_cell,] )<span class="sc">^</span><span class="dv">2</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-33_5f97544e8e6b7239a4b290d01ffa70ed">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( </span>
 <span id="cb57-2"><a href="#cb57-2" aria-hidden="true" tabindex="-1"></a>  dist_to_start, dist_to_end, </span>
 <span id="cb57-3"><a href="#cb57-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster=</span>seu<span class="sc">$</span>seurat_clusters ) <span class="sc">%&gt;%</span></span>
@@ -592,11 +688,15 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb57-10"><a href="#cb57-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>dist_to_end, <span class="at">y=</span>dist_to_start, <span class="at">col=</span>type ), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span></span>
 <span id="cb57-11"><a href="#cb57-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Let’s rotate this plot by 45°:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-34_8206fdd79e6b76f36ecf2288f0a21c31">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb58"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb58-1"><a href="#cb58-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>( </span>
 <span id="cb58-2"><a href="#cb58-2" aria-hidden="true" tabindex="-1"></a>  dist_to_start, dist_to_end, </span>
 <span id="cb58-3"><a href="#cb58-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cluster=</span>seu<span class="sc">$</span>seurat_clusters ) <span class="sc">%&gt;%</span></span>
@@ -610,15 +710,19 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb58-11"><a href="#cb58-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> dist_to_start <span class="sc">-</span> dist_to_end, </span>
 <span id="cb58-12"><a href="#cb58-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> dist_to_start <span class="sc">+</span> dist_to_end, <span class="at">col=</span>type ), <span class="at">size=</span>.<span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Our new x-axis should be suitable as pseudotime:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-35_2aeb572b352c0182808b4b0862013a94">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>pseudotime <span class="ot">&lt;-</span> dist_to_start <span class="sc">-</span> dist_to_end</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s plot this into the UMAP:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-36_16e4da13a4509bf964352874726663bd">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb60"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb60-1"><a href="#cb60-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb60-2"><a href="#cb60-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb60-3"><a href="#cb60-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( pseudotime ) <span class="sc">%&gt;%</span> </span>
@@ -626,11 +730,15 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb60-5"><a href="#cb60-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>pseudotime ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb60-6"><a href="#cb60-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_gradientn</span>( <span class="at">colours=</span>rje<span class="sc">::</span><span class="fu">cubeHelix</span>(<span class="dv">100</span>,<span class="at">r=</span><span class="dv">4</span>) ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-36-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Before we dive into this, let’s also plot the <code>y axis of</code>dist+to+start+dfist+to_end`:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-37_0bd84f22a6e450fefa105c2b38bfcbb4">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb61-2"><a href="#cb61-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb61-3"><a href="#cb61-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">distsum =</span> dist_to_start <span class="sc">+</span> dist_to_end ) <span class="sc">%&gt;%</span> </span>
@@ -638,7 +746,11 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb61-5"><a href="#cb61-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>distsum ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb61-6"><a href="#cb61-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_gradient2</span>( <span class="at">midpoint =</span> .<span class="dv">01</span>, <span class="at">limits =</span> <span class="fu">c</span>(<span class="dv">0</span>,.<span class="dv">02</span>), <span class="at">oob=</span>scales<span class="sc">::</span>oob_squish )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-37-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Comparing with the plot above, our pseudotime is valid for the red, white and perhaps the very faintly blue regions.</p>
@@ -647,18 +759,18 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <h3 class="anchored" data-anchor-id="comaprison-to-principal-curve">Comaprison to principal curve</h3>
 <p>Let’s recreate the principal curve that we used before for pseudotime.</p>
 <p>As before, we calculate the principal curve using the cells in the lineage as input, without the cells from the two cycling cluster, and use smoothing splines with 10 degrees of freedom.</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-38_58af10fcb1b9cf5571f9c3cbd3766807">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb62"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb62-1"><a href="#cb62-1" aria-hidden="true" tabindex="-1"></a>princurve<span class="sc">::</span><span class="fu">principal_curve</span>(</span>
 <span id="cb62-2"><a href="#cb62-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>)[ seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span> ), ],</span>
 <span id="cb62-3"><a href="#cb62-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">df =</span> <span class="dv">10</span>, <span class="at">approx_points=</span><span class="dv">1000</span> ) <span class="ot">-&gt;</span> prc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We again project the remaining cells onto outo the cells on the curve and assign to them the same pseudotime as the one of the nearest point on the curve:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-39_fdb93d377f2a7a42aa6557f6f186beb5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a>FNN<span class="sc">::</span><span class="fu">get.knnx</span>( prc<span class="sc">$</span>s, <span class="fu">Embeddings</span>(seu,<span class="st">"pca"</span>), <span class="at">k=</span><span class="dv">1</span> ) <span class="ot">-&gt;</span> prc_nn</span>
 <span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a>pseudotime_prc <span class="ot">&lt;-</span> prc<span class="sc">$</span>lambda[ prc_nn<span class="sc">$</span>nn.index ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here is the principal-curve-based pseudotime:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-40_92e545211d2c196e9f08f9f3dfe34b2b">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
 <span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( pseudotime_prc ) <span class="sc">%&gt;%</span> </span>
@@ -666,11 +778,15 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>pseudotime_prc ), <span class="at">size=</span>.<span class="dv">3</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>() <span class="sc">+</span></span>
 <span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_gradientn</span>( <span class="at">colours=</span>rje<span class="sc">::</span><span class="fu">cubeHelix</span>(<span class="dv">100</span>,<span class="at">r=</span><span class="dv">4</span>) ) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-40-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We can also compare the two:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-41_33f958b6ff7b5d4bc3e582567183a284">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt_diffusion =</span> pseudotime,</span>
 <span id="cb65-3"><a href="#cb65-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt_prc =</span> <span class="sc">-</span>pseudotime_prc,</span>
@@ -684,11 +800,15 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb65-11"><a href="#cb65-11" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb65-12"><a href="#cb65-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt_diffusion, <span class="at">y=</span>pt_prc, <span class="at">col=</span>type ), <span class="at">size=</span>.<span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-41-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Here, teh same, but coloured for cluster (using only the lineage cells). See below for a UMAP coloured in the same manner.</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-42_c94c7ccf930543376ebc53227838434f">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb66"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb66-1"><a href="#cb66-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
 <span id="cb66-2"><a href="#cb66-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt_diffusion =</span> pseudotime,</span>
 <span id="cb66-3"><a href="#cb66-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">pt_prc =</span> <span class="sc">-</span>pseudotime_prc,</span>
@@ -699,7 +819,11 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb66-8"><a href="#cb66-8" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb66-9"><a href="#cb66-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>pt_diffusion, <span class="at">y=</span>pt_prc, <span class="at">col=</span>cluster ), <span class="at">size=</span>.<span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-42-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-42-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -708,18 +832,18 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <p>The space of <span class="math inline">\(X_\ell\)</span> can also be interpreted as an alternative to the feature space, called “diffusion space”. Using the first few components provides a dimension redution, the “diffusion map”.</p>
 <p>For this to work well, our neighborhood graph should be connected.</p>
 <p>Ours has two connection components, however, as is evident from the fact that our transition matrix has two unit eigenvalues:</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-43_2297fed197dffa8264520b3debbcb92a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb67"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb67-1"><a href="#cb67-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( eigtrm<span class="sc">$</span>values )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 1.0000000 1.0000000 0.9998821 0.9993076 0.9991653 0.9984226</code></pre>
 </div>
 </div>
 <p>To make our live easier, let’s reduce the data to only the lineage cells</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-44_19b78a1ba2ff7dc14ce3157305d2dc84">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb69"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb69-1"><a href="#cb69-1" aria-hidden="true" tabindex="-1"></a>in_lineage <span class="ot">&lt;-</span> seu<span class="sc">$</span>seurat_clusters <span class="sc">%in%</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">5</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">7</span>, <span class="dv">6</span>, <span class="dv">11</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Subset the adjacency matrix to these and recalculate the transition matrix and its spectrum</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-45_feffb6c296aa0cf1b709954a5443b8bb">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb70"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb70-1"><a href="#cb70-1" aria-hidden="true" tabindex="-1"></a>adjml <span class="ot">&lt;-</span> adjm[ in_lineage, ][ , in_lineage ]</span>
 <span id="cb70-2"><a href="#cb70-2" aria-hidden="true" tabindex="-1"></a>ncells <span class="ot">&lt;-</span> <span class="fu">nrow</span>(adjml)</span>
 <span id="cb70-3"><a href="#cb70-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -728,7 +852,7 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 <span id="cb70-6"><a href="#cb70-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb70-7"><a href="#cb70-7" aria-hidden="true" tabindex="-1"></a>x300 <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>( invsqrtdegdiag <span class="sc">%*%</span> eigtrm<span class="sc">$</span>vectors <span class="sc">%*%</span> <span class="fu">diag</span>( eigtrm<span class="sc">$</span>values<span class="sc">^</span><span class="dv">300</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-46_9c07d47fe1e613e63c023f9301819d7d">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb71"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb71-1"><a href="#cb71-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( x300[,<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span> ] ) <span class="sc">%&gt;%</span></span>
 <span id="cb71-2"><a href="#cb71-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster =</span> seu<span class="sc">$</span>seurat_clusters[in_lineage] ) <span class="sc">%&gt;%</span></span>
 <span id="cb71-3"><a href="#cb71-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
@@ -739,17 +863,25 @@ T^\ell &amp;= \left(D^{-1} A\right)^\ell \\
 ℹ Using compatibility `.name_repair`.</code></pre>
 </div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-46-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-46-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>For comparison, the UMAP with the same c</p>
-<div class="cell" data-hash="graph_diffusion_cache/html/unnamed-chunk-47_393285d49fe7614433efcd15b6d8f80b">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="fu">as_tibble</span>( <span class="fu">Embeddings</span>(seu,<span class="st">"umap"</span>)[in_lineage,] ) <span class="sc">%&gt;%</span></span>
 <span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="fu">add_column</span>( <span class="at">cluster =</span> seu<span class="sc">$</span>seurat_clusters[in_lineage] ) <span class="sc">%&gt;%</span></span>
 <span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>ggplot <span class="sc">+</span></span>
 <span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>( <span class="fu">aes</span>( <span class="at">x=</span>umap_1, <span class="at">y=</span>umap_2, <span class="at">col=</span>cluster ), <span class="at">size=</span>.<span class="dv">1</span> ) <span class="sc">+</span> <span class="fu">coord_equal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="graph_diffusion_files/figure-html/unnamed-chunk-47-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -849,10 +981,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -862,8 +1011,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -875,7 +1033,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -919,6 +1200,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -944,6 +1226,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -1004,6 +1312,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 

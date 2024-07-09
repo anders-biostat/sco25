@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,6 +93,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
@@ -95,6 +102,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -125,7 +159,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
+
 
 <section id="motivation" class="level3">
 <h3 class="anchored" data-anchor-id="motivation">Motivation</h3>
@@ -137,29 +173,37 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>In practice, the problem usually arises with high-dimensional data, but to discuss approaches to solve it, it might be better to use example data that lives in a 2D space, as this is easy to visualize.</p>
 <p>The following code uses splines to construct a curve that will serve as example.</p>
 <p>We first set a number of control points:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-1_b1152fda713e3973bd6b409e029b7bfe">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>knots <span class="ot">&lt;-</span> <span class="fu">cbind</span>(</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">x =</span> <span class="fu">c</span>( <span class="fl">0.1</span>, <span class="fl">1.0</span>, <span class="fl">1.7</span>, <span class="fl">2.5</span>, <span class="fl">2.8</span>, <span class="fl">2.4</span>, <span class="fl">2.2</span>, <span class="fl">3.2</span>, <span class="fl">4.0</span>, <span class="fl">5.2</span> ),</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">y =</span> <span class="fu">c</span>( <span class="fl">1.0</span>, <span class="fl">1.2</span>, <span class="fl">1.7</span>, <span class="fl">1.9</span>, <span class="fl">1.5</span>, <span class="fl">1.1</span>, <span class="fl">0.2</span>, <span class="fl">0.6</span>, <span class="fl">1.1</span>, <span class="fl">1.2</span> ) )</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( knots, <span class="at">type=</span><span class="st">"b"</span>, <span class="at">asp=</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>Next, we use these points as guides to get a smooth (continuous and differentiable) curve:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-2_0562357f43c1d130ab907cbe5f923f1c">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>spline_basis <span class="ot">&lt;-</span> splines<span class="sc">::</span><span class="fu">bs</span>( <span class="fu">seq</span>( <span class="dv">0</span>, <span class="dv">1</span>, <span class="at">l=</span><span class="dv">1000</span>), <span class="at">df=</span><span class="fu">nrow</span>(knots), <span class="at">intercept=</span><span class="cn">TRUE</span> )</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( knots, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We will skip over an explanation how the <code>bs</code> function is used in this example to construct x and y coordinates, as out goal is just to get some non-trivial curve.</p>
 <p>Now we select random points along this curve (sampling the curve uniformly), and add some Gaussian noise to the 2D coordinates.</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-3_88a6979239a4ab830911b806ff79d9ac">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>( <span class="dv">13245768</span> )</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>t <span class="ot">&lt;-</span> <span class="fu">runif</span>( <span class="dv">1000</span> )</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -167,27 +211,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">matrix</span>( <span class="fu">rnorm</span>( <span class="dv">2000</span>, <span class="dv">0</span> , .<span class="dv">1</span>), <span class="at">ncol=</span><span class="dv">2</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>This will be our data. We will use it instead of our usual PCA scores. Here’s a plot of the data, with the original curve as dahsed line.</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-4_3aa452df3c8a36e561bd926c523b4213">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="st">"gray"</span>, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="first-try-with-princurve" class="level3">
 <h3 class="anchored" data-anchor-id="first-try-with-princurve">First try with princurve</h3>
 <p>Can we reconstruct the curve from the data? Let’s try, using the “princurve” package, which implements the method we will discuss below:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-5_d829b802247b5d02459ac7aea2a8f259">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>prc <span class="ot">&lt;-</span> princurve<span class="sc">::</span><span class="fu">principal_curve</span>( x )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here’s the curve that we got (in brown):</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-6_efa1798417dbf7326e00deccb4899ac2">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="st">"gray"</span>, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( prc<span class="sc">$</span>s[ prc<span class="sc">$</span>ord, ], <span class="at">col=</span><span class="st">"brown"</span> )</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>The principal curve algorithm tries to find a curve <span class="math inline">\(\mathbf{f}:[0,1]\rightarrow\mathbb{R}^n\)</span></p>
@@ -202,14 +254,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ul>
 <p>By default, <code>princurve</code> uses spline regression (as provided by the R basis function <code>stats::smooth.spline</code>). (Again, we unfortunately don’t have the time to discuss spline regression.)</p>
 <p>To get a better result than what we just saw, we should increase the number of degrees of freedom (i.e., number of knots) for the spline smoother:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-7_3008f5a27303598568bd5fb3a79b8dc8">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>prc <span class="ot">&lt;-</span> princurve<span class="sc">::</span><span class="fu">principal_curve</span>( x, <span class="at">df=</span><span class="dv">10</span> )</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="st">"gray"</span>, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( prc<span class="sc">$</span>s[ prc<span class="sc">$</span>ord, ], <span class="at">col=</span><span class="st">"brown"</span> )</span>
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -220,61 +276,77 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="anchored" data-anchor-id="initialization">Initialization</h4>
 <p>We first need an initial guess for an assignment of points to pseudotime values.</p>
 <p>To this end, we perform a PCA on the data</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-8_7fbda1a5ff02f41369cd9556eae06b4f">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>pca <span class="ot">&lt;-</span> <span class="fu">prcomp</span>( x )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here’s the direction of the first PC:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-9_5eca966f414260a07c81628b4195759f">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="st">"gray"</span>, <span class="at">asp=</span><span class="dv">1</span> )</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">a =</span> <span class="fl">1.5</span>, <span class="at">b =</span> pca<span class="sc">$</span>rotation[<span class="st">"y"</span>,<span class="st">"PC1"</span>] <span class="sc">/</span> pca<span class="sc">$</span>rotation[<span class="st">"x"</span>,<span class="st">"PC1"</span>] )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>  <span class="co"># abline draws a line with intercept a (here chosen arbitrarily ) and</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">#    slope b (here taken from principal component 1)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The scores along PC1 are the orthogonal projections of the data points onto thie line. This will be our initial guess for the pseudotime, i.e., serve as a first rough ordering of the data points:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-10_e7c3dec5393703143ca5abfd3b5327e0">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>pt <span class="ot">&lt;-</span> pca<span class="sc">$</span>x[,<span class="st">"PC1"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-11_7ec62a036a94670013eaf0edee15a23a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>scale_colors <span class="ot">&lt;-</span> <span class="cf">function</span>(t) </span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  rje<span class="sc">::</span><span class="fu">cubeHelix</span>(<span class="dv">130</span>,<span class="at">r=</span><span class="dv">4</span>)[ <span class="fu">ceiling</span>( ( t <span class="sc">-</span> <span class="fu">min</span>(t) ) <span class="sc">/</span> ( <span class="fu">max</span>(t) <span class="sc">-</span> <span class="fu">min</span>(t) ) <span class="sc">*</span> <span class="dv">99</span> ) <span class="sc">+</span> <span class="dv">1</span> ]</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="fu">scale_colors</span>(pt), <span class="at">asp=</span><span class="dv">1</span>, <span class="at">cex=</span>.<span class="dv">5</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="regression-step" class="level4">
 <h4 class="anchored" data-anchor-id="regression-step">Regression step</h4>
 <p>Now, consider each coordinate dimension <span class="math inline">\(i\)</span> of the data separately, and perform a smoothing spline regression of the <span class="math inline">\(i\)</span>-th component of the data vectors onto the pseudotime:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-12_6b97376117bb2a8c084aefe0e9947bbe">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fits <span class="ot">&lt;-</span> <span class="fu">lapply</span>( <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="cf">function</span>(i) <span class="fu">smooth.spline</span>( pt, x[,i], <span class="at">df=</span><span class="dv">10</span> ) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here’s a plot of the fits:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-13_bc3ad798f6d7ef40d8e1a2591b1dac73">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span> ) {</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>( pt, x[,i], <span class="at">asp=</span><span class="dv">1</span>, <span class="at">cex=</span>.<span class="dv">2</span>, <span class="at">main=</span>i )</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>( fits[[i]], <span class="at">col=</span><span class="st">"red"</span> )</span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-13-2.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-13-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>We construct a fine grid of equispace pseudotime values, that extends a bit outwards the interval covered by our current pseudotime values:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-14_f7eeb4410580fba48774bb9bcd6ccb30">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>tg <span class="ot">&lt;-</span> <span class="fu">seq</span>(</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">from =</span> <span class="fu">min</span>(pt) <span class="sc">-</span> .<span class="dv">3</span> <span class="sc">*</span> ( <span class="fu">max</span>(pt) <span class="sc">-</span> <span class="fu">min</span>(pt) ),</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">to   =</span> <span class="fu">max</span>(pt) <span class="sc">+</span> .<span class="dv">3</span> <span class="sc">*</span> ( <span class="fu">max</span>(pt) <span class="sc">-</span> <span class="fu">min</span>(pt) ),</span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">length.out =</span> <span class="dv">10000</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we calculate the curve points at these pseudotime points</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-15_276295feee50c1238e42966589f7f1f3">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>curve <span class="ot">&lt;-</span> <span class="fu">sapply</span>( fits, <span class="cf">function</span>(fit)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">predict</span>( fit, tg )<span class="sc">$</span>y )</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -290,11 +362,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Here’s</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-16_5aaa985c0112bb92979cd690a4c11790">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="st">"gray"</span>, <span class="at">asp=</span><span class="dv">1</span>, <span class="at">cex=</span>.<span class="dv">5</span> )</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( curve, <span class="at">col=</span><span class="st">"red"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -302,7 +378,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h4 class="anchored" data-anchor-id="projection-step">Projection step</h4>
 <p>Now, we project each data point onto the curve, i.e., we find the curve point closest to the data point.</p>
 <p>We use the fast nearest neighbors (FNN) package for this. Its function <code>get.knnx</code> takes two matrices, denoted “data” and “query” and considers the rows of these matrices as data points. Then, it searches for each query point its nearest neighbors among the data points.</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-17_dd843638438ef119fb6fceea9f1f8809">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>nn <span class="ot">&lt;-</span> FNN<span class="sc">::</span><span class="fu">get.knnx</span>( <span class="at">data=</span>curve, <span class="at">query=</span>x, <span class="at">k=</span><span class="dv">1</span> )</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(nn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -314,7 +390,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Now, each data point has an index into our 3000 curve points that shows us where it is projected to.</p>
 <p>To find pseudotime, we need to find out how away far the data point’s projection image is along the curve. Hence, we calculate the distance from each curve point to the next:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-18_405aa5f44e9789f253a44783f01dc0d7">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>curve_segment_lengths <span class="ot">&lt;-</span> <span class="fu">sqrt</span>( </span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowSums</span>( ( curve[ <span class="dv">2</span><span class="sc">:</span><span class="fu">nrow</span>(curve), ] <span class="sc">-</span> curve[ <span class="dv">1</span><span class="sc">:</span>(<span class="fu">nrow</span>(curve)<span class="sc">-</span><span class="dv">1</span>), ] )<span class="sc">^</span><span class="dv">2</span> ) )</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>                               </span>
@@ -325,7 +401,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>The cumulative sum of this vector gives us the distance of erach curve point to the start of the curve, measured along the curve:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-19_aae80bf4a59e4a8b4c7cd5aad8ca56f1">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>distance_from_start <span class="ot">&lt;-</span> <span class="fu">c</span>( <span class="dv">0</span>, <span class="fu">cumsum</span>(curve_segment_lengths) ) </span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>( distance_from_start )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -335,23 +411,27 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <p>Now, we can assign a pseudotime to each data point</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-20_4629780bed4470d09f2ed34f18d5386c">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>pt <span class="ot">&lt;-</span> distance_from_start[ nn<span class="sc">$</span>nn.index ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here is now the result of this first iteration, with our fitted curve in red, the true curve in blue, and the data points coloured by pseudotime:</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-21_b9caddce8097d7812e83c0b8b2f450b5">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>( x, <span class="at">col=</span><span class="fu">scale_colors</span>(pt), <span class="at">asp=</span><span class="dv">1</span>, <span class="at">cex=</span>.<span class="dv">5</span> )</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( curve, <span class="at">col=</span><span class="st">"red"</span> )</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="next-iteration" class="level4">
 <h4 class="anchored" data-anchor-id="next-iteration">Next iteration</h4>
 <p>We rerun the two steps to get the next iteration</p>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-22_60d3c0d63e81b7429fd936ec0bc9c4a3">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Regression step:</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Spline smoothing of individual coordinates</span></span>
@@ -362,10 +442,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>( fits[[i]], <span class="at">col=</span><span class="st">"red"</span> )</span>
 <span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-2.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate curve along fine grid</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>tg <span class="ot">&lt;-</span> <span class="fu">seq</span>(</span>
@@ -396,13 +484,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( curve, <span class="at">col=</span><span class="st">"red"</span> )</span>
 <span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-3.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-22-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
 <section id="putting-it-all-together" class="level4">
 <h4 class="anchored" data-anchor-id="putting-it-all-together">Putting it all together</h4>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-23_4e9efe92cc7f7579ec9e3907ad380d0a">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>principal_curve_iteration <span class="ot">&lt;-</span> <span class="cf">function</span>( x, <span class="at">pt=</span><span class="cn">NULL</span>, <span class="at">curve=</span><span class="cn">NULL</span> ) {</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>( <span class="fu">is.null</span>(pt) ) {</span>
@@ -437,7 +529,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb29-32"><a href="#cb29-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>( <span class="at">pt=</span>pt, <span class="at">curve=</span>curve )</span>
 <span id="cb29-33"><a href="#cb29-33" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell" data-hash="principal_curves_cache/html/unnamed-chunk-24_bb2c766ad036563d7c447702d30d7940">
+<div class="cell">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>l <span class="ot">=</span> <span class="fu">list</span>( <span class="at">pt=</span><span class="cn">NULL</span>, <span class="at">curve=</span><span class="cn">NULL</span> )</span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>( iter <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span> ) {</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -448,22 +540,46 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lines</span>( spline_basis <span class="sc">%*%</span> knots, <span class="at">col=</span><span class="st">"blue"</span>, <span class="at">lty=</span><span class="st">"dashed"</span> )</span>
 <span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-2.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-3.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-4.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-5.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 <div class="cell-output-display">
-<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-6.png" class="img-fluid" width="672"></p>
+<div>
+<figure class="figure">
+<p><img src="principal_curves_files/figure-html/unnamed-chunk-24-6.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -561,10 +677,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -574,8 +707,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -587,7 +729,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -631,6 +896,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -656,6 +922,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -716,6 +1008,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 

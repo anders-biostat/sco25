@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.3.450">
+<meta name="generator" content="quarto-1.4.555">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -22,7 +22,7 @@ ul.task-list li input[type="checkbox"] {
 }
 /* CSS for syntax highlighting */
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -57,7 +57,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
 <script src="site_libs/quarto-search/fuse.min.js"></script>
@@ -78,7 +78,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   "collapse-after": 3,
   "panel-placement": "start",
   "type": "textbox",
-  "limit": 20,
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
   "language": {
     "search-no-results-text": "No results",
     "search-matching-documents-text": "matching documents",
@@ -87,18 +93,46 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-more-match-text": "more match in this document",
     "search-more-matches-text": "more matches in this document",
     "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
     "search-detached-cancel-button-title": "Cancel",
     "search-submit-button-title": "Submit",
     "search-label": "Search"
   }
 }</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
+
 <script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 <script src="https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js" crossorigin="anonymous"></script>
 
   <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -129,10 +163,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </div>
   
 
+
 </header>
 
+
 <p>Here, we reimplement UMAP</p>
-<div class="cell" data-execution_count="1">
+<div id="ffd6a21c-fa3a-4c03-8edf-e47b78af5bad" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> scipy.sparse</span>
@@ -159,7 +195,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="example-data">Example data</h3>
 <p>We use again the IFNAGRKO dataset. Log-normalization and PCA has already been performed.</p>
 <p>Here is the result of the PCA:</p>
-<div class="cell" data-execution_count="2">
+<div id="61d301dc-22ce-4183-814f-8c6e26575948" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> h5py.File(<span class="st">"../ifnagrko_pca.h5"</span>) <span class="im">as</span> f:</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    pca <span class="op">=</span> f[<span class="st">'pca'</span>][:].transpose()</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -184,7 +220,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="standard-umap">Standard UMAP</h3>
 <p>We use the UMAP package to perform the transformation.</p>
 <p>Note that we stick to default values except for one thing: We have fixed the hyperparameters <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> both to 1.</p>
-<div class="cell" data-execution_count="3">
+<div id="5f0d81f4-ad58-4b9f-a1d7-ef9e869e7095" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ump0 <span class="op">=</span> umap.UMAP( a<span class="op">=</span><span class="dv">1</span>, b<span class="op">=</span><span class="dv">1</span>, verbose<span class="op">=</span><span class="va">True</span> ).fit( pca )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>UMAP(a=1, b=1, verbose=True)
@@ -208,11 +244,15 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 </div>
 <p>Here’s a scatter plot of the result</p>
-<div class="cell" data-execution_count="4">
+<div id="5a8f4ace-42e1-433c-b2f4-46fd27bbc6c6" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump0.embedding_[:,<span class="dv">0</span>], ump0.embedding_[:,<span class="dv">1</span>], s<span class="op">=</span><span class="fl">.1</span> )</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-5-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-5-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 <hr>
@@ -221,12 +261,12 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <section id="find-nearest-neighbors" class="level3">
 <h3 class="anchored" data-anchor-id="find-nearest-neighbors">Find nearest-neighbors</h3>
 <p>We use a <a href="https://en.wikipedia.org/wiki/K-d_tree">kd tree</a> to find the 15 nearest neighbors:</p>
-<div class="cell" data-execution_count="5">
+<div id="568ed491-2ad9-46b1-ac78-c2310508bef3" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>nnbgs <span class="op">=</span> <span class="dv">14</span></span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>nndist, nnidx <span class="op">=</span> scipy.spatial.KDTree( pca ).query( pca, k<span class="op">=</span>nnbgs<span class="op">+</span><span class="dv">1</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><code>nnidx</code> is now an array of shape <code>ncells</code> by <code>nnbgs+1</code>, giving for each cell the indices of its nearest neighbours:</p>
-<div class="cell" data-execution_count="6">
+<div id="20c664fe-60f4-4b5d-902b-b92b5ab6a355" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>nnidx[:<span class="dv">5</span>,:<span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
 <pre><code>array([[    0,  2503,  4612,  2816,  2696],
@@ -236,7 +276,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
        [    4, 10059, 10134,  3873,  5332]])</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="7">
+<div id="9d34f017-fd55-4bea-ad4d-609ff8f4ef2f" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>nndist[:<span class="dv">5</span>,:<span class="dv">5</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>array([[0.        , 2.91554959, 3.87197945, 3.94469136, 4.04883681],
@@ -247,11 +287,11 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 </div>
 <p>As each cell is listed as its own nearest neighbor, we remove the first column, leaving us with <code>nnbgs</code> columns.</p>
-<div class="cell" data-execution_count="8">
+<div id="74608485-eb79-4b3b-a13b-a23659351dd9" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>nnidx <span class="op">=</span> nnidx[:,<span class="dv">1</span>:]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The array <code>nndist</code> contains the distances of the neighbours to the respective cell. The array has the same shape. We also remove the first column.</p>
-<div class="cell" data-execution_count="9">
+<div id="72387505-c8e2-4eb0-8996-56033e69b901" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>nndist <span class="op">=</span> nndist[:,<span class="dv">1</span>:]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
@@ -263,7 +303,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <p>Furthermore, the decay constant <span class="math inline">\(\sigma_i\)</span> is chosen such that <span class="math display">\[\sum_{j=1}^k \mu_{i\rightarrow j} = \log_2 k,\]</span> where <span class="math inline">\(k\)</span> is the numebr of nearest neighbors.</p>
 <p>Note that these values are not symmetric under exchange of <span class="math inline">\(i\)</span> and <span class="math inline">\(j\)</span>. We therefore call these numbers the “directed” similarity scores.</p>
 <p>To calculate them, we find the decay constants <span class="math inline">\(\sigma_i\)</span> using a simple root-finding approach:</p>
-<div class="cell" data-execution_count="10">
+<div id="d3b0cdad-26f4-4056-9e2f-036c22decef4" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>mu_dir <span class="op">=</span> np.zeros_like( nndist )</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(mu_dir.shape[<span class="dv">0</span>]):</span>
@@ -282,7 +322,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
        [1.        , 0.47652488, 0.37747247, 0.35019673, 0.34993508]])</code></pre>
 </div>
 </div>
-<div class="cell" data-execution_count="11">
+<div id="b2c62f1d-d65e-4455-b66f-8d60ada7dfaa" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>( np.<span class="bu">abs</span>( mu_dir.<span class="bu">sum</span>(<span class="dv">1</span>) <span class="op">-</span> math.log2(nnbgs<span class="op">+</span><span class="dv">1</span>) ).<span class="bu">max</span>(),</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  np.<span class="bu">abs</span>( mu_dir[:,<span class="dv">0</span>] <span class="op">-</span> <span class="fl">1.</span> ).<span class="bu">max</span>() )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
@@ -296,7 +336,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <p>For this to make sense, we need a symmetric neighborhood relationship. Therefore, we make the union of the reciprocal fuzzy membership probabilities. Given two events <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span> with probabilities <span class="math inline">\(p_A\)</span> and <span class="math inline">\(p_B\)</span>, the probability of at least one of the two happening is <span class="math inline">\(p_A+p_B-p_Ap_B\)</span>.</p>
 <p>Therefore, we set <span class="math display">\[ \mu_{ij} = \mu_{i\rightarrow j}+\mu_{j\rightarrow i}- \mu_{i\rightarrow j}\mu_{j\rightarrow i}.\]</span></p>
 <p>To calculate this, we first set up a sparse matrix whose entries are given by the <span class="math inline">\(\mu_{i\rightarrow j}\)</span>:</p>
-<div class="cell" data-execution_count="12">
+<div id="4aabdd44-79b8-4057-b5c0-6f1d083ab0c5" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>adj_dir <span class="op">=</span> scipy.sparse.coo_array( (ncells,ncells) )</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(nnbgs):</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    adj_dir <span class="op">+=</span> scipy.sparse.coo_array( (mu_dir[:,i], (np.arange(ncells), nnidx[:,i]) ), shape<span class="op">=</span>(ncells,ncells) )</span>
@@ -308,7 +348,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <p>This code works as follows: A sparse matrix in COOrdinate form takes three vectors, provided as <code>(data, (row,col))</code>, that indicate that positions and values of all non-zero matrix entries. The <code>i</code>-the iteration of the for-loop constructs such a matrix for the symmetry score of each cell to its <code>i</code>-th nearest neighbor. Adding up these matrices yields the matrix formed by the <span class="math inline">\(\mu_{i \rightarrow j}\)</span>. We call the matrix <code>adj_dir</code>, because it can be understood as the adjacency matrix of a weighted directed nearest-neighbours graph.</p>
 <p>The values <span class="math inline">\(\mu_{j \rightarrow i}\)</span> are the matrix elements of the transpsoe of that matrix. The symmetrization is hence calculated with:</p>
-<div class="cell" data-execution_count="13">
+<div id="b14bc740-c3ef-4278-b9da-c204d40e8648" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>adj_symm <span class="op">=</span> adj_dir <span class="op">+</span> adj_dir.transpose() <span class="op">-</span> adj_dir.multiply( adj_dir.transpose() )</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>adj_symm</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
@@ -320,16 +360,24 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <section id="histograms" class="level4">
 <h4 class="anchored" data-anchor-id="histograms">Histograms</h4>
 <p>Here are histograms of the nonzero matrix elements of the directed and the symmetrized similarity-score matrix:</p>
-<div class="cell" data-execution_count="14">
+<div id="e32bac08-9f18-4dd6-abf7-7fa364744052" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>plt.hist( adj_dir.data, <span class="dv">100</span> )<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-15-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-15-output-1.png" class="img-fluid figure-img"></p>
+</figure>
 </div>
 </div>
-<div class="cell" data-execution_count="15">
+</div>
+<div id="4e959865-c310-4f76-b04d-6c39b33fb704" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>plt.hist( adj_symm.data, <span class="dv">100</span> )<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-16-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-16-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -337,7 +385,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <section id="compare-with-umap-packages-graph" class="level3">
 <h3 class="anchored" data-anchor-id="compare-with-umap-packages-graph">Compare with UMAP package’s graph</h3>
 <p>We compare the weighted, symmetrized adjency matrix that we have just manually generated with one generated by the UMAP software. That one can be found here:</p>
-<div class="cell" data-execution_count="16">
+<div id="2e93a43f-5dc1-413b-8eb0-17e3db6d3732" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>ump0.graph_</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
 <pre><code>&lt;18302x18302 sparse matrix of type '&lt;class 'numpy.float32'&gt;'
@@ -345,7 +393,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 </div>
 <p>Number of edges in our graph, and in theirs?</p>
-<div class="cell" data-execution_count="17">
+<div id="afb11a9b-60fe-41b4-8236-67ec8c362213" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>( (adj_symm<span class="op">&gt;</span><span class="dv">0</span>).<span class="bu">sum</span>(),  (ump0.graph_<span class="op">&gt;</span><span class="dv">0</span>).<span class="bu">sum</span>() )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="17">
 <pre><code>(379018, 378972)</code></pre>
@@ -353,7 +401,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <p><strong>TO DO</strong>: There is a discrepancy here. Check the above code and find the mistake.</p>
 <p>For how many of the edges does the edge weight differ from the one computed by the UMAP package by more than .01?</p>
-<div class="cell" data-execution_count="18">
+<div id="2c1cf83b-9a0c-467d-a8b3-ef24f2dc53e3" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>( np.<span class="bu">abs</span>( adj_symm <span class="op">-</span> ump0.graph_ ) <span class="op">&gt;</span> <span class="fl">.01</span> ).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>3788</code></pre>
@@ -361,7 +409,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <p>The matrices seem to nearly agree. However, the seemingly minor differences do mess up something, because the code below produces good results only with the <code>ump0.graph_</code>. I will have to search the mistake.</p>
 <p>Until I find it, I replace our matrix with the one from the package:</p>
-<div class="cell" data-execution_count="19">
+<div id="3411e37d-8a72-4865-a0d1-9eaef6321083" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>adj_symm <span class="op">=</span> scipy.sparse.csr_array( ump0.graph_ )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
@@ -374,7 +422,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <p>The symmetrized matrix can also be interpreted as an adjacency matrix of an undirected weighted graph.</p>
 <p>If we binarize the matrix, i.e., set all non-zero weights to 1, we get the point cloud’s unweighted <span class="math inline">\(k\)</span>-nearest-neighbors graph.</p>
 <p>We ask whether this graph is connected:</p>
-<div class="cell" data-execution_count="20">
+<div id="9af4d0b4-5eab-4426-a135-6917b472d1d9" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ncc, ccidx <span class="op">=</span> scipy.sparse.csgraph.connected_components( adj_symm<span class="op">&gt;</span><span class="dv">0</span> )</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>ncc</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="20">
@@ -383,14 +431,14 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <p>No, it is not. We have two connection components that are not connected with each other.</p>
 <p>How many cells fall into each component?</p>
-<div class="cell" data-execution_count="21">
+<div id="f88acc90-e85c-498f-a4cc-c882ef9c9213" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>np.bincount(ccidx)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="21">
 <pre><code>array([17820,   137,   345])</code></pre>
 </div>
 </div>
 <p>To make our life easier, we remove that small components and only keep the “main component” (<code>mc</code>), which has index 0.</p>
-<div class="cell" data-execution_count="22">
+<div id="ead7543c-25e7-4950-9909-73e3aa58f98c" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>adj_mc <span class="op">=</span> adj_symm[ ccidx<span class="op">==</span><span class="dv">0</span>, :][:, ccidx<span class="op">==</span><span class="dv">0</span> ]</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>adj_mc.shape</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="22">
@@ -402,28 +450,32 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="leiden-clustering">Leiden clustering</h3>
 <p>Merely so that we have a way of colouring our cells in subsequent plots, we perform a Leiden clustering.</p>
 <p>To this end, we binarize the adjacency matrix (i.e., set all non-zero entries to 1) and form a graph from that.</p>
-<div class="cell" data-execution_count="23">
+<div id="713efbe8-a55c-4369-8224-0536ff37d4d9" class="cell" data-execution_count="23">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>nngraph <span class="op">=</span> igraph.Graph.Adjacency( adj_mc<span class="op">&gt;</span><span class="dv">0</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Then, we run the Leiden algorithm.</p>
-<div class="cell" data-execution_count="24">
+<div id="0b0c1074-8d76-42cc-9ddc-5dc3f4de5159" class="cell" data-execution_count="24">
 <div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>clm <span class="op">=</span> leidenalg.find_partition( nngraph, leidenalg.ModularityVertexPartition ).membership</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Now, we have a vector of cluster memberships. Here, for the first 10 cells:</p>
-<div class="cell" data-execution_count="25">
+<div id="3c60c1d3-b253-4867-ad6a-501fe28f8d9f" class="cell" data-execution_count="25">
 <div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>clm[:<span class="dv">10</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="25">
 <pre><code>[10, 1, 15, 4, 0, 2, 3, 0, 5, 0]</code></pre>
 </div>
 </div>
 <p>We can colour the UMAP from before using this:</p>
-<div class="cell" data-execution_count="26">
+<div id="34119e3a-b46b-4e7b-89bf-fe933c5eb054" class="cell" data-execution_count="26">
 <div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>palette <span class="op">=</span> plt.colormaps[<span class="st">'tab20'</span>](<span class="bu">range</span>( <span class="bu">max</span>(clm)<span class="op">+</span><span class="dv">1</span> ))</span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">0</span> ], ump0.embedding_[ ccidx<span class="op">==</span><span class="dv">0</span>, <span class="dv">1</span> ], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-27-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 </section>
@@ -431,22 +483,22 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="spectral-clustering">Spectral clustering</h3>
 <p>We are still not ready to perform the actual UMAP algorithm, because we need an initial configuration. In the UMAP package, this is obtained via spectral clustering, so we do the same here:</p>
 <p>We start by constructing the graph Laplacian of our weighted adjacency matrix. To this end, we first get a diagonal matrix D of the degrees of the graph vertices, i.e. <span class="math display">\[D_{ij}=\delta_{ij}\sum_{j'}\mu_{ij'}.\]</span></p>
-<div class="cell" data-execution_count="27">
+<div id="dc1099f4-3324-49a9-bc99-1bdb392e694c" class="cell" data-execution_count="27">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>degdiag <span class="op">=</span> scipy.sparse.diags( adj_symm.<span class="bu">sum</span>(<span class="dv">0</span>) )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>The standard graph Laplacian is given by <span class="math inline">\(L_0=D-A\)</span>, where <span class="math inline">\(A\)</span> is the adjacency matrix formed by the <span class="math inline">\(\mu_{ij}\)</span>. Spectral clustering, however, works better, if one scales the Laplacian by dividing rows and columns by the square roots of the degrees, obtaining <span class="math display">\[L=D^{-1/2}L_0 D^{-1/2} = I - D^{-1/2} A D^{-1/2}.\]</span></p>
 <p>We get this scaled Laplacian,</p>
-<div class="cell" data-execution_count="28">
+<div id="26431862-e39f-429e-b8a1-fd19c5a6c340" class="cell" data-execution_count="28">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>invsqrtdegdiag <span class="op">=</span> scipy.sparse.diags( <span class="dv">1</span> <span class="op">/</span> np.sqrt( adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>) ) )</span>
 <span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>scaled_laplacian <span class="op">=</span> scipy.sparse.identity(adj_mc.shape[<span class="dv">0</span>]) <span class="op">-</span> invsqrtdegdiag <span class="op">*</span> adj_mc <span class="op">*</span> invsqrtdegdiag</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>and get its 10 smallest (by magnitude) eigenvalues and their eigenvectors</p>
-<div class="cell" data-execution_count="29">
+<div id="f56e0c8a-a52d-4c89-b155-b27d9bd5120e" class="cell" data-execution_count="29">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>evals, evecs <span class="op">=</span> scipy.sparse.linalg.eigsh( scaled_laplacian, k<span class="op">=</span><span class="dv">10</span>, which<span class="op">=</span><span class="st">'SM'</span> )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Here are the eigenvalues:</p>
-<div class="cell" data-execution_count="30">
+<div id="bfb5dead-6990-4024-a3de-27b984229cf7" class="cell" data-execution_count="30">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>evals</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="30">
 <pre><code>array([-1.10779340e-09,  4.51068171e-04,  5.63650240e-04,  8.16247925e-04,
@@ -456,19 +508,27 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </div>
 <p>As expected, the lowest eigenvalue is 0. There is only one eigenvalue because our graph is connected. Had we kept the other connection component, we would have obtained a multi-dimensional eigenspace to the zero eigenvalue. This is, why we removed it above – so that we do not have to deal with this issue here.</p>
 <p>The eigenvector corresponding to the 0 eigenvalue would be constant for the usncaled Laplacian. Due to the scaling, it is now proportional to the square roots of the vertex degrees:</p>
-<div class="cell" data-execution_count="31">
+<div id="dcce3ce5-1ad7-43c5-8f18-acd61204ad19" class="cell" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb48"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">0</span>], np.sqrt(adj_mc.<span class="bu">sum</span>(<span class="dv">0</span>)), s<span class="op">=</span><span class="fl">.1</span> )</span>
 <span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>plt.gcf().set_size_inches(<span class="dv">2</span>,<span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-32-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>This vector is hence not of interest. The next two eigenvectors, however, are. We plot them here:</p>
-<div class="cell" data-execution_count="32">
+<div id="4847b012-8022-466d-8d9d-32567aa66019" class="cell" data-execution_count="32">
 <div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( evecs[:,<span class="dv">1</span>], evecs[:,<span class="dv">2</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
 <span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-33-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 <p>This is what we will use as initial configuration for the UMAP algorithm.</p>
@@ -477,7 +537,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <h3 class="anchored" data-anchor-id="umap">UMAP</h3>
 <p>For a description of the UMAP algorithm, see <a href="tsne_umap_math.html">here</a>.</p>
 <p>Here is an implementation.</p>
-<div class="cell" data-execution_count="33">
+<div id="345a37c4-cc14-4ca2-8ee1-b3a7a2fd5e1b" class="cell" data-execution_count="33">
 <div class="sourceCode cell-code" id="cb50"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="at">@njit</span></span>
 <span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> squared_distance_2d( v1, v2 ):</span>
 <span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>    dx <span class="op">=</span> v2[<span class="dv">0</span>] <span class="op">-</span> v1[<span class="dv">0</span>]</span>
@@ -536,7 +596,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 <p>In the code above, I have hard-coded a few hyperparameters: - The values for <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> are fixed to 1 and hence do not appear in the expressions for the gradient - The number of repulsive gradient applications per application of the attractive gradient, called <code>negative_sampling_rate</code> in the UMAP documentation, is fixed to its default value, 5. - The repulsive gradient is multiplied with the value 0.1 before it is applied. This parameter, called <code>repulsion_strength</code> in the UMAP documentation or <span class="math inline">\(\gamma\)</span> in the UMAP paper, is normally set to 1 – but with 1, the code below does not produce a good UMAP. I am not sure why the default value does not work. This might indicate that my code deviates from the default hyperparameters somewhere else, too, requiring this change to compensate.</p>
 <p>Now, we initialize the 2D UMAP coordinated with the eigenvectors corresponding to the two lowest non-zero eigenvalues of the graph Laplacian.</p>
 <p>We also change the adjacency graph from CSR to COO sparse format, as this is needed by our code, and we initialize the learning rate <span class="math inline">\(\alpha\)</span> to 1.</p>
-<div class="cell" data-execution_count="34">
+<div id="f8795124-6986-4a83-982c-79346563a277" class="cell" data-execution_count="34">
 <div class="sourceCode cell-code" id="cb51"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>ump <span class="op">=</span> evecs[:,<span class="dv">1</span>:<span class="dv">3</span>].copy()</span>
 <span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>adj_mc_coo <span class="op">=</span> adj_mc.tocoo()</span>
 <span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>lr <span class="op">=</span> <span class="fl">1.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -544,7 +604,7 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </section>
 <section id="now-we-run-through-the-points-1300-times-each-time-reducing-the-learning-rate-a-bit." class="level3">
 <h3 class="anchored" data-anchor-id="now-we-run-through-the-points-1300-times-each-time-reducing-the-learning-rate-a-bit.">Now we run through the points 1300 times, each time reducing the learning rate a bit.</h3>
-<div class="cell" data-execution_count="35">
+<div id="8826ad92-c6c2-4198-8449-94fdde4d503e" class="cell" data-execution_count="35">
 <div class="sourceCode cell-code" id="cb52"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> tnrange(<span class="dv">1300</span>):</span>
 <span id="cb52-2"><a href="#cb52-2" aria-hidden="true" tabindex="-1"></a>    ump <span class="op">=</span> run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, adj_mc_coo.data, lr )</span>
 <span id="cb52-3"><a href="#cb52-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">#ump = run_epoch( ump, adj_mc_coo.row, adj_mc_coo.col, np.ones_like(adj_mc_coo.data), lr )</span></span>
@@ -555,11 +615,15 @@ Mon Jun 24 12:15:51 2024 Finished embedding</code></pre>
 </script>
 </div>
 </div>
-<div class="cell" data-execution_count="36">
+<div id="6342d3ad-6879-4363-9c38-7aceab374240" class="cell" data-execution_count="36">
 <div class="sourceCode cell-code" id="cb53"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>plt.scatter( ump[:,<span class="dv">0</span>], ump[:,<span class="dv">1</span>], s<span class="op">=</span><span class="fl">.1</span>, c<span class="op">=</span>palette[clm] )</span>
 <span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a>plt.gca().set_aspect(<span class="st">'equal'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<p><img src="UMAP_pedestrian_files/figure-html/cell-37-output-1.png" class="img-fluid"></p>
+<div>
+<figure class="figure">
+<p><img src="UMAP_pedestrian_files/figure-html/cell-37-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
 </div>
 </div>
 
@@ -646,10 +710,27 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
     // clear code selection
     e.clearSelection();
   });
-  function tippyHover(el, contentFn) {
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
     const config = {
       allowHTML: true,
-      content: contentFn,
       maxWidth: 500,
       delay: 100,
       arrow: false,
@@ -659,8 +740,17 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       interactive: true,
       interactiveBorder: 10,
       theme: 'quarto',
-      placement: 'bottom-start'
+      placement: 'bottom-start',
     };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
     window.tippy(el, config); 
   }
   const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
@@ -672,7 +762,130 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
       try { href = new URL(href).hash; } catch {}
       const id = href.replace(/^#\/?/, "");
       const note = window.document.getElementById(id);
-      return note.innerHTML;
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
     });
   }
       let selectedAnnoteEl;
@@ -716,6 +929,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
             }
             div.style.top = top - 2 + "px";
             div.style.height = height + 4 + "px";
+            div.style.left = 0;
             let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
             if (gutterDiv === null) {
               gutterDiv = window.document.createElement("div");
@@ -741,6 +955,32 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
         });
         selectedAnnoteEl = undefined;
       };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
       // Attach click handler to the DT
       const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
       for (const annoteDlNode of annoteDls) {
@@ -801,6 +1041,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 });
 </script>
 </div> <!-- /content -->
+
 
 
 
