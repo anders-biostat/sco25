@@ -93,9 +93,13 @@ Place:
   - [Reimplementing UMAP in Python](UMAP_pedestrian.html)
   - [CCA Integration](cca.html) (preliminary)
   - [Homework: Smoothing](homework_smoothing.html)
-- prepared for following lectures 
+- Lecture of 2024-07-08
+  - [Video](https://youtu.be/tOoKwd4ZS6o)
   - [Homework: Integration](homework_integration.html)
   - [Gamma-Poisson regression](gamma_poisson.html)
+- Lecture of 2024-07-15
+  - [Video](https://youtu.be/0ax7aV4v0ys)
+- prepared for following lectures 
   - [Cell cycle regression](cell_cycle.html)
 
 ## Source code
