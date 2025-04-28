@@ -1,5 +1,7 @@
 project:
   type: website
+  render: 
+    - "!last_year"
 
 website:
   title: "Mathematics of single-cell omics"

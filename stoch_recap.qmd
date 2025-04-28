@@ -1,0 +1,184 @@
+---
+title: "Stochastics recaps"
+---
+
+
+## Random variables and their moments
+
+### Random variables and probabilities
+
+Informally, a *random experiment* is a procedure that yields a different outcome every time it
+is performed. A *random variable* is a quantity that summerizes on aspect of the outcome in
+a (typically numerical) value. An *event* is a subset of the set of all possible outcomes and
+is typically specified by giving conditions on one or several random pariables. For every event,
+we may ask which fraction of the outcomes are contained in it if many repetirions of the
+random experiment are performed. In the so-called *frequentist* framework, one assumes that this
+number has a well-defined limit for the number of experiments going to infinity, and calls this
+limit the *probability* of the event. 
+
+Probabilities fulfill the following axioms ("Kolmogorov axioms"): 
+
+- Probabilities are non-negative.
+- Writing $\Omega$ for the set of all possible outcomes, $\text{Prob}(\Omega)=1$.
+- For events $A,B\subset\Omega$ that are disjoint ($A\cap B=\{\}$), probabilities are additive: $\text{Prob}(A\cup B) = \text{Prob}(A) + \text{Prob}(B)$.
+
+(Further reading: Wikipedia page on [Probability axioms](https://en.wikipedia.org/wiki/Probability_axioms).)
+
+Note: There are pathological subsets of $\Omega$ that cannot be assigned a probability without causing contradictions (Vitali theorem). 
+
+### Probability density/mass functions
+
+For a *discrete random variable* (i.e., a random variable that can take values only from a discrete set), we define the
+*probability mass function* (p.m.f.) as the function that maps this set to the probability
+that the random variable takes the respective value: $f_X(x)=\text{Prob}(X=x)$.
+
+For *continuous random variables*, i.e., those that take values in a continuum (typically an interval of $\mathbb{R}$), 
+we define instead a *probability density function* (p.d.f.) as 
+$$ f_X(x) = \lim_{h\to 0} \frac{\text{Prob}(x\le X < x+h)}{h}=\frac{\partial F_X(x)}{\partial x},$$
+which we have written using the *cumulative probability function* of $X$,
+$ F_X(x) = \text{Prob}(X < x)$.
+
+With this,
+$$ \text{Prob}(a\le X<b) = \int_a^bf_X(x)\text{d}x.$$
+
+We can also define a joint cumulative probability for two random variables as
+$$ F_{X,Y}(x,y) = \text{Prob}(X < x\text{ and } Y<y) $$
+with p.d.f.
+$$ f_{X,Y}(x,y) = \frac{\partial^2F_{X,Y}(x,y)}{\partial x\partial y}=\lim_{h_X\to 0}\lim_{h_Y\to 0}\frac{\text{Prob}(x\le X<x+h_X\text{ and } y\le Y<Y+h_Y)}{h_Xh_Y} $$
+
+
+### Expectations
+
+The expectation $\text{E}(X)$ of a discrete random variable $X$ is defined as
+$$\text{E}(X)=\sum_x x\,\text{Prob}(X=x),$$
+with the sum running over all possible values. For continuous random variables, we define
+$$\text{E}(X)=\int x f(x)\text{d}x $$
+where the integral runs over the domain of $X$ and $f$ is the *probability density function*.
+
+If we want to have a unified picture for discrete and continuous random variables, we can replace a probability mass function $f(x_i)$ defined on a set of discrete values $\{x_i\}_i$ and assigning a probability to each value, with a probability density function $f(x)=\sum_i\delta(x-x_i)$, where $\delta$ is the [Dirac delta "function"](https://en.wikipedia.org/wiki/Dirac_delta_function). (For an even more general framework, one replaces $f(x)\text{d}x$ with a Lebesgue measure.)
+
+#### Calculus with expectations
+
+Expectations are linear: For two random variable $X$ and $Y$ and two constants $\alpha$ and $\beta$, we have
+$$ \text{E}(\alpha X+\beta Y) = \alpha\text{E}(X)+\beta\text{E}(Y).$$
+
+Expectations may be multiplied only if the random variables are independent:
+
+$$\text{E}(XY)=\text{E}(X)\text{E}(Y)\qquad\text{if }X,Y\text{ independent}$$
+
+Independence means that 
+$$F_{X,Y}(x,y)=F_X(x)F_Y(y)$$ 
+for all values of $x$ and $y$.
+
+
+### Variance of a random variable
+
+The *variance* of a random variable $X$ is defined as
+$$\text{Var}(X):=\text{E}\left((X-\text{E}(X))^2\right).$$
+An quick calculation shows that
+
+$$ \text{Var}(X) = \text{E}(X^2) - (\text{E}(X))^2.$$
+
+Variances are additive and scale quadratically, i.e., for two random variables $X$ and $Y$ and a constant $\alpha$, we have
+
+$$\text{Var}(X+Y)=\text{Var}(X)+\text{Var}(Y)\qquad\text{and}\qquad \text{Var}(\alpha X)=\alpha^2\,\text{Var}(X).$$
+
+
+
+One also defined the *standard deviation*
+$$\text{SD}(X) := \sqrt{\text{Var}(X)}$$
+and the *coefficient of variation*
+$$\text{CV}(X):=\frac{\text{SD}(X)}{\text{E}(X)}.$$
+
+## Moment estimators
+
+### Sample average
+
+If we have several draws from the same distribution (a "sample"), this is best described by saying that we have several random variables, $X_1,X_2,\dots,X_n$ that all follow the same distribution and are all pairwise independent. One says: The $X_i$ are i.i.d. (independent and identically distributed).
+
+Let's say that the distribution of the $X_i$ has expectation $\text{E}(X)=\mu$ and the variance $\text{Var}(X)=v$. We do not know the values of $\mu$ and $v$ and wish to *estimate* them from our 
+sample $X_1,X_2,\dots,X_n$.
+
+The sample average $\overline{X}=\frac{1}{n}\sum_{i=1}^n X_i$ is the canonical estimator for the expectation (or "population mean") $\mu$. The estimator is unbiased, i.e, its own expectation is the value sought:
+
+$$ \text{E}(\overline{X}) = \frac{1}{n}\sum_{i=1}^n \text{E}(X_i)=\mu.$$
+The variance of the sample average is
+
+$$\text{Var}(\overline{X})=\frac{1}{n^2}\sum_{i=1}^n\text{Var}(X_i)=\frac{v}{n}.$$
+
+Therefore, the standard error of the sample average as an estimator of the population mean (the
+"standard error of the mean", S.E.M.) is the SD over the square root of the sample size, $\sqrt{v}/\sqrt{n}$.
+
+Note that $v$ here is the true value of the variance, not its estimate. If an uncertain estimate is used, caution is required.
+
+### Sample variance
+
+The canonical estimator for the variance is the *sample variance*,
+$$\text{sVar}(\{X_i\}_i) := \frac{1}{n-1}\sum_{i=1}^n(X_i-\overline{X})^2.$$
+
+The $n-1$ in front (instead of $n$) is required to make the estimator unbiased ("Bessel's correction").
+
+## Conditional probability
+
+For two events $A$ and $B$, we define the conditional probability of $A$ for $B$ as
+$$\text{Prob}(A|B)=\frac{\text{Prob}(A \cap B)}{\text{Prob}(B)}.$$
+For a random variable $Y$, we define its distribution conditioned on $X=x$ as the 
+distribution with p.d.f.
+$$f_{Y|X}(y|x)=\frac{f_{X,Y}(x,y)}{f_X(x)}.$$
+
+### Conditional expectation
+
+We define the expectation of $Y$ conditioned on $X$ as
+
+$$\text{E}(Y|X)=\int yf_{Y|X}(y|x) \text{d}y.$$
+Note that this is not a constant but a random variable that depends on $X$, and takes
+a different value for each value of $X$.
+
+Its expectation yields $E(Y)$, the *total expectation of Y*. This is known as the law of total expectation:
+$$\text{E}(Y|X)=\text{E}(\text{E}(Y|X)).$$
+
+### Conditional variance
+
+Analogously, we define the conditional expectation,
+$$\text{Var}(Y|X)=\text{E}(Y-\text{E}(Y|X)|X).$$
+From this, we can get the total expectation via the law of total expectation,
+$$\text{Var}(Y)=\text{E}(\text{Var}(Y|X))+\text{Var}(\text{E}(Y|X)).$$
+
+### Example
+
+Our random experiment is to plug an apple from a tree in an orchard and to place it on a scale.
+
+We describe the mass of the apple in gramm by the random variable $X$.
+
+Let us assume that $X$ follows a normal distribution with mean $\mu=100$ g and standard deviation $\sigma=10$ g:
+
+$$\begin{align}
+X&\sim\mathcal{N}(\mu,\sigma)\\
+f_X(x)&=\frac{1}{\sqrt{2\pi\sigma}}\exp\left( \frac{(x-\mu)^2}{2\sigma^2}\right)
+\end{align}$$
+
+Our scale is a bad and very shaky one. Its readout $Y$ is the true weight $X$ of the apple plus a deviation,
+the measurement error $D$. We assume
+$$D\sim\mathcal{N}(0,\tau)$$
+
+#### First view: Addition
+
+As the error is added, we have $Y=X+D$.
+
+Therefore, the expectation of the scale readout is $\text{E}(Y)=\text{E}(X)+\text{E}(D)=\mu$ and its variance is
+$$\text{Var}(Y)=\text{Var}(X)+\text{Var}(D)=\sigma^2+\tau^2.$$
+
+#### Second view: Conditioning
+
+We may also say: For an apple with weight $X=x$, we expect the scale to display the weight $x$, but the actual readout will vary around this expectation with a standard deviation of D. Therefore,
+$$Y\,|\,(X\!=\!x)\sim\mathcal{N}(x,\tau),$$
+which is usually simply written as 
+$$Y|X\sim\mathcal{N}(X,\tau).$$
+From this, we read off: $\text{E}(Y|X)=X$ and $\text{Var}(Y|X)=\tau^2$.
+
+Therefore, the (total) expectation for our readout is
+
+$$\text{E}(Y) = \text{E}(\text{E}(Y|X)) = \text{E}(X) = \mu$$
+and the variance is
+$$\text{Var}(Y) = \text{E}(\text{Var}(Y|X)) + \text{Var}(\text{E}(Y|X)) = \text{E}(\tau^2) + \text{Var}(X) = \tau^2 + \sigma^2. $$
+Both views give the same results, but some situations admit only the second view, as we will see next.

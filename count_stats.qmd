@@ -1,0 +1,216 @@
+---
+title: "Counting Statistics"
+---
+
+## Binomial and Poisson distribution
+
+### The binomial distribution
+
+A large container contains millions of small balls. A fraction $p$ of the balls are red. The balls are well mixed. The task is to estimate $p$. 
+
+We blindly draw $n$ balls from the container, and write $K$ for the number of red balls among the $n$ drawn balls. What is the probability that $K$ takes some given value $k$?
+
+Each ball is red with probability $p$; this happening $k$ times in a row has probability $p^k$. The remaining $n-k$ balls are not red, which has probability $(1-p)^{n-k}$. The probability of first drawing $k$ red balls and then $n-k$ non-red balls ist therefore $p^k(1-p)^{n-k}$. However, the red balls do not have to all come first; they can be distributed arbitrarily among all the balls. There are $\binom{n}{k}$ ways of arranging $k$ red and $n-k$ white balls in a line.
+
+Therefore, 
+
+$$\text{Prob}(K=k) = \binom{n}{n} p^k (1-p)^{n-k}=:f_\text{Bi}(k;n,p)$$
+
+We say that the random variable $K$ follows a *binomial distribution* with parameters $n$ and $q$,
+$$ K \sim \text{Bi}(n,p),$$
+and we call the function $f_\text{Bi}(\cdot;n,k)$ the *probability mass function* (p.m.f.) for $K$.
+
+A p.m.f. has to be normalized, i.e. the sum over all its values must be 1, and this is the case here,
+$$ \sum_{k=0}^n f_\text{Bi}(k;n,p) = 1, $$
+as can be easily seen by expanding $(p+q)^n$ using the binomial theorem and setting $q=1-p$.
+
+Note that we here assumed that the number of balls in the container is so much larger than the number of drawn balls that drawing the balls changes the fraction of red balls in the container only negligibly. Otherwise, we would have needed to use the hypergeometric instead of the binomial distribution.
+
+
+### Expectation and variance of the binomial distribution
+
+With a straightforward calculation, we find that for
+$$K\sim\text{Bi}(n,p),$$
+we have
+$$ \text{E}(K) = np$$
+and
+$$ \text{Var}(K) = np(1-p). $$
+
+### From the binomial to the Poisson distribution
+
+If we write $\lambda:=np$ for the expectation of the binomial distribution and take the
+limit of its p.m.f. for $n\to\infty$, holding $\lambda$ fixed (i.e., letting $p=\lambda/n\to 0$ with $n\to\infty$), we get
+$$ \lim_{n\to\infty\\ p=\lambda/n} \binom{n}{k}p^n(1-p)^{n-k} = e^{-\lambda}\frac{\lambda^k}{k!}.$$
+(For the proof, see, e.g., the Wikipedia page on the [Poisson Limit theorem](https://en.wikipedia.org/wiki/Poisson_limit_theorem).)
+
+
+Here, we define the *Poisson distribution* with rate parameter $\lambda$ as the distribution that has this limit as p.m.f.:
+$$f_\text{Pois}(k;\lambda):=e^{-\lambda}\frac{\lambda^k}{k!}$$
+We can understand the Poisson distribution as a limit of the Binomial distribution:
+$$\text{Bi}(n,p)\to\text{Pois}(\lambda)\quad \text{ for } n\to\infty\text{ with } \lambda=np = \text{const.} $$
+
+$$ \lim_{\substack{n\to\infty\\p=\lambda/n}} f_\text{Bi}(k;n,p) = f_\text{Pois}(k;\lambda)$$
+If we want to use the Poisson pmf to approximate the binomial pmf, it is useful to know that
+$$\sum_{k=0}^n\left| f_\text{Bi}(k;n,p)-f_\text{Pois}(k;np) \right|<2np^2=2\lambda p. $$
+This is known as [Le Cam's theorem](https://en.wikipedia.org/wiki/Le_Cam%27s_theorem).
+
+For a Poisson-distributed random variable $K$,
+
+$$ K \sim\text{Pois}(\lambda), $$
+
+we have
+
+$$\text{E}(K)=\text{Var}(K)=\lambda.$$
+
+### Estimating proportions
+
+Back to the initial question: a container contains millions of balls, of which a 
+proportion $q$ is red. We want to determine $q$. We are allowed to draw $n$ balls. The number of red balls among them is $K$. 
+
+We assume that $q$ is sufficiently small that we may approximate
+$$K\sim\text{Pois}(nq)$$
+
+We use $K$ to estimate the proportion of red balls in the container as
+
+$$\hat q = \frac{K}{n}.$$
+The *standard error* of this estimator (i.e., the standard deviation of its sampling distribution) is
+
+$$\text{SD}(\hat q) = \sqrt{\text{Var}\left(\frac{K}{n}\right)} = \sqrt{\frac{\text{Var}(K)}{n^2}} = \frac{\sqrt{\text{E}(K)}}{n} = \frac{\sqrt{qn}}{n} = \sqrt\frac{q}{n}.$$
+We see that the uncertainty of our estimate is proportional to $1/\sqrt{n}$.
+
+How much is this, *relative* to the estimator's value?
+
+$$\text{CV}(\hat q) = \frac{\text{CV}(\hat q)}{\text{E}(\hat q)}= \frac{\sqrt{\text{Var}(K/n)}}{\text{E}(K/n)} = \frac{\frac{1}{n}\sqrt{\text{Var}(K)}}{\frac{1}{n}\text{E}(K)}=\frac{1}{\sqrt{nq}}.$$
+Of course, we don't now the true value $q$, so we plug in our estimate $\hat q$ instead:
+
+$$\text{CV}(\hat q) \approx \frac{1}{\sqrt{n\hat q}}=\frac{1}{\sqrt{K}}$$
+
+Therefore: The *relative* uncertainty (the CV) of an estimate of a small proportion, which is based
+on a count of $K$, is given by $1/\sqrt{K}$. Note that this is independent of $n$.
+
+*Example 1*: A quality control engineer wants to estimate the defect rate of a factory. How many products does she have to test to get an estimate with a *relative* standard error of less than 1/5?
+
+*Answer*: She needs to keep testing until she has found 25 defective products. 
+
+*Example 2*: In an scRNASeq experiment, we have obtained 3000 reads from a certain cell. 9 of these reads are from gene $G$. The gene's expression strength in this cell can therefore be estimated as $(9\pm\sqrt{9})/3500=0.003\pm0.001$.
+
+---
+
+## Variance in scRNASeq
+
+In our first RNA-Seq analysis, we "normalized" the count values by dividing each individual count value
+by the total count for the resepctive cell, thus transforming the counts into fractions. We then took for each gene
+the mean and variance over the gene's fraction values in all the cells. Plotting variances versus means on a log-log plot, we found a peculiar rising floor. (See image at the end of Homework 1.)
+
+Here, we want to explore the origin of this.
+
+We will approach the situation in several intermediate steps
+
+### Many identical containers
+
+We have $m$ containers, each containing many hundreds of thousands (or millions) of balls. In all containers,
+the same (small) fraction $q$ of the balls is red. We, however, do not know that the fraction is the same in all containers.
+
+From each container, we draw the same number $n$ of balls and count how many of them are red. We write $K_i$ for the number of red balls in the sample drawn from container $i$. The true distribution of the $K_i$ is
+
+$$K_i\sim\text{Bi}(n,q)\approx\text{Pois}(nq).$$
+
+Our estimate for the fraction of red balls in container $i$ is $P_i = K_i/n$. As discussed above,
+the expectation and variance of the $P_i$ are $q$ and $q/n$, and if we calculate the sample means
+and sample variances of the $P_i$, they should scatter around these values.
+
+### Non-identical containers
+
+Now let us assume that the proportion $Q_i$ of red balls in container $i$ differs from container to container. We use a capital $Q$ to show that the proportion is now itself a random variable. The proportions $Q_i$ are drawn from some distribution that has expectation $q_0$ and variance $v$:
+$$\text{E}(Q_i)=q_0,\qquad\text{Var}(Q_i)=v.$$
+
+Again, we call $K_i$ the number of red balls drawn from container $i$. This time, however, the distribution of $K_i$ depends on the $Q_i$:
+
+$$K_i|Q_i\sim\text{Pois}(nQ_i).$$
+The total expectation of $K_i$ is, unsurpisingly,
+
+$$\text{E}(K_i)=\text{E}(\text{E}(K_i|Q_i))=\text{E}(nQ_i)=nq_0.$$
+The total variance is
+
+$$\begin{align}
+\text{Var}(K_i) &= \text{E}(\text{Var}(K_i|Q_i))+\text{Var}(\text{E}(K_i|Q_i))\\
+&=\text{E}(nQ_i)+\text{Var}(nQ_i)=nq_0+n^2v
+\end{align}
+$$
+For the estimated proportions $P_i=K_i/n$, we therefore have
+$$ \text{E}(P_i)=q_0\qquad\text{and}\qquad \text{Var}(P_i)=\frac{\text{Var}(K_i)}{n^2}=\frac{q_0}{n}+v.
+$$
+We note that the variance of the estimated proportions is the sum of two components: the variance of the actual proportions and the counting noise (also called "Poisson noise" or "shot noise").
+
+Therefore: If one tries to estimate the variance of proportions across several containers by drawing $n$ balls from each container, the result overestimates the true variance by a counting noise component, that depends on the number of balls drawn from each container.
+
+#### Example
+
+We want to see whether the proportion of fish with red fins among all the fish varies among 20 different lakes. We catch 50 fish in each lake. Among these, the following numbers in each lake have red fins:
+
+```{r}
+k <- c(6, 5, 5, 6, 4, 3, 3, 4, 1, 5, 5, 3, 4, 6, 6, 6, 1, 3, 3, 5)
+n <- 50
+```
+
+We estimate the average proportion of red-finned fish to be
+```{r}
+mean( k/n )
+```
+
+The variance of the proportion estimates is
+
+```{r}
+var( k/n )
+```
+
+We expect couting noise of
+```{r}
+mean( k/n ) / n
+```
+The actual variance is about the same as the counting noise; therefore, we cannot say whether the abundance varies from lake to lake.
+
+### Varying sample size
+
+Finally, let us assume that we do not have control over the number of balls drawn from each container. We are simply given $n_i$ balls that were drawn at random from container $i$, and the sample sizes $n_i$ are all different. Again, $K_i$ is the number of red balls among the balls from container $i$, and
+
+$$K_i|Q_i\sim\text{Pois}(n_iQ_i).$$
+As before, we have total expectation $E(P_i)=q_0$ and $\text{Var}(P_i)=q_0/n_i+v$.
+
+What is now expectation of the average of the $P_i$? Using $\text{E}(K_i)=n_iq_0$, we have
+
+$$E(\overline{P_i})=\frac{1}{m}\sum_i\frac{\text{E}(K_i)}{n_i}=q_0$$
+
+For the sample variance $W=\frac{1}{m-1}\sum_{i}(P_i-\overline{P})^2$, the calculation is a bit more involved. We first note that
+
+$$
+\text{E}(P_i^2) = \left[\text{E}(P_i)\right]^2+\text{Var}(P_i)=q_0^2+\frac{q_0}{n_i}+v
+$$
+
+and then calculate:
+
+$$\begin{align}
+\text{E}(W)&=\frac{1}{m-
+1}\sum_i\text{E}\left[\left(P_i-\overline{P}\right)^2\right]\\
+&=\frac{1}{m-1}\sum_i\text{E}\left(P_i-\frac{1}{m}\sum_jP_j\right)\left(P_i-\frac{1}{m}\sum_kP_k\right)\\
+&=\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}(P_i-P_j)(P_i-P_k)\\
+&=\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}(P_i^2-P_iP_j-P_iP_k+P_jP_k)\\
+&=\frac{m^2}{(m-1)m^2}\sum_i\text{E}(P_i^2)+\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}\left(-P_iP_j-P_iP_j+P_iP_j\right)\\
+&=\frac{1}{m-1}\sum_i\text{E}(P_i^2)-\frac{m}{(m-1)m^2}\sum_i\sum_j\text{E}\left(P_iP_j\right)\\
+&=\frac{1}{m-1}\sum_i\text{E}(P_i^2)-\frac{1}{m(m-1)}\sum_i\left(\text{E}(P_i^2)+\sum_{j\neq i}\text{E}(P_i)\text{E}(P_j)\right)\\
+&=\frac{m-1}{m(m-1)}\sum_i\text{E}(P_i^2)-\frac{1}{m(m-1)}\sum_i\left(\sum_{j\neq i}q_0^2\right)\\
+&=\frac{1}{m}\left(mq_0^2+q_0\sum_i\frac{1}{n_i}+mv\right)-q_0^2\\
+&=q_0/\tilde n+v\qquad\text{with }\frac{1}{\tilde n}=\frac{1}{m}\sum_i\frac{1}{n_i}.
+\end{align}
+$$
+
+To summarise: The expected variance of the $P_i$ is $v+q_0/\tilde n$, where $\tilde n$ is the harmonic mean of all the $n_i$. This generalizes our previous result $v+q_0/n$ for the case where all $n_i=n$ were equal.
+
+### Application to scRNA-Seq
+
+We have $m$ cells, indexed with $i=1,\dots,m$, and we obtain $s_i$ reads from cell $i$, of which
+a count $K_i$ falls onto some gene of interest. Then, the expected sample variance of the fractions $P_i=K_i/s_i$
+is the sum of the expected count noise $q/\tilde s$, where $q$ is the gene's average expression fraction and $\tilde s=m/\sum_i(1/s_i)$ is the harmonic mean of the cells' total counts $s_i$.
+
+Whenever the sample variance of the $P_i$ is not well above the expected counting noise level $q/\tilde n$, we cannot expect to gain any information from the gene about differences between cells, because the gene's variation in expression is too small and drowns in the counting noise.
+

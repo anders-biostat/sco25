@@ -15,7 +15,7 @@ title: "Mathematics of Single-cell Omics"
   	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo_hd.svg" style="width:30%;padding:3%"></a>
   </p>
 
-<h3>Applied mathematics for Biology:</h3>
+<h3>Applied Mathematics for Biology:</h3>
 <h2 style="margin-top:0px">Single-cell omics</h2>
 
 <h4>Lecture Notes (summer term 2025)</h4>
@@ -37,6 +37,9 @@ Lecture times/dates:
   - [A simple analysis with Seurat](seurat.html)
   - [A similar analysis, for pedestrians](ped_ifnagrko.R)
   - Example data: PBMC3k (available on 10X web site)
+  - [Video recording](https://youtu.be/Zfkbptp-AZ8) of lecture
+- Lecture of 2025-04-28:
+  []
 
 ## Source code
 

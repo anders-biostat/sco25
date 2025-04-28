@@ -1,0 +1,112 @@
+---
+format:
+  html:
+    embed-resources: true
+---
+
+<p>
+Lecture "Mathematics in Biology: Single-cell Omics"<br>
+Simon Anders<br>
+University of Heidelberg, Summer term 2025
+</p>
+
+## Homework 1
+
+A typical mammalian cell contains a few hundred thousand mRNA molecules, which come from
+many different genes. Even the most strongly expressed gene makes up less than a fraction 
+of $10^{-3}$ of all the mRNA molecules.
+
+In typical single-cell RNA sequencing experiments, one gets sequencing reads from only a small 
+part of these molecules -- maybe a few thousand reads per cell when using microfluidic-based 
+methods, or perhaps up to 25,000 with plate-based methods.
+
+Whith these numbers in mind, let us consider a sample comprising of $n$ cells,
+indexed with $i=1,\dots,n$. We write $M_i$ for the number of mRNA molecules in cell $i$
+and assume that $M_i$ is very large, $M_i>10^5$. After sequencing, we obtain $m_i$ reads
+from cell $i$, with each read stemming from one mRNA molecule. We assume that the 
+probability of an mRNA molecule to be sequenced and to hence appear as read is the same
+for all molecules.
+
+Let us focus on one specific gene $G$. For now, we assume (rather unrealistically)
+that the proportion of molecules transcribed from this gene among all the $M_i$ mRNA 
+molecules in the cell is exactly the same in all cells, namely $q$. 
+
+After sequencing, we obtain $s_i$ reads from cell $i$, with a number $K_i$ of the reads
+originating from gene G (and $s_i-K_i$ reads originating from other genes).
+
+### Problem 1
+
+Convince yourself that the $K_i$ are following a binomial distribution with $s_i$ trials
+and success probability $q$.
+
+Assuming that $M_i>10^5$ and $q<10^{-3}$, show that the probability mass function (p.m.f.) of
+this binomial distribution is very well approximated by a Poisson distribution with 
+rate parameter $s_iq$. Numerically calculate the p.m.f.s of both distribution for suitable
+parameters and compare.
+
+### Problem 2
+
+Remember that given a collection $\{X_i\}_{i=1}^n$ of i.i.d. random variables, their sample average is defined as
+$$ \overline{X} = \frac{1}{n}\sum_{i=1}^n X_i $$ 
+and their sample variance as 
+
+$$ \operatorname{sVar}(\{X_i\}) = \frac{1}{n-1} \sum_{i=1}^n\left(X_i - \overline{X}\right)^2$$
+
+The sample variance is a consistent estimator of the population variance, i.e., 
+$$ \operatorname{E}[\operatorname{sVar}(\{X_i\})] = \operatorname{Var} X_i=\operatorname{Var}X_1 \tag{✻}$$
+(which is independent of $i$ as the $X_i$ were assumed as i.i.d.). Remind yourself of the proof for the that fact and why this requires that the prefactor before the sum is $n-1$ and not $n$. (This point is known as *Bessel's correction*; look it up, e.g., on Wikipedia, and check the proof there.)
+
+Let us now write $P_i=K_i/s_i$ for the proportion of reads for cell $i$ that originate from gene G. Remind yourself what the variance of the $K_i$ is under the assumption that they are Poisson-distributed with expectation $s_i q$. Then, show that the expectation of the sample variance of the proportions $P_i$ is given by:
+
+$$ \operatorname{E}\left(\operatorname{sVar}(\{P_i\})\right) = \Xi q\quad\text{with }\Xi=\frac{1}{n}\sum_{i=1}^n\frac{1}{s_i}.$$
+Note that you cannot use (✻) directly because the $P_i$ are not identically distributed, but you can adopt the proof used in Bessel's correction.
+
+### Problem 3
+
+Let us now drop our unrealistic assumption that the cells all have the same value for the fraction $q$. Rather, the fraction of mRNA molecules in cell $i$ that originate from gene G is given by the random variable $Q_i$ which has expectation $q$ and variance $v$, and all the $Q_i$ are independent of each other. The distribution of $K_i$ now becomes conditional:
+$$K_i|Q_i\sim\operatorname{Poisson}(s_iQ_i)$$
+
+Using the law of total expectation and the law of total variance (see, e.g., Wikipedia), show that the marginal expectations for sample average and sample variance of the fraction estimates $P_i$ are
+
+$$\operatorname{E}\left(\frac{1}{n}\sum_{i=1}^n P_i\right) = q \quad\text{and}\quad \operatorname{E}(\operatorname{sVar}(\{P_i\}))=\Xi q + v. \tag{✻✻}
+$$
+
+### Problem 4
+
+*(If you have been in the problem class on 15 April: Yes, we have done this one already.)*
+
+At [this link](https://www.10xgenomics.com/datasets/10-k-peripheral-blood-mononuclear-cells-pbm-cs-from-a-healthy-donor-single-indexed-3-1-standard-4-0-0), you find an example data set from 10X (a company manufacturing equipment for single-cell sequencing) of 10,000 peripheral blood mononuclear cells (PBMCs, i.e., white blood cells of the types that have a single nucleus, taken from a blood draw from e.g. the arm vein) from a healthy donor. Download the filtered feature/cell matrix in raw format and unpack the file. 
+
+Read in the count matrix, which is stored in coordinate-sparse form in MatrixMarket format. In R, you can use the `readMM` function in the `Matrix` package. If you prefer working with Python, use `scipy.io.mmread`.
+
+```{r}
+library(Matrix)
+readMM( "~/tmp/filtered_feature_bc_matrix/matrix.mtx.gz" ) -> count_matrix
+```
+
+If you want to, you can also read the gene symbols and cell barcodes and attach them to the matrix as row and column names:
+
+```{r}
+rownames(count_matrix) <- read.table( "~/tmp/filtered_feature_bc_matrix/features.tsv.gz" )$V2
+colnames(count_matrix) <- read.table( "~/tmp/filtered_feature_bc_matrix/barcodes.tsv.gz" )$V1
+```
+
+Our matrix now contains read counts $K_{ij}$ for gene $i$ in cell $j$. Calculate the column sums $s_j = \sum_i K_{ij}$ and
+the matrix of fractions $Q_{ij}=K_{ij}/s_j$.
+
+Now calculate for each gene $i$ the average expression $q_i=\frac{1}{n}\sum_{j=1}^n Q_{ij}$ (where $n$ is the number of cells, i.e., the number of columns in the matrix) and corresponding variance $v_i=\frac{1}{n-1}\sum_{j=1}^n (Q_{ij}-q_i)^2$, using standard functions to get row means and row variances of a matrix.
+
+Generate a scatter plot of $v_i$ against $q_i$. It should look like shown below. Compare the shape and slope of the point cloud with your expectation from (✻✻).
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,fig.width=5,fig.height=5}
+library(sparseMatrixStats)
+frac_matrix <- t( t(count_matrix) / colSums(count_matrix) )
+plot( rowMeans(frac_matrix), rowVars(as(frac_matrix,"dgCMatrix")), 
+      cex=.1, log="xy", col="#00000050", asp=1, xlab="means", ylab="variances" )
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE}
+#plot( rowMeans(frac_matrix), rowVars(frac_matrix) / rowMeans(frac_matrix), 
+#      cex=.1, log="xy", col="#00000050", asp=1 )
+#abline( h = mean( 1/colSums(count_matrix) ), col="magenta" )
+```
