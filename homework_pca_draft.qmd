@@ -1,0 +1,128 @@
+---
+title: "Homework 3: PCA"
+execute:
+  echo: false
+  message: false
+  warning: false
+---
+
+### PCA of the Big 5 dataset
+
+In the lecture we used the Big5 dataset from [Open Psychometrics](http://openpsychometrics.org). Download the dataset "BIG5" from their [data page](https://openpsychometrics.org/_rawdata/). In the Zip file, you will find two files: the data table and the code book. The latter contains the text of the questions. 
+
+Load the Big5 data set and remove the meta-data columns, so that you are left with a data matrix. Note that the data table has the wrong file extension: it's called `data.csv` but its a tab-separated file.
+
+The data matrix should have about 19 thousand rows, one per person, and 50 columns for the 50 questionnaire items, and
+contain integer values from1 to 5 for the [Likert scale](https://en.wikipedia.org/wiki/Likert_scale) answers.
+
+```{r}
+library( tidyverse )
+
+read_tsv( "~/Downloads/BIG5/data.csv") %>%
+select( E1:last_col() ) %>% as.matrix() -> data
+```
+Use R's built-in PCA function `prcomp` to perform principal componant analysis (PCA) on the data matrix. Use centering and scaling of the matrix by setting the appropriate options of `prcomp`. 
+ 
+```{r}
+prcomp( t(data), center=TRUE, scale.=TRUE ) -> pca
+```
+
+### The `prcomp` output
+
+Here a quick description of the output of the `prcomp` function using the notation from the lecture
+
+- `sdev`: these are the eigenvalues of $Y^T Y$
+- `rotation`: this matrix contains the basis chosen in the subspace `S`, which is formed by the eigenvectors. The eigenvectors form the columns of `rotation`. It is called `rotation` because it rotates your data from the coordinate system spanned by the questionnaire items into the one spanned by principal components (i.e., the eigenvectors). In the lecture, the columns were called $mathbf{p}_s$ or $\mathbf{u}_l$. (We first considered these two separately and then found that they are the same, $\mathbf{p}_s=\mathbf{u}_s$ )
+- `x`: this is the result of rotating the data. The elements $X_{is}$ of this matrix were written as $X_{is}=\mathbf{p}_s^\top \mathbf{y}_i$ in the lecture.
+- `center`: the means that were subtracted from the columns of the data matrix in the initial centering.
+- `scale`: the standard deviations by which the columns of the data matrix were divided in the scaling step.
+
+Note: The two matrices, `rotation` and `x` have as many columns as the data matrix, i.e., we have $k=n$. If we want to project in a subspace with lower dimensionality $k<n$, we simply use only the first $k$ columns of the matrices.
+
+### Double-checking the `prcomp` output
+
+Let us see whether we have correctly understood what the output slots are.
+
+- Check whether `center` really contains the columns means of the data matrix, the subtract the columns means from your data matrix. Check that the new matrix (the "centered data matrix") now has vanishing column means. (When subtracting the column means, make sure your really subtract from the columns, not the rows. Hint: Transposing the matrix before and after helps.)
+- Calculate the standard deviations of the rows of the centered data matrix and check that this is what `scale` contains. Divide the rows of your centered data matrix by these values to obtain the final centered and scaled data matrix, which we call $Y$.
+- Check that the rotation matrix really is a rotation matrix, i.e., an orthonormal matrix. Remember that a square matrix $M$ is orthonomal iff $M^TM=I$.
+- Check that rotating the rows of $Y$ with the rotation matrix really produces the score matrix `x` (or $X$).
+- Conversely, check performing the inverse rotation (rotating backwards) on $X$ gives $Y$. Remember that a rotation matrix can be inverted by transposing it.
+- If you are not tired yet of checking everything, also calculate the eigenvalue decomposition of $Y^TY$ and check that the eigenvalues are equal to `sdev` and the eigenvectors to the columns of `rotation`.
+
+```{r}
+t( ( t(data) - colMeans(data) ) / apply( data, 2, sd ) ) -> y
+```
+
+### Scree plot
+
+Plot the variance explained by each principal component (PC). For this, plot the squared eigenvalues against their rank. (The eigenvalues are in slot `sdev` of the `prcomp` output.) Here is how the plot might look like:
+ 
+```{r}
+plot( pca$sdev^2, xlab="PC index", ylab="variance" )
+```
+ 
+ The first five or six PCs seem to lift of from the others, so let's use $k=6$.
+ 
+### Reconstruction error
+ 
+- Recreate $Y$ from score matrix $X$ and rotation matrix $R$, but this time only using the first 6 PCs, i.e., truncate $X$ and $R$ to only their 6 left-most columns before multiplying. How much does $Y$ differ from the reconstruction $X_{[k]}^\phantom{}R_{[k]}^{\,T}$ (where I have used the notation $M_{[k]}$ for the rectangular matrix comprising only the first $k$ columns of $M$)? Quantify the difference by calculating the squared Froebenius norm $\left\|Y- X_{[k]}R_{[k]}^{\,T}\right\|_F^2$, i.e. sum up the squared elements of the difference matrix.
+
+Here is how the plot should look like:
+
+```{r}
+plot( sapply( 1:50, function(k) sum( ( pca$x[,1:k] %*% t( pca$rotation[,1:k] ) - y )^2 ) ), 
+      xlab="k", ylab="reconstruction error (squared)" )
+```
+
+Can you explain why the following code produces a curve with exactly the same shape?
+
+```{r}
+plot( sapply( 1:50, function(k) sum( pca$sdev[(k+1):50]^2 ) ),
+      xlab="k", ylab="sum of all but the first k squared eigenvalues" )
+```
+
+### Varimax
+
+Make a heatmap of the rotation matrix (simply call `image` on the matrix). Then call `varimax` on the truncated rotation matrix $R_{[6]}$:
+
+```{r}
+vm <- varimax( pca$rotation[,1:6] )
+```
+
+You will get a list with two matrices, a loadings matrix $L$ and another rotation matrix $Q$. If you want to check, you will note that $R_{[k]}Q=L$, i.e., Q performs a further rotation.
+
+```{r}
+# a data row
+vm <- varimax(pca$rotation[,1:5])
+yy <- rep( c(-1,1,-1,1,-1), each=10 ) * item_signs * 2 + 3
+yy <- me
+-( ( yy - pca$center  ) / pca$scale ) %*% pca$rotation[,1:5] %*% vm$rotmat
+```
+
+### Rotate yourself
+
+Fill out the [questionnaire](https://openpsychometrics.org/tests/IPIP-BFFM/). Make your own data row by converting your answers into numbers by numbering the answers with 1 to 5 from left to right. Rotate the   
+
+```{r}
+item_signs <- apply( vm$loadings, 1, function(x) sign(x[which.max(abs(x))]) )
+```
+
+X
+```{r}
+item_signs <-
+c(E1 = -1, E2 = 1, E3 = -1, E4 = 1, E5 = -1, E6 = 1, E7 = -1, 
+E8 = 1, E9 = -1, E10 = 1, N1 = -1, N2 = 1, N3 = -1, N4 = 1, N5 = -1, 
+N6 = -1, N7 = -1, N8 = -1, N9 = -1, N10 = -1, A1 = -1, A2 = 1, 
+A3 = -1, A4 = 1, A5 = -1, A6 = 1, A7 = -1, A8 = 1, A9 = 1, A10 = 1, 
+C1 = 1, C2 = -1, C3 = 1, C4 = -1, C5 = 1, C6 = -1, C7 = 1, C8 = -1, 
+C9 = 1, C10 = 1, O1 = 1, O2 = -1, O3 = 1, O4 = -1, O5 = 1, O6 = -1, 
+O7 = 1, O8 = 1, O9 = 1, O10 = 1)
+item_signs[1:10] <- item_signs[1:10] * -1
+
+me <- c( 1,5,2,5,1,3,1,5,3,5, 
+         2,2,4,1,2,2,2,1,1,5,
+         1,5,1,5,1,4,2,4,4,3,
+         2,5,3,3,2,5,4,4,3,4,
+         5,1,1,1,3,4,5,4,5,3 )
+```

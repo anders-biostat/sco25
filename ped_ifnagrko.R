@@ -4,16 +4,13 @@ library( sparseMatrixStats )
 
 ## Read count matrix
 
-Seurat::ReadMtx( 
-  "~/tmp/ifnagrko/ifnagrko_raw_counts.mtx.gz",
-  "~/tmp/ifnagrko/ifnagrko_obs.csv.gz",
-  "~/tmp/ifnagrko/ifnagrko_var.csv", 
-  feature.column=2, skip.cell=1, skip.feature=1, 
-  cell.sep=",", feature.sep=",",
-  mtx.transpose=TRUE ) -> count_matrix
-
-count_matrix[ 1:5, 1:5 ]
-
+read.table( "~/tmp/ifnagrko/ifnagrko_raw_counts.mtx.gz", comment="%" ) -> mm
+mm[1:5,]
+sparseMatrix( i=mm[-1,2], j=mm[-1,1], x=mm[-1,3], dims=mm[1,c(2,1)] ) ->  count_matrix
+read.csv( "~/tmp/ifnagrko/ifnagrko_obs.csv.gz" )$barcode -> colnames(count_matrix)
+read.csv( "~/tmp/ifnagrko/ifnagrko_var.csv" )$gene_name -> rownames(count_matrix)
+rm(mm)
+gc()
 
 ## Calculate fraction
 
@@ -75,23 +72,23 @@ ggplot + geom_point( aes( x=U1, y=U2, col=expr ), size=.3 ) + coord_equal()
 
 library( igraph )
 
+nn <- nn2$nn.index
 # Construct edge list: each cell to it's k-th nearest neighbor
-k <- 3
-#  start of the edge list:
+# for example, start of the edge list for the 3rd neighor
 ( rbind( 1:nrow(nn), nn[,k+1] ) )[ , 1:20 ]
 # the same, flattened (this is the format that igraph wants)
 as.vector( rbind( 1:nrow(nn), nn[,k+1] ) )[ 1:40 ]
-# now for all values of k
+# now for all values of k from 1 to 9
 do.call( c, lapply( 1:9, function(k) as.vector( rbind( 1:nrow(nn), nn[,k+1] ) ) ) ) -> edgelist
 # make a graph
 make_graph( edges=edgelist, n=nrow(nn), directed=FALSE ) -> nn_graph
 
 # Check the vertex degrees
-hist( degree(nn_graph) )
+plot( table(degree(nn_graph)) )
 
 
 # Leiden clustering
-cluster_leiden( nn_graph, objective_function="modularity", resolution_parameter=.2 ) -> cm
+cluster_leiden( nn_graph, objective_function="modularity", resolution_parameter=1 ) -> cm
 
 table( membership(cm) )
 
@@ -140,7 +137,7 @@ summarise( n_stubs = sum(degree) ) -> stub_counts
 stub_counts
 
 # Let's write s_g for the number of stubs in cluster g. If we
-# randomly pick to stubs to connect, what is the probability
+# randomly pick two stubs to connect, what is the probability
 # for them to be in the same group?
 
 sum(stub_counts$n_stubs^2) / sum(stub_counts$n_stubs)^2

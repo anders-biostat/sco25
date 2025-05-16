@@ -1,5 +1,5 @@
 ---
-title: "Counting Statistics"
+title: "Statistics of Count Data"
 ---
 
 ## Binomial and Poisson distribution
@@ -192,15 +192,15 @@ and then calculate:
 $$\begin{align}
 \text{E}(W)&=\frac{1}{m-
 1}\sum_i\text{E}\left[\left(P_i-\overline{P}\right)^2\right]\\
-&=\frac{1}{m-1}\sum_i\text{E}\left(P_i-\frac{1}{m}\sum_jP_j\right)\left(P_i-\frac{1}{m}\sum_kP_k\right)\\
-&=\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}(P_i-P_j)(P_i-P_k)\\
+&=\frac{1}{m-1}\sum_i\text{E}\left[\left(P_i-\frac{1}{m}\sum_jP_j\right)\left(P_i-\frac{1}{m}\sum_kP_k\right)\right]\\
+&=\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}\left[(P_i-P_j)(P_i-P_k)\right]\\
 &=\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}(P_i^2-P_iP_j-P_iP_k+P_jP_k)\\
 &=\frac{m^2}{(m-1)m^2}\sum_i\text{E}(P_i^2)+\frac{1}{(m-1)m^2}\sum_i\sum_j\sum_k\text{E}\left(-P_iP_j-P_iP_j+P_iP_j\right)\\
 &=\frac{1}{m-1}\sum_i\text{E}(P_i^2)-\frac{m}{(m-1)m^2}\sum_i\sum_j\text{E}\left(P_iP_j\right)\\
 &=\frac{1}{m-1}\sum_i\text{E}(P_i^2)-\frac{1}{m(m-1)}\sum_i\left(\text{E}(P_i^2)+\sum_{j\neq i}\text{E}(P_i)\text{E}(P_j)\right)\\
 &=\frac{m-1}{m(m-1)}\sum_i\text{E}(P_i^2)-\frac{1}{m(m-1)}\sum_i\left(\sum_{j\neq i}q_0^2\right)\\
 &=\frac{1}{m}\left(mq_0^2+q_0\sum_i\frac{1}{n_i}+mv\right)-q_0^2\\
-&=q_0/\tilde n+v\qquad\text{with }\frac{1}{\tilde n}=\frac{1}{m}\sum_i\frac{1}{n_i}.
+&=\frac{q_0}{\tilde n}+v\qquad\text{with }\frac{1}{\tilde n}=\frac{1}{m}\sum_i\frac{1}{n_i}.
 \end{align}
 $$
 

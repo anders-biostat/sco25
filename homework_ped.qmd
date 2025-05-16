@@ -1,0 +1,201 @@
+---
+title: 'Homework: Single-cell analysis for "pedestrians"'
+---
+
+In the exercise class on Tuesday, we have used Seurat to performs the first steps of a standard analysis of a simple single-cell data set. Here, we do this steps again, but now using elementary functions.
+
+You can dob the exercise in R or Python, but instructions will focus on R.
+
+### Step 1: Load the count matrix
+
+We use again the 10k PBMC data set from 10x, available [here](https://www.10xgenomics.com/datasets/10k-human-pbmcs-3-v3-1-chromium-controller-3-1-high). Download the filtered feature/cell matrix (in "old" format, not as HDF5 file). Unpack the archive to get the 3 gzipped files with matrix values, row labels (table of features, i.e., genes ) and column labels (cell barcodes).
+
+First load the matrix file (`matrix.mtx.gz`), which provides the count matrix in coordinate-sparse MatrixMarket format. Read it with the `readMM` function from the `Matrix` package. (For Python: `scipy.io.mmread` in SciPy)
+
+```{r echo=FALSE}
+library( Matrix )
+readMM( "~/tmp/filtered_feature_bc_matrix/matrix.mtx.gz" ) -> cm
+```
+
+You should get a matrix with size
+
+```{r echo=FALSE}
+dim(cm)
+```
+
+with an upper left corner like this:
+
+```{r echo=FALSE}
+cm[1:10,1:10]
+```
+(Dots indicate zeroes.)
+
+Now read the gene table (`features.tsv.gz`) using e.g. the `read.table` function. Your table should have one row for each row of the count matrix. Here are the first 5 rows of this table:
+
+```{r echo=FALSE}
+read.table( "~/tmp/filtered_feature_bc_matrix/features.tsv.gz", sep="\t" ) -> gene_table
+
+head( gene_table, 5 )
+```
+
+Next, read the cell barcodes file. There should be one barcode for each column of the count matrix. Here are the first 5:
+
+```{r echo=FALSE}
+readLines( "~/tmp/filtered_feature_bc_matrix/barcodes.tsv.gz" ) -> barcodes
+
+head( barcodes, 5 )
+```
+
+Finally, attach the gene symbols (middle column of the gene table) and the barcodes to the count matrix as row and column labels.
+
+```{r echo=FALSE}
+rownames(cm) <- gene_table$V2
+colnames(cm) <- barcodes
+```
+
+### Step 2: Histogram of the cell totals
+
+Calculate for each cell its total number of reads by summing up all columns of the count matrix. Here are the first totals or the first 5 cells:
+
+```{r echo=FALSE}
+colSums(cm)[1:5]
+```
+
+Make a histogram of (a) the column totals and (b) the logarithms (to basis 10) of the column totals. Which of the two histograms looks more useful?
+
+### Step 3: Log-normalize the data
+
+Divide all values in the count matrix by the total of the resepctive column. We will call the result the fraction matrix. Writing $K$ for the count matrix and using $i$ as gene (row) index and $j$ as cell (column index), this means to calculate 
+$$P_{ij}=K_{ij}/\sum_{i'}K_{i'j}.$$ 
+
+Double-check that the fraction matrix $P$ now has columns that sum to 1, i.e, that $\sum_iP_{ij}=1$ for all cells $i$.
+
+```{r echo=FALSE}
+fm <- t( t(cm)/colSums(cm) )
+```
+
+Next, perform a log transformation and obtain the "expression matrix" 
+$$Y_{ij}=\log_{10}(P_{ij}S+1)$$ 
+with scaling factor $S=10^4$. 
+
+For this step, you have to take care of a subtlety: So far, R has used our matrices' sparsity to save memory: instead of keeping all values in memory, it only kept the non-zero values, together with their coordinates, either in coordinate sparse (a.k.a. triplet sparse) or in column sparse form. (See the Wikipedia page on [Sparse Matrix](https://en.wikipedia.org/wiki/Sparse_matrix) for more details.) As long as we only perform transformations that map zeroes to zeroes, the matrices stay sparse. Above, when we divided by the column sums, this was the case. 
+
+Here, this is ultimatively also the case, because $k=0$ is mapped to $y=\log_{10}(kS+1)=0$. However, when calculating this, R goes through the intermediate step of calculating $k\mapsto(kS+1)$, which does not preserve zeroes. This will require R to allocate place for the full ("dense") intermediate matrix and your computer may not have enough memory for this.
+
+However, R offers the special function `log1p` which performs the transformation 
+$$\operatorname{log1p}:x\mapsto\log(x+1),$$ 
+thus allowing us to skip over the non-zero-preserving intermediate step. (Python's `math` and `numpy` packages offer the same functin.)
+
+Hence, take care to use `log1p` to perform the logarithm and remember to afterwards rescale form natural to decadic logarithm.
+
+```{r echo=FALSE}
+y <- log1p( fm*1e4 ) / log(10)
+```
+
+### Find highly variable genes
+
+Calculate for each gene its average logarithmized (but *not* normalized) expression, i.e,
+$$\mu_i=\operatorname{mean}_j P_{ij}=\frac{1}{n_\text{genes}}\sum_j P_{ij}.$$ 
+To do so, apply the standard function to calculate matrix row averages to $P$. Also calculate the row (sample) variances of $P$: $\quad v_i=\operatorname{sVar}_jP_{ij}$.
+
+Then make a scatter plot of the $v_i$ versus $\mu_i$ and one of $v_i/\mu_i$ versus $\mu_i$. Add to both plots a line that shows the expected counting noise using the formula from this week's lecture. 
+
+The second plot should look like this:
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+library( sparseMatrixStats )
+plot( rowMeans(fm), rowVars(fm)/rowMeans(fm), log="xy", cex=.1, col="#00000040",
+      xlab="gene means", ylab="gene variances / gene means")
+abline( h=mean(1/colSums(cm)), col="purple" )
+
+rev( names( tail( sort(rowVars(fm)/rowMeans(fm)), 1000 ) ) ) -> hvg
+```
+
+Sort the genes by $v_i/\mu_i$ and pick the genes with the 1000 highest values. 
+
+Here are the top 5 of these highly variable genes:
+
+```{r echo=FALSE}
+head( hvg, 5 )
+```
+
+Subset the expression matrix to these 1000 rows. Let us call this matrix $\tilde Y$.
+
+### Perform principal component analysis (PCA)
+
+Now center and scale the matrix $\tilde Y$. This means: Subtract from each matrix row the row average and divide by the row's standard deviation. Let us call the centered and scaled matrix $Y_c$ (or `yc` in code).
+
+```{r echo=FALSE}
+y[hvg, ] -> ytilde
+( ytilde - rowMeans(ytilde) ) / rowSds(ytilde) -> yc
+```
+
+We now perform a decomposition of $Y_c$ of the form $Y_c\approx RX^T$, where $R$ is an orthonormal (i.e., rotation) matrix, also called the loadings matrix, and $X$ is a matrix of principal component scores. We obtain these two matrices as follows:
+
+```{r}
+irlba::prcomp_irlba( t(yc), n=30, center=FALSE, scale.=FALSE ) -> pca
+```
+
+Here, we have called `prcomp_irlba`, a truncated PCA function for sparse matrices supplied by the `irlba` package. We instruct the function to not center and scale the matrix as we have already done this manually in the previous step.
+
+We will discuss in the next lectures what exactly a PCA does.
+
+For now, we simply inspect the result of the call, which contains some general information and the two matrices $R$ and $X$:
+```{r}
+str( pca )
+```
+
+The rotation matrix has one row per gene and 30 columns, as we have requested the top 30 principal components (`n=30`). The score matrix has one row per cell and 30 columns, i.e., each cell is now represented by a 30-dimensional vector.
+
+For completeness, we set the row names of the two matrices to the gene and cell labels:
+
+```{r}
+rownames(pca$x) <- colnames(yc)
+rownames(pca$rotation) <- rownames(yc)
+```
+
+### Check the PCA
+
+As we will discuss in more detail soon, the purpose of a PCA is to find a good low-rank approximation of a matrix. Here,
+$\hat Y_c=RX^T$ has rank $n=30$, because it is formed by a matrix product with inner dimension 30. 
+
+We check whether $\hat Y_c$ is a good approximation to $Y_c$. To do so, calculate $\hat Y_c$, then pick a random gene and plot against each other the rows of $Y_c$ and $\hat Y_c$ that correspond to this gene. Try a few different genes. For example:
+
+```{r echo=FALSE}
+pca$rotation %*% t(pca$x) -> yc_hat
+
+# gene <- sample( hvg, 1 )
+gene  <- "MT-ND2"
+plot( yc_hat[gene,], yc[gene,], asp=1, main=gene, xlab="original", 
+      ylab="reconstructed", cex=.1, col="#00000030" )
+```
+
+### Plot the first two PCs
+
+Plot the first two PCs against each other. The plot should look like this:
+
+```{r echo=FALSE}
+plot( pca$x[,1], pca$x[,2], cex=.1, col="#00000030", asp=1, ylim=c(-20,20) )
+```
+
+### Make UMAP plot
+
+Finally, we use the `uwot` package to get a UMAP representation, as follows:
+
+```{r}
+uwot::umap( pca$x ) -> ump
+```
+
+Here is a plot of 2D coordinates returned by UMAP:
+
+```{r}
+plot( ump, cex=.1, col="#00000030", asp=1 )
+```
+
+### Sleepwalk
+
+If you want to, you can use [Sleepwalk](https://anders-biostat.github.io/sleepwalk/) to compare the UMAP representation with the Euclidean distances of the cells as represented by rows in $X$.
+
+```{r eval=FALSE}
+sleepwalk::sleepwalk( ump, pca$x )
+```

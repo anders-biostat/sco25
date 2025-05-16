@@ -1,0 +1,62 @@
+---
+title: "PCA"
+---
+
+A certain system can be in a continuum of different internal states or configurations. The set of all possible states can be considered as a manifold or a probability distribution in a low-dimensional space $\mathbb{R}^d$. From outside, the system's response to situation or features of its outwards behaviour can be studied in a multitude of way, yielding scores on a large number of possible assesment procedures, each 
+
+https://projects.ori.org/lrg/PDFs_papers/Goldberg.Big-Five-Markers-Psych.Assess.1992.pdf 
+(100 markers in Appendix A)
+
+Example: Personality:
+- external view: subjects' answers to a large number of questions
+- internal view: a smaller number of personality dimensions
+
+### Abstract simulated example
+
+We have 1000 objects, whose internal state can be described by a 3D vector
+
+```{r}
+n <- 1000
+true_states <- cbind(
+  rnorm( n ),
+  ifelse( runif(n)<.3, rnorm( n, -1, 2 ), rnorm( n, 3, .5 ) ),
+  runif( n, -2, 2 )
+)
+
+hist(x[,3])
+```
+
+We have 7 different possible measurements whose results depend in different ways on the state:
+```{r}
+true_loadings <- rbind(
+  c( 1, .5, 0 ),
+  c( -20, 0, 10 ),
+  c( -1, .1, .1 ),
+  c( 0, 9, 2 ),
+  c( 1, 1, 1 ),
+  c( .1, -.1, 3 ),
+  c( 0, 0, .8 )
+)  
+
+measurement_noise_sd <- .1 * c( .1, .2, .5, .3, .4, .15, .4 ) 
+
+y <- true_states %*% t(true_loadings) + rnorm( n*7, 0, rep( measurement_noise_sd, each=n ) )
+```
+
+```{r}
+pca <- prcomp( y, center=TRUE, scale. = TRUE )
+pca
+```
+
+```{r}
+cor(true_states, pca$x )
+```
+
+```{r}
+true_states <- matrix( rnorm( 3*n ), ncol=3 )
+true_loadings <- matrix( rnorm( 3*7 ), ncol=3 )
+y <- true_states %*% t(true_loadings)
+pca <- prcomp( y ) 
+pca
+```
+

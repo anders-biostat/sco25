@@ -1,14 +1,18 @@
 project:
   type: website
   render: 
-    - "!last_year"
-
+    - "!last_year/"
+    - "*.qmd"
+    - "*.R"
+    - "!*draft*"
 website:
   title: "Mathematics of single-cell omics"
 
 format:
   html:
-    theme: cosmo
+    theme: 
+      - cosmo
+      - custom.scss
     css: styles.css
     toc: false
 

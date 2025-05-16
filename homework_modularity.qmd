@@ -1,0 +1,35 @@
+---
+title: "Homework 3b: Modularity clustering"
+---
+
+### Modularity score
+
+In the lecture, we have calculated the modularity score for a graph with an assignment of vertices to clusters, but we have not given a closed form expression to summarize the procedure. Do so now.
+
+How to proceed: We are given a graph $G=(V,E)$ with vertex set $V$ and edge set $E\subset V\times V$ together with a mapping $c:V\to C$ that assigns each vertex to a cluster (where $C$ is simply a set of distinct labels for the clusters). The graph is undirected, i.e, $(v,v')\in E \Longleftrightarrow (v',v)\in E$.
+
+This graph is given as an adjacency matrix $A\in\{0,1\}^{|V|\times |V|}$ with $A_{vv'}=1$ if $(v,v')\in E$ and $A_{vv'}=1$ otherwise, and and the cluster assignment is given as a vector $\mathbf{c}=(c_v)_{v\in V}$ with $c_v=c(v)$.
+
+From this, we can easily construct a matrix $B\in\mathbb{N}_0^{|C|\times|C|}$, where $$B_{cc'}=\left|\left\{(v,v')\in E\mid c_v=c,\, c_{v'}=c'\right\}\right|$$
+that tells us how many edges there are between vertices in cluster $c$ and $c'$. Note that, if defined this way, the diagonal elements $B_{cc}$ count each edge within cluster $c$ twice.
+
+How can you calculate $E$ from $A$ and $\mathbf{c}$?
+
+We also have the degree $d_v$ of vertex $d$ that is the number of edges connected to vertex $v$. How can this be calculated from $A$ and $\mathbf{c}$?
+
+How can you calculate the modularity score $M_G(\mathbf{c})$ from these? Do you need $A$, or is $B$ sufficient?
+
+### Update rule
+
+You change a given cluster assignment $\mathbf{c}^{(0)}$ into another one, $\mathbf{c}^{(1)}$ by moving a single vertex $v$ from cluster $c_v^{(0)}$ to a new cluster  $c_v^{(1)}$. All other vertices stay in their clusters, i.e., $c_{v'}^{(0)}=c_{v'}^{(1)}$ for all $v'\neq v$.
+
+How can you calculate the change in modularity score, $M_G(\mathbf{c}')-M_G(\mathbf{c})$ without recalculating everything? How do you update $B$?
+
+### Leiden algorithm
+
+The Leiden algorithm is a greedy algorithm to find a clustering $\mathbf{c}$ that maximizes $M_G(\mathbf{c})$ at least locally. You start with assigning each vertex to its own cluster. Then, for each vertex, calculate the change in modularity score if the vertex were moved from its current cluster to any other currently non-empty cluster. Find the maximum of all these differences and perform its associated vertex move. Iterate until all no further increase in modularity score is possible.
+
+Write down pseudocode for this algorithm. (If you feel like it, implement it.)
+
+
+

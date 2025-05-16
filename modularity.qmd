@@ -1,0 +1,221 @@
+---
+title: "Modularity clustering"
+---
+
+```{r message=FALSE}
+library( tidyverse )
+library( Matrix )
+```
+
+### Data
+
+Load the data to work with:
+
+```{r}
+load("ifnagrko_nn.rda")
+```
+
+This file contains two variables:
+
+```{r}
+str(nn)
+str(ump)
+```
+
+`ump` is a UMAP of the cells of the IFNAGRKO data set:
+
+```{r}
+plot( ump, cex=.1, asp=1, col=adjustcolor("black",.3) )
+```
+
+`nn` is a nearest neighbor matrix. Each row corresonds to a cell and lists the indices of that cell's  20 nearest neighbors according to Euclidean distance in PCA space:
+
+```{r}
+head(nn)
+```
+
+### Neighborhood graph as adjacency matrix
+
+We now construct an undirected graph, where each cell is a vertex and each neigborhood relationship is an edge.
+
+As R has row-major matrices, the `nn` matrix is stored in memory such that each column is contigues. If we flatten the matrix with `as.vector`, we get a vector that first lists the values of the firstb column, then of the second column, etc.
+
+```{r}
+as.vector(nn) %>% head()
+```
+
+Let us write $n$ for the number of cells. If we build a vector comprising the sequence $1,...,n$ k=20 times, then the edges are the connections of paired vertex indices in the two vectors. We thus can build an adjacency matrix for the neighborhood graph:
+
+```{r}
+sparseMatrix( 
+  i = rep( 1:nrow(nn), ncol(nn) ), 
+  j = as.vector(nn), 
+  x = 1,
+  dims = c( nrow(nn), nrow(nn) ),
+  repr="T" ) -> adjm
+```
+
+As our graph is undirected, we must symmetrize the matrix by adding its transpose. Then, however, we will have double-counted all mutual nearest neighbors, which now have a 2 instead of a 1, so the set these back to 1.
+
+```{r}
+adjm + t(adjm) -> adjm
+adjm@x <- pmin( adjm@x, 1 )
+```
+
+The column sums of the adjacency matrix gves us the degrees of the vertices:
+
+```{r}
+colSums(adjm) -> vertex_degrees
+```
+
+Here is a histogram
+
+```{r}
+hist( vertex_degrees )
+```
+The minimum is 20 but a vertex can habe much more neighbors due to non-mutual neighboprhood relations.
+
+### Leiden Clustering with igraph
+
+We can now use the igraph package to build this graph in its internal representation:
+
+```{r}
+igraph::graph_from_adjacency_matrix( adjm, mode="undirected" ) -> nn_graph
+
+nn_graph
+```
+
+We can ask igraph to perform modularity clustering on this graph by running the Leiden algorithm:
+
+```{r}
+igraph::cluster_leiden( nn_graph, objective_function="modularity" ) -> clustering
+
+str(clustering)
+```
+
+Let's plot this
+
+```{r}
+plot( ump, col=clustering$membership, asp=1, cex=.1 )
+```
+
+The Leiden algorithm maximizes a score known as "modularity score". It's value is given in the `quality` slot above.
+We will now see how to calculate this score.
+
+### Modularity score
+
+It seems natural to ask that a good clustering should break as few edges as possible, where we call an edge "broken" if it connects two vertices that have been assigned to different clusters, i.e., if the edge crosses a "cluster boundary". Let us see which fraction of the edges is broken by the clustering produced by igraph's Leiden implementation:
+
+To get a list of edges, we use that our adjacency matrix is given in triplet sparse form, i.e., we can get simply extract the start and end vertices of all edges from the triplets. In order to get each edge only once, we only look at the part above the diagonal:
+
+```{r}
+stopifnot( all(adjm@x!=0) )
+tibble( from=adjm@i+1, to=adjm@j+1 ) %>%
+filter( from < to ) -> edge_table
+
+head(edge_table)
+```
+We can easily add two columns giving the cluster memberships of the two vertices
+
+```{r}
+edge_table %>%
+mutate( 
+  from_cluster = clustering$membership[ from ],
+  to_cluster   = clustering$membership[ to ] ) -> edge_table_clustered
+
+head( edge_table_clustered )
+```
+
+Now, we can count how many edges connect vertices from different clusters:
+
+```{r}
+sum( edge_table_clustered$from_cluster != edge_table_clustered$to_cluster )
+```
+
+Using `mean` instead of `sum` and `==` instead of `!=`, we get the proportion of the edges that stay within a cluster among all edges
+
+```{r}
+mean( edge_table_clustered$from_cluster == edge_table_clustered$to_cluster ) -> fraction_inner
+
+fraction_inner
+```
+
+We will call this value $J$.
+
+It seems natural to say that a clustering (i.e., an assignment of vertices to clusters) is good if this values is large. However, this score has a trivial maximizer: assign all vertices to the same cluster.
+
+Therefore, we should compare the score with a baseline. For the modularity score, this baseline is chosen as the expected proprtion of non-crossing edged under random "edge permutations".
+
+An "edge permutation" here means that each vertex gets connected with new randomly chosen partner vertices such that all vertex degrees stay the same. One way of visualizing this is to break every edge into two "stub": a "stub" is a half-edge that is connected to only one vertex, while its other end is open and dangling. We randomly pair up stubs to create a new graph, which we then call an "edge permutation" of the previous graph.
+
+In our representation, an edge permutation can simply be done by performing a permutation on either the `from` or the `to` column of the edge table:
+
+```{r}
+edge_table %>%
+mutate( to = sample(to) ) %>%
+mutate( 
+  from_cluster = clustering$membership[ from ],
+  to_cluster   = clustering$membership[ to ] ) %>%
+summarise( mean( from_cluster == to_cluster ) )
+```
+If we repeat this many times, we get the expectation of the within-cluster edge proportion under random edge permutation. We call this value $J_0$ and define the "modularity score" of a given clustering for a given graph as $M=J-J_0$.
+
+### Calculating $J_0$
+
+How many edge stubs are in each cluster? This is simply the sum of the degrees of all vertices in the cluster.
+
+```{r}
+tapply( vertex_degrees, clustering$membership, sum ) -> degree_sums
+
+degree_sums
+```
+
+Let us call these values $D_c$ (vertex degree sum in cluster $c$) and let us write $D=\sum_c D_c$ for the sum of the degrees of *all* vertices.
+
+If we randomly pick two stubs, we have $D(D-1)/2$ possible vertex pairs. How many of them connect vertices within the same cluster? Clearly $\sum_x D_c(D_c-1)/2$. Therefore, the probability of a random connection being a within-cluster connection
+
+$$ \frac{\sum_cD_c(D_c-1)/2}{n(n-1)/2} $$
+
+
+We simplify this by dropping the "$-1$" and get
+
+$$ J_0 = \frac{\sum_c D_c^2}{D^2} = \frac{\sum_cD_c^2}{\left(\sum_cD_c\right)^2}.$$
+
+For our graph, we get
+
+```{r}
+sum( degree_sums^2 ) / sum( degree_sums )^2 -> expected_fraction_inner
+
+expected_fraction_inner
+```
+
+We calculate $M=J-J_0$:
+```{r}
+fraction_inner - expected_fraction_inner
+```
+
+and compare with the result reported by igraph:
+
+```{r}
+clustering$quality
+```
+
+### Approximations made
+
+[...]
+
+### Quick calculation
+
+Let us write $E_{cc'}$ for the number of edges going from a vertex in cluster $c$ to one in cluster $c'$. The diagonal elements are, of course, given by $E_{cc}=D_c/2$.
+
+Here are the elements of this matrix, caclulated for our clustering
+
+```{r}
+edge_table_clustered %>%
+group_by( from_cluster, to_cluster ) %>%
+summarise( n=n() )
+```
+
+For cluster $c$, there are $\sum_c'E_{cc'}$ edges going from that cluster 
+
+

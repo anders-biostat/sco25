@@ -1,0 +1,99 @@
+---
+title: "Homework 3a: PCA"
+---
+
+### Plan and model
+
+We will simulate data so that we know what to expect when we analyze our simulated data afterwards. 
+
+Our model is that our objects (maybe cells) occupy a "state space" that can be embedded into a low-dimensional Euclidean space $\mathbb{R}^d$. For each object, we measure the expression of $m$ features (e.g., the expression of $m$ genes), yielding for each object a feature vector in $\mathbb{R}^m$ with $m>d$. We assume that a cell's state completely determines its expected feature vector, i.e., there is a mapping from $d$-dimensional state space to $m$-dimensional feature space. Therefore, the feature vectors should all lie in a $d$-dimensional sub-manifold of $\mathbb{R}^m$ -- and if the mapping from state to feature vector is linear, this manifold should be flat, i.e. a sub-space.
+
+However, the process of measuring the features introduces noise, making each measured feature value deviate a bit from its expected value. The measurement noise added to two different features is assumed to be independent.
+
+Therefore, the actually measured feature vectors leave the $d$-dimensional sub-manifold/sub-space and their support has dimensionality $m$. Can a PCA recover the $d$-dimensional subspace and each cell's $d$-dimensional state? If so, does this still work if the space-to-feature mapping is non-linear? And when is the measurement noise to strong to allow recovery?
+
+To see, we will simulate data for different scenarios and study the respective PCA results.
+
+Then we modify the simulation settings and study the results. Below, you will find suggestions for different scenarios to try. Study a few of them (or all if you feel industrious) or come up with your own.
+
+#### Using R with LLMs
+
+If you are still unfamiliar with R, don't get hold up on syntax details. Just ask ChatGPT or another LLM of your choice. Ask specific questions like "How do I get the variances of the columns of a matrix in R?". To speed things up, it can be a good idea to add something like: "Be brief and just tell me the code, without long explanations."
+
+### Simulate states
+
+Let's start with $m=1000$ objects that live in a $d=5$-dimensional space.
+
+Chose for each state space dimension a different distribution. Make them diverse: some with one, some with two or three nodes, some normal, others uniform or any other distribution. Make sure that each component has a different variance, e.g., by multiplying them with rather different scaling factors. Let's call this matrix $S_0$.
+
+For example, like this (for $d=4$):
+
+```{r}
+n <- 1000
+
+s0 <- cbind(
+  2 * rnorm( n ),
+  1.2 * ifelse( runif(n)<.3, rnorm( n, -1, 1 ), rnorm( n, 3, .2 ) ),
+  3 * runif( n, -2, 2 ),
+  7 * rexp( n,  1.5 )
+)
+
+head( s0 )
+
+apply( s0, 2, var )  # check column variances
+```
+
+
+### Simulate feature expectations
+
+Let's assume that there are $n=15$ features to be measured. Each feature's expected value is determined by several of the state components in a linear , i.e., the feature's expected value is a linear combination of state components.
+
+An easy way is to chose for each feature $d$ weights at random, by drawing from a standard normal. All these weights can be assembled in a $n\times d$ matrix $F$. Convince yourself that multiplying a state vector from the right with this matrix form the linear combination, and that we can hence form an $n \times m$ matrix of expected values $Y_0$ for all the objects' feature vectors simply by multiplying $F$ and $S_0$. 
+
+Do the rows of $Y_0$ now really all sit in a $d$-dimensional subspace? How can you check this numerically?
+
+### Add measurement noise
+
+Now add isotropic measurement noise, i.e., add to each value in $Y_0$ a random value drawn from a normal with mean zero and standard deviation of say, 0.3, to obtain the measured feature values $Y$.
+
+### PCA
+
+Perform a PCA on $Y$ using R's standard PCA function, `prcomp`. (Don't forget to think about whether you need to transpose $Y$ before giving it to `prcomp`.)
+
+Check the eigenvalues. Can you see from them that the state space was $d$-dimensional? (Hint: Look at the logarithms of the eigenvalues, or plot them.) Can you match the eigenvalue's specific values to  parameters of your simulation?
+
+Calculate and inspect the matrix of the covariances between each column of $S_0$ and each column of the PC score matrix $X$. What do you see?
+
+### Uncentered and scaled features
+
+Check means and standard deviations of the rows of $Y$. Are they all similar? Change this by multiplying each row of $Y_0$ by a different scaling factor and then adding different (e.g., random) "centers" to each row. Add noise again and perform a new PCA. Do your observations still hold? How does this depend on whether you use the option `scale=TRUE` in `prcomp`?
+
+### Reconstruction error
+
+Use the data in the object returned by PCA (i.e., the score matrix, the rotation matrix, the vector of scaling factors (row SDs) and the vector of centers (row means)) to reconstruct $Y$. Calculate the reconstruction error by taking the element-wise difference between the reconstructed $\hat Y$ and the original $Y$ and add up their squares of the differences. Then do the reconstruction using only the first $l$ of the $n$ columns of score and rotation matrix. How does the reconstruction error depend on $l$? How is this connected to the eigenvalues (`sdev` in the PCA return object)? 
+
+And how does the reconstruction error change if you take the difference nto between $\hat Y$ and $Y$ but between $\hat Y$ and $Y_0$?
+
+### Nonlinear influence
+
+Let one of the features depend in a nonlinear way on the state, e.g., by adding the scaled *square* of one of the state components. How does the number of large eigenvalues in the PCA change? Why?
+
+<!--
+
+---
+
+*I am not sure yet whether the following questions are really insightful. I need to think about it. Skip them for now.*
+
+<div style="color:gray60">
+### Sparse loadings
+
+Go back to a linear mapping, and change your matrix $F$ such that each feature only depends on some of the state components, e.g., by setting a large fraction of the matrix elements to 0. How is this reflected in the loadings (i.e., rotation) matrix of the PCA. Use `image` to visualize the loadings matrix.
+
+### Mixed principal components
+
+Keeping your sparse $F$, change now $S_0$ such that two columns have the same standard deviation. In a PC, they should then get the same, or at least very similar, eigenvalues, resulting in a mixed eigenspace associated with these eigenvalues. How is this reflected in the loadings matrix?
+
+Can you "disentangle" the mixed components by applying the `varimax` function to the loadings (i.e., rotation) matrix?
+</div>
+
+-->
