@@ -1,8 +1,8 @@
 ---
-title: "PCA / Rationale"
+title: "Priniple Component Analysis (PCA)"
 ---
 
-To assess human persoanilty, psychologists use questionaires. A common format is to ask whether the test subject feels well described by phrases ("personality items") like for example
+To assess human personality, psychologists use questionnaires. A common format is to ask whether the test subject feels well described by phrases ("personality items") such as
 
 - "I don't talk a lot."
 - "I am interested in people."
@@ -13,45 +13,99 @@ To assess human persoanilty, psychologists use questionaires. A common format is
 The subject is supposed to choose an answer on the *Likert scale*, i.e., say whether the statement is 
 
 - "very inaccurate" (or: "strongly disagree")
-- "moderately inaccurate" (or: "somwehat disagree")
-- "neither accurate nor inaccurate" (or: "neither agree or disagree")
+- "moderately inaccurate" (or: "somewhat disagree")
+- "neither accurate nor inaccurate" (or: "neither agree nor disagree")
 - "moderately accurate" (or: "somewhat agree")
-- "very acccurate" (or: "strongly agree")
+- "very accurate" (or: "strongly agree")
 
-We can score these answers with valuies from 1 to 5, or from -2 to 2.
-	
-[Here](https://ipip.ori.org/AlphabeticalItemList.htm) is a list of 3000+ such statements (the "International Personality Item Pool" (IPIP)
+We can score these answers with values from 1 to 5, or from -2 to 2.
+
+[Here](https://ipip.ori.org/AlphabeticalItemList.htm) is a list of 3000+ such statements (the "International Personality Item Pool", IPIP)
 
 It stands to reason that the answers to many such questions correlate, and that we can predict a subject's answer to one question if we know their answer to sufficiently many other questions. 
 
-The theory of personality traits posits that human personality can be quantified along a rather small number of axes, spanning, e.g., from very introvert to very extrovert, or from very careful to very adventorous, or the like. We consider these as directions in a Euclidean-like space, the "personality space", i.e, we posit that a human's personality can be well described as a vector in such a space. Let us assume that human personality space can (to good approximation) be embedded in a Euclidean space $\mathbb{R}^k$, with $k$ a not too large number. We write $\mathbf{x}_i\in\mathbb{R}^k$ for the personality vector of subect $i$ and $Y_{ij}$ for the answer of subject $i$ to questionnaire item $j$.
+The theory of personality traits posits that human personality can be quantified along a rather small number of axes, spanning, e.g., from very introvert to very extrovert, or from very careful to very adventurous, or the like. We consider these as directions in a Euclidean-like space, the "personality space", i.e, we posit that a human's personality can be well described as a vector in such a space. Let us assume that human personality space can (to good approximation) be embedded in a Euclidean space $\mathbb{R}^k$, with $k$ a not too large number. We write $\mathbf{x}_i\in\mathbb{R}^k$ for the personality vector of subject $i$ and $Y_{ij}$ for the answer of subject $i$ to questionnaire item $j$.
 
 Once we have fixed a basis for our personality space and thus established a mapping to $\mathbb{R}^k$ with its canonical basis, and assuming we knew the "personality vector" $\mathbb{x}_i\in\mathbb{R}^k$ of subject $i$, we can write our expectation for the subject's answer as
-$$\text{E}(Y_{ij}) = y_{i0}+\sum_{r=1}^k a_{jr} x_{ir} =y_{i0}+\mathbf{a}_j^T\mathbf{x}_i,$$
-where $a_{rj}$ is the strength and direction of the influence of personality dimension $r$ onto a subject's agreement with questionnaire item (statement) $j$. If a positive personality component along dimension $r$ makes a subject *dis*agree with item $i$, this value will be negative. We call the value $a_{jr}$ the *loading* of personality dimension $r$ on item $i$. 
+$$\text{E}(Y_{ij}) = y_{0j}+\sum_{r=1}^k a_{jr} x_{ir} =y_{0j}+\mathbf{a}_j^\mathrm{T}\mathbf{x}_i,$$
+where $a_{jr}$ is the strength and direction of the influence of personality dimension $r$ onto a subject's agreement with questionnaire item (statement) $j$. If a positive personality component along dimension $r$ makes a subject *dis*agree with item $i$, this value will be negative. We call the value $a_{jr}$ the *loading* of personality dimension $r$ on item $i$. 
 
-Every question has also an *offset* $y_{i0}$ that describes the answer of the "zero subject" who has the zero vector $\mathbf{o}$ as personality vector. We will find it convenient to assume that the mapping of personality space to $\mathbb{R}^k$ is *centered*, by which we mean that it maps the "average subject" to $\mathbf{o}$, such that the expected value for any personality trait for a randomly picked subject is 0.
+Every question has also an *offset* $y_{0j}$ that describes the answer of the "zero subject" who has the zero vector $\mathbf{o}$ as personality vector. We will find it convenient to assume that the mapping of personality space to $\mathbb{R}^k$ is *centered*, by which we mean that it maps the "average subject" to $\mathbf{o}$, such that the expected value for any personality trait for a randomly picked subject is 0.
 
 Note that we imply here that the personality traits' influence on the agreement with the item is *linear*.
 
 The subject's actual answer, $y_{ij}$, will, of course deviate from this "prediction" by a "noise" term $\varepsilon_{ij}$:
-$$ y_{ij} = y_{i0}+\mathbf{a}_j^T\mathbf{x}_i + \varepsilon_{ij}.$$
+$$ y_{ij} = y_{i0}+\mathbf{a}_j^\mathrm{T}\mathbf{x}_i + \varepsilon_{ij}.$$
 The offsets $y_{i0}$ are cumbersome. We will from now on drop them, i.e., assume that $y_{i0}=0$. In practice one would achieve this by "centering" the answers: For each item $i$, we calculate its average answer score over all subjects, $\frac{1}{m}\sum_i y_{ij}$, and, assuming that this is a good estimate for $y_{i0}$, simply subtract it from all answer scores. Hence, from now on,
-$$ y_{ij} = \mathbf{a}_j^T\mathbf{x}_i + \varepsilon_{ij}.$$
+$$ y_{ij} = \mathbf{a}_j^\mathrm{T}\mathbf{x}_i + \varepsilon_{ij}.$$
 
-We write $\mathbf{y}_i\in\mathbb{R}^n$ for the vector formed by the answers $y_{ij}$ of an given subject $i$ to all the items $j$ on the used questionnaire, which has $n$ items. If we have $m$ subjects, we can assemble an $m\times n$ data matrix $Y$ with all the answers. The rows of $Y$ are the subjects, the columns the questionnaire items. We can also form an $n\times k$ matrix $X$ whose rows are the subjects' personality vectors and an $m\times k$ matrix $A$ with the loadings. With this, we can write
-$$ Y^T = A X^T + E,$$
+We write $\mathbf{y}_i\in\mathbb{R}^n$ for the vector formed by the answers $y_{ij}$ of an given subject $i$ to all the items $j$ on the used questionnaire, which has $n$ items. If we have $m$ subjects, we can assemble an $m\times n$ data matrix $Y$ with all the answers. The rows of $Y$ are the subjects, the columns the questionnaire items. We can also form an $m\times k$ matrix $X$ whose rows are the subjects' personality vectors and an $n\times k$ matrix $A$ with the loadings. With this, we can write
+$$ Y^\mathrm{T} = A X^\mathrm{T} + E,$$
 where the matrix $E$ captures the "error" or "noise" terms $\varepsilon_{ij}$.
 
-Let us now assume for a moment that there were no noise ($\varepsilon_{ij}=0$). Then, the vectors $\mathbf{y}_i$ all lie in a $k$-dimensional subspace of $\mathbb{R}^n$, because $A$ is a linear map from $\mathbb{R}^k$ to $\mathbb{R}^n$. Let us call this subspace $S$. It is the subspace spanned by the solumns of $A$.
+Let us now assume for a moment that there were no noise ($\varepsilon_{ij}=0$). Then, the vectors $\mathbf{y}_i$ all lie in a $k$-dimensional subspace of $\mathbb{R}^n$, because $A$ is a linear map from $\mathbb{R}^k$ to $\mathbb{R}^n$. Let us call this subspace $S$. It is the subspace spanned by the columns of $A$.
 
 With (not too strong) noise, the $\mathbf{y}_i$ are no longer exactly on the subspace but close to it. Thus, if we projected them onto the subspace, we would not change the vectors much.
 
 So, if we are only given $Y$, how do we find $S$? And how do we find its dimensionality, $k$?
 
-Let us write $P:\mathbb{R}^n\to S\subset\mathbb{R}^n$ for the orthogonal projection onto $S$. If we find $P$, we also get $S$. With this, we can decompose a subject's answer vector $\mathbb{y}_i$ into their expected answer $\mathbf{Y}^S_i$ and the noise contribution $\mathbf{y}^\perp_i\perp\mathbf{y}_i$:
+Let us write $P:\mathbb{R}^n\to S\subset\mathbb{R}^n$ for the orthogonal projection onto $S$. If we find $P$, we also get $S$. With this, we can decompose a subject's answer vector $\mathbb{y}_i$ into their expected answer $\mathbf{Y}^S_i$ and the noise contribution $\mathbf{y}^\perp_i\perp\mathbf{y}_i^S$:
 $$ \mathbf{y}_i=\mathbf{y}_i^S+\mathbf{y}_i^\perp\qquad\text{with }\mathbf{y}_i^S=P\mathbf{y}_i.$$
-It seems natural to search for the $P$ that minimizes $\sum_i\|\mathbf{y}_i^\perp\|_2^2=\sum_{ij}(y^\perp_{ij})^2$, i.e. that minimizes $\|(I-P)Y^T\|_F^2$, or maximizes $\|PY^T\|_F^2$. (Here, $\|M\|_F=\sqrt{\sum_{ij}m_{ij}^2}$ is the Froebenius norm, a matrix norm that simply adds up the squares of all matrix elements and then takes the square root.)
+It seems natural to search for the $P$ that minimizes $\sum_i\|\mathbf{y}_i^\perp\|_2^2=\sum_{ij}(y^\perp_{ij})^2$, i.e. that minimizes $\|(I-P)Y^\mathrm{T}\|_F^2$, or maximizes $\|PY^\mathrm{T}\|_\text{F}^2$. (Here, $\|M\|_\text{F}=\sqrt{\sum_{ij}m_{ij}^2}$ is the Frobenius norm, a matrix norm that simply adds up the squares of all matrix elements and then takes the square root.)
 
-[continues on black board]
+---
 
+Now, we  can state our task in mathematical language: For a given data matrix $Y\in\mathbb{R}^{m\times m}$, find the linear projector $P$ into a $k$ dimensional subspace such that the projection of the rows of  $Y$, $PY^\mathrm{T}$ has maximal Frobenius norm.
+
+Let $\mathbf{p}_1,\dots,\mathbf{p}_k$ be an orthonormal basis for that $k$-dimensional subspace. The projection operator $P$ can then be written as
+$$ P=\sum_{s=1}^k\mathbf{p}_s\mathbf{p}_s^\mathrm{T}$$
+
+With this, we can see that 
+$$ \begin{align}
+\|PY^\mathrm{T}\|_\text{F}^2&=\sum_{i=1}^m\|P\mathbf{y}_i\|^2=\sum_{i=1}^m\sum_{s=1}^k(\mathbf{p}_s^\mathrm{T}\mathbf{y}_i)^2\\&=\sum_i\sum_s\mathbf{p}_s^\mathrm{T}\mathbf{y}_i\mathbf{y}_i^\mathrm{T}\mathbf{p}_s=\sum_s\mathbf{p}_s^\mathrm{T}Y^\mathrm{T}Y\mathbf{p}_s
+\end{align}
+$$
+(writing, as before, $\mathbf{y}_i$ for the $i$-th row of $Y$). In the last line, we have used the outer product $\sum_i\mathbf{y}_i\mathbf{y}_i^\mathrm{T}=Y^\mathrm{T}Y$ to get the matrix $Y^\mathrm{T}Y$. 
+
+This matrix has matrix elements
+$$(Y^\mathrm{T}Y)_{j,j'}=\sum_i y_{ij}y_{ij'},
+$$
+i.e., it contains all pairwise scalar products of columns of $Y$.
+
+As $Y^\mathrm{T}Y$ is symmetric, it has an eigendecomposition. We write $\mathbf{u}_l$ for its eigenvectors and $\lambda_l$ for the corresponding eigenvalues, sorted such that $\lambda_1>\lambda_1>\dots>\lambda_n$:
+$$Y^\mathrm{T}Y\mathbf{u}_l=\lambda_l\mathbf{u}_l\qquad\text{with }\mathbf{u}_{l'}^\mathrm{T}\mathbf{u}_l=\delta_{l'l},$$
+where the $\delta$ is the Kronecker delta, showing that the eigenbasis is orthonormal. The eigenvalues are all nonnegative, because $Y^\mathrm{T}Y$ is positive semidefinite, as can be seen from the fact that $\mathbf{P}^\mathrm{T}Y^\mathrm{T}Y\mathbf{p}$ cannot be negative for any vector $\mathbf{p}$ as it is the square of the norm of $Y\mathbf{p}$.
+
+We discuss first the case of $k=1$, i.e, we seek a one-dimensional subspace to project onto
+and hence one unit basis vector $\mathbf{p}_1$. We expand this vector in the eigenbasis of $Y^\mathrm{T}Y$:
+$$\mathbf{p}_1=\sum_l\rho_{1l}\mathbf{u}_l, \qquad \sum_l\rho_{1l}^2=1$$
+How should we choose the $\rho_l$ to maximize
+
+$$\begin{align}
+\|PY^\mathrm{T}\|_\text{F}^2&=\mathbf{p}_1^\mathrm{T}Y^\mathrm{T}Y\mathbf{
+p}_1=\sum_{l'}\rho_{1l'}\mathbf{u}_{l'}^\mathrm{T}\sum_l\mathbf{u}_l\rho_{1l}\lambda_l\\
+&=\sum_l \rho_{1l}^2\lambda_l=\text{max!}\quad?
+\end{align}$$
+
+Clearly, we should set $\rho_{1,1}=1$ and $\rho_{1,l}=0$ for $l>1$ to maximize this because
+$\lambda_1$ is the largest eigenvalue. This means:
+we should use $\mathbf{p}_1=\mathbf{u}_1$.
+
+For $k=2$, we have to find a second basis vector $\mathbf{p}_2$ that is orthogonal to $\mathbf{p}_1$ and hence has $\rho_{2,1}=0$. Therefore, we should now put all weight onto the second component and set $\rho_{2,2}=1$. By induction, we conclude: 
+
+To get the $k$-dimensional subspace that maximizes $\|PY^\mathrm{T}\|^2_\text{F}$, we should use the subspace spanned by the first $k$ eigenvectors of $Y^\mathrm{T}Y$.
+
+(To do: Strictly speaking, we still need to show that this greedy procedure really find the global optimum.)
+
+Thus, the procedure to perform principal component analysis on a data matrix $Y$ is as follows: Center the matrix, i.e., subtract from each column the column's mean to obtain $Y_c$. Then form the matrix $Y_c^\mathrm{T}Y_c$ by calculating the scalar products of all pairs of columns of $Y_c$. Find the eigendecomposition of $Y_c^\mathrm{T}Y_c$. If a $k$-dimensional subspace is desired, use the first $k$ eigenvectors to form the "loadings" (or "rotation") matrix $R_{[k]}$. Using that matrix on $Y_c$ yields the score matrix 
+$$X=Y_cR_{[k]}$$ 
+whose $i$-th row now contains the $k$ "principal components" (PCs) of data row $\mathbf{y}_i$. The columns of $R_{[k]}$ tell us the loadings, i.e., the weights that the data dimensions have onto each PC.
+
+By reversing the rotation, we get
+$$Y_{c,[k]}=X_{[k]}R^\mathrm{T},$$
+the rank-$k$ approximation of $Y_c$.
+
+The approximation error can be shown to be the sum of the eigenvalues belonging to the eigenvectors not included in $X$:
+$$ \|Y_c-Y_{c,[k]}\|_\text{F}^2 = \sum_{s=k+1}^n\lambda_s.$$
+
+Finally, note that as $Y_c$ has been centered, the matrix $Y_c^\mathrm{T}Y_c$ is $(m-1)$ times the sample covariance matrix of $Y$.

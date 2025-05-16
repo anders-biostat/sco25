@@ -11,7 +11,7 @@ How to proceed: We are given a graph $G=(V,E)$ with vertex set $V$ and edge set 
 This graph is given as an adjacency matrix $A\in\{0,1\}^{|V|\times |V|}$ with $A_{vv'}=1$ if $(v,v')\in E$ and $A_{vv'}=1$ otherwise, and and the cluster assignment is given as a vector $\mathbf{c}=(c_v)_{v\in V}$ with $c_v=c(v)$.
 
 From this, we can easily construct a matrix $B\in\mathbb{N}_0^{|C|\times|C|}$, where $$B_{cc'}=\left|\left\{(v,v')\in E\mid c_v=c,\, c_{v'}=c'\right\}\right|$$
-that tells us how many edges there are between vertices in cluster $c$ and $c'$. Note that, if defined this way, the diagonal elements $B_{cc}$ count each edge within cluster $c$ twice.
+that tells us how many edges there are between vertices in cluster $c$ and cluster $c'$. Note that, if defined this way, the diagonal elements $B_{cc}$ count each edge within cluster $c$ twice.
 
 How can you calculate $E$ from $A$ and $\mathbf{c}$?
 
@@ -21,9 +21,9 @@ How can you calculate the modularity score $M_G(\mathbf{c})$ from these? Do you 
 
 ### Update rule
 
-You change a given cluster assignment $\mathbf{c}^{(0)}$ into another one, $\mathbf{c}^{(1)}$ by moving a single vertex $v$ from cluster $c_v^{(0)}$ to a new cluster  $c_v^{(1)}$. All other vertices stay in their clusters, i.e., $c_{v'}^{(0)}=c_{v'}^{(1)}$ for all $v'\neq v$.
+You change a given cluster assignment $\mathbf{c}^{(0)}$ into another one, $\mathbf{c}^{(1)}$, by moving a single vertex $v$ from cluster $c_v^{(0)}$ to a different cluster  $c_v^{(1)}$. All other vertices stay in their clusters, i.e., $c_{v'}^{(0)}=c_{v'}^{(1)}$ for all $v'\neq v$.
 
-How can you calculate the change in modularity score, $M_G(\mathbf{c}')-M_G(\mathbf{c})$ without recalculating everything? How do you update $B$?
+How can you calculate the change in modularity score, $M_G(\mathbf{c}')-M_G(\mathbf{c})$ without recalculating everything? How do you update $B$? Which parts of $A$ do you have to look at?
 
 ### Leiden algorithm
 
