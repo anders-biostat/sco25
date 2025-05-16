@@ -5,15 +5,20 @@ project:
     - "*.qmd"
     - "*.R"
     - "!*draft*"
+    
 website:
   title: "Mathematics of single-cell omics"
+  navbar:
+    background: primary
+    search: true
+    logo: "https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg"
 
 format:
   html:
     theme: 
-      - cosmo
+      - flatly
       - custom.scss
     css: styles.css
-    toc: false
+    toc: true
 
 

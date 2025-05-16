@@ -1,5 +1,8 @@
 ---
 title: "Mathematics of Single-cell Omics"
+format:
+  html:
+    toc: false
 ---
 
 <style>
@@ -8,6 +11,7 @@ title: "Mathematics of Single-cell Omics"
 }
 </style>
 
+<header>
   <p style="text-align:right">
   	<a href="https://www.bioquant.uni-heidelberg.de">
   	  <img src="https://www.bioquant.uni-heidelberg.de/themes/custom/bootstrap_bq/logo.svg" style="width:30%;padding:3%"></a>
@@ -22,24 +26,40 @@ title: "Mathematics of Single-cell Omics"
 <h5><a href="mailto:simon.anders@bioquant.uni-heidelberg.de">Simon Anders</a>, Universität Heidelberg</h5>
 
 -----
+</header>
 
 ## Dates and times
 
 Lecture times/dates:
 
 - lectures: on **Mondays**, 15:00 s.t., BioQuant (INF 267), room 044
-- exercises: on **Tuesdays**, 14:00 s.t., BioQuant (INF 267), room 655
+- exercises: on **Tuesdays**, 14:00 s.t., BioQuant (INF 267), room 042
 
 ## Material and  Video Recodings
 - Lecture of 2025-04-14:
-  - [Biology Primer](biology_primer.html)
-  - [Overview High-throughput Sequencing](overview_hts.html)
+  - [Biology primer](biology_primer.html)
+  - [Overview high-throughput sequencing](overview_hts.html)
   - [A simple analysis with Seurat](seurat.html)
-  - [A similar analysis, for pedestrians](ped_ifnagrko.R)
   - Example data: PBMC3k (available on 10X web site)
-  - [Video recording](https://youtu.be/Zfkbptp-AZ8) of lecture
+  - [Homework 1](homework1.html)
 - Lecture of 2025-04-28:
-  []
+  - [Single-cell analysis "for pedestrians"](ped_ifnagrko.R)
+  - [Stochastics intro/recap](stoch_recap.html)
+  - [Statistics for count data](count_stats.html)
+  - [Homework 2](homework_ped.html)
+- Lecture of 2025-05-05
+  - [PCA](pca_math.html)
+  - blackboard photo (to be added)
+- Lecture of 2025-05-12
+  - [Modularity clustering](modularity.html) 
+  - blackboard photo (to be added)
+  - Choose some problems to work on from
+    - [Homework 3a](homework_pca.html): PCA
+    - [Homework 3b](homework_modularity.html): Modularity clustering
+
+## Video recordings
+
+Video recordings of the lectures can be found [here](https://www.youtube.com/playlist?list=PL3RVGH-VQHwI7ngnFJ2e5MwkSpq8yFDtE)
 
 ## Source code
 
