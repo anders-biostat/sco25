@@ -6,12 +6,11 @@ title: "Trajectories"
 
 We load our usual example data
 
-```{r}
-suppressPackageStartupMessages({
-  library( tidyverse )
-  library( Matrix )
-  library( sparseMatrixStats )
-  library( Seurat ) })
+```{r message=FALSE}
+library( tidyverse )
+library( Matrix )
+library( sparseMatrixStats )
+library( Seurat )
 
 ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
     "~/Downloads/ifnagrko/ifnagrko_obs.csv",
@@ -20,7 +19,9 @@ ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
     mtx.transpose=TRUE) -> count_matrix
 ```
 
-```{r}
+Run the usual standard Seurat pipeline
+
+```{r message=FALSE,warning=FALSE}
 count_matrix %>%
 CreateSeuratObject() %>%
 NormalizeData() %>%
@@ -32,22 +33,24 @@ FindClusters( resolution=0.5 ) %>%
 RunUMAP( dims=1:20 ) -> seu
 ```
 
+Followed by the UMAP plot
+
 ```{r}
 UMAPPlot( seu, label=TRUE ) + coord_equal()
 ```
 
-This time, we will concetrate on the long elongated main structure, which we
+This time, we will concentrate on the long elongated main structure, which we
 will call the "lineage" in the following. It is a snapshot of the development
 of astrocytes that act as neural stem cells and become transient amplifying 
-progenitors (TAPs) which undergo cell cycle, i.e., divide and multiply, and the 
+progenitors (TAPs) which undergo cell cycle, i.e., divide and multiply, and then 
 turn into neuroblasts and finally neurons.
 
 To orient us in the plot, we highlight the expression of Aqp4 (aquaporin-4, a marker for 
-astrocytes), Mki67 (a marker for prliferating, i.e., dividing cells), Dcx 
+astrocytes), Mki67 (a marker for proliferating, i.e., dividing cells), Dcx 
 (doublecortin, a marker for neuroblasts) and Gria1 (Glutamate ionotropic receptor, 
 AMPA type, subunit 1; a marker for mature neurons)
 
-```{r}
+```{r warning=FALSE}
 FeaturePlot( seu, c( "Aqp4", "Mki67", "Dcx", "Gria1" ) )
 ```
 
@@ -79,8 +82,8 @@ my expectation.
 
 ### Aim: Trajectory
 
-Our first aim for today is to fit a "pseudotime trejectory" to the lineage. This means
-thatw e want to assign to each cell in the lineage a real number, which we call
+Our first aim for today is to fit a "pseudotime trajectory" to the lineage. This means
+that we want to assign to each cell in the lineage a real number, which we call
 it "pseudotime" that monotonally increases along the putative developmental trajectory 
 from astrocytic neural stem cells via TAPs and neuroblasts to neurons.
 
@@ -99,6 +102,7 @@ As preparation, we first explore distances with sleepwalk:
 ```{r eval=FALSE}
 sleepwalk::sleepwalk( Embeddings(seu,"umap"), Embeddings(seu,"pca") )
 ```
+
 We notice that the cycling cells have a lot of distance to the non-cycling
 lineage cells. This will cause problems because the principal curve alorithm
 cannot deal with loops, i.e., the curve should pass besides the cell-cycle loop.
@@ -113,7 +117,7 @@ lineage_clusters_2 <- setdiff( lineage_clusters, c( 6, 11 ) )
 
 ### Fitting the principal curve
 
-Now, we could the `princomp` package to fit the principal curve
+Now, we use the `princomp` package to fit the principal curve
 
 ```{r}
 princurve::principal_curve( 
@@ -143,8 +147,8 @@ prc$lambda[ nnres$nn.index[,1] ] %>%
   set_names( rownames(Embeddings(seu,"pca")) ) -> seu$pt
 ```
 
-Her we have rescaled the pseudotime to [0;1] and also reversed the dirction,
-so thjat it now increases from stem cells towards neuroblasts.
+Here we have rescaled the pseudotime to [0;1] and also reversed the direction,
+so that it now increases from stem cells towards neuroblasts.
 
 ```{r}
 Embeddings(seu,"umap") %>%
@@ -155,7 +159,7 @@ ggplot +
   coord_equal() + scale_color_viridis_c(option="D")
 ```
 
-We should also check how for each cell is from the curve
+We should also check how far away each cell is from the curve
 
 ```{r}
 nnres$nn.dist[,1] %>%
@@ -188,10 +192,12 @@ ggplot +
   geom_point( aes( x=pt, y=expr, col=dist ), size=.3 ) +
   scale_color_viridis_c()
 ```
-In order to make more apparent how many point are on the zero line, this line has been broadened.
+
+In order to make more apparent how many point are on the zero line, that line has 
+been broadened with random jitter.
 
 We now fit a smooth curve through this scatter plot. As we want to do this properly,
-we use locfit with Poisson GLM, i.e., wo don't use the log-normalized
+we use `locfit` with Poisson GLM, i.e., wo don't use the log-normalized
 values but the raw counts. (Details [here](smoothing.html).)
 
 First we assemble the data
@@ -232,11 +238,14 @@ Now we can do the plot:
 ```{r}
 tbl %>%
 filter( in_lineage ) %>%
+mutate( expr = ifelse( count>0, count/total + 1e-4, 10^runif( n(), -4.5, -4.3 ) ) ) %>%
 ggplot( aes( x=pt ) ) +
-  geom_point( aes( y = count/total + 1e-4, col=dist ), size=.3 ) +
+  geom_point( aes( y = expr, col=dist ), size=.3 ) +
   geom_line( aes( y = y ), data=tbl_fit, col="magenta" ) +
   scale_color_viridis_c() + scale_y_log10()
 ```
+
+The bottom bar shows the cells with zero counts.
 
 #### Many genes
 

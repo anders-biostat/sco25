@@ -56,6 +56,9 @@ Lecture times/dates:
   - Choose some problems to work on from
     - [Homework 3a](homework_pca.html): PCA
     - [Homework 3b](homework_modularity.html): Modularity clustering
+- Lecture of 2025-05-19
+  - [Gene expression along a trajectory](trajectory.html)
+  - [Smoothing](smoothing.html)
 
 ## Video recordings
 

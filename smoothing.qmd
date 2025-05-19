@@ -79,11 +79,11 @@ ones.
 
 A kernel function should be symmetric $f_\text{K}(x)=f_\text{K}(-x)$, 
 have a single mode at 0, be continuous, perhaps also differentiable, and 
-small or even zero for $|x|>0$. We use the tricube kernel
+be small or even zero for $|x|>1$. We use the tricube kernel
 $$ f_\text{tc}(u) = \left\{ \begin{align}
-\frac{70}{81} \left(1-|u|^3\right)^3 \qquad & \text{for } |u| \le 1 
+&{\textstyle\frac{70}{81} \left(1-|u|^3\right)^3} \quad & \text{for } |u| \le 1 
 \\
-0 \qquad & \text{otherwise} 
+&0 \quad & \text{otherwise} 
 \end{align} \right.$$
 
 The prefactor merely ensures that the function has a unit integral. 
@@ -161,13 +161,13 @@ fit
 Here, `lm` has now maximized the weighted sum of squared residuals,
 
 $$ \frac{\sum_i w_i ( \hat y_i - y )^2}{\sum_i w_i}, \qquad \text{with } \hat y_i = \hat a + \hat b x_i, $$
-where $\hat a$ and $\hat b$ are the fitetd coefficients (intercept and slope), reported by
+where $\hat a$ and $\hat b$ are the fitted coefficients (intercept and slope), reported by
 ```{r}
 coef(fit)
 ```
 and $w_i$ are the weights, calculated as above.
 
-Let's put the regression line into our plot, in orange, together fith the fitted
+Let's put the regression line into our plot, in orange, together with the fitted
 value at point $x_0$ (in red) :
 
 ```{r}
@@ -373,10 +373,10 @@ lines( xg, true_function(xg), col="blue" )
 ### Example with Poisson noise
 
 Above, the noise was Gaussian (normal). In our single-cell data, it is Poissonian.
-Furthermore, we would like to calculate the curve on the log level, while properly dealing
+Furthermore, we would like to calculate the curve on the log scale, while properly dealing
 with zeroes.
 
-We construct example count data from our curved function.
+We construct suitable example count data from our curved function.
 
 Let's use a few more data points this time:
 
@@ -459,7 +459,7 @@ $\operatorname{Var}\hat\mu$, is minimized?
 If all the estimated variances are the same,  $v_i=v$, then the weights should all be the same, too:
 $w_i\propto 1$.
 
-In general, however, the weights might differ. Then, one should choose $w_i\propto \frac{1}{v_i}$.
+In general, however, the variances might differ. Then, one should choose $w_i\propto \frac{1}{v_i}$.
 
 This is easily proven with Lagrange multipliers; the proof can be found on the Wikipedia page
 on [inverse-variance weighting](https://en.wikipedia.org/wiki/Inverse-variance_weighting).
@@ -470,7 +470,7 @@ Let us now assume that the random variables we want to average over are fraction
 derived from Poisson counts. We have cells, indexed by $i$, with counts for our gene
 of interest, given by $K_i\sim \operatorname{Pois}(s_i q)$, where $s_i$ is the
 "size", i.e., the total count sum for the cell. We wish to estimate the common
-expected fraction $q$ via teh weighted average
+expected fraction $q$ via the weighted average
 $$ \hat q = \frac{\sum_iw_i\frac{K_i}{s_i}}{\sum_i w_i}. $$
 What weights $w_i$ should we use? Using $\operatorname{Var} K_i=s_i q$ together with
 the preceding result, we get
@@ -522,7 +522,7 @@ ll <- function( alpha, kappa )
   sum( dpois( k, alpha * exp( -kappa * t ), log=TRUE ) )
 ```
 
-We can find the parameters that maximize this function, using some guessed initital values:
+We can find the parameters that maximize this function, using some guessed initial values:
 
 ```{r}
 optim( 
@@ -538,8 +538,8 @@ always has three components:
 family (which includes the normal, the Poisson, the binomial, the gamma-Poisson, and others). Here, we have:
 
 $$ K_i \sim \operatorname{Pois}( \mu_i ). $$
-(ii) The mean parameter $\mu_i$ in that distribution is coupled with teh so-called "linear
-predictir$ \eta_i$ by a function, the so-called "link function". Here:
+(ii) The mean parameter $\mu_i$ in that distribution is coupled with the so-called "linear
+predictor$ \eta_i$ by a function, the so-called "link function". Here:
 $$ \eta_i = \log \mu_i. $$
 (iii) The linear predictor is a linear combination of known predictors $x_ij$ with unknown coefficients $\beta_j$. In general
 $$ \eta_i = \beta_0 + \sum_j \beta_j x_{ij} + o_i$$
@@ -547,7 +547,7 @@ and here simply
 $$ \eta_i = \beta_0 + \beta_1 t_i, $$ 
 i.e. we have, besides the intercept $\beta_0$, only one further coefficient, $\beta_1$. 
 
-There are also no offsets $o_i$. (If the time
+Also, we have no offsets $o_i$. (If the time
 we had waited at each time point to count would not always have been the same but
 differed from measurement to measurement, we would have included the length these 
 waiting times as "exposure values" $o_i$.)
@@ -562,7 +562,7 @@ can be replaced by a GLM solver:
 fit <- glm( k ~ t, family = poisson(link="log") )
 fit
 ```
-We get the same result as with optim. We see this directly for the coefficient for $t$ (i.e.,
+We get exactly the same result as with optim. We see this directly for the coefficient for $t$ (i.e.,
 $\kappa$), but for $\alpha$, we have to exponentiate:
 ```{r}
 exp(coef(fit)[1])
@@ -614,12 +614,12 @@ plot( x, log( k/s + 1e-4 ), col="gray" )
 lines( xg, yhat, col="red" )
 lines( xg, log( true_fraction( xg ) ), col="blue" ) 
 ```
-We get a lot of warnings aboutv failure of IRLS to converge for some values.
+We get a lot of warnings about failure of IRLS to converge for some values.
 
 Instead of trying to debug this, we use the locfit package, where we have a ready-made
 function for this purpose:
 
-```{r}
+```{r message=FALSE}
 library( locfit )
 
 fit <- locfit( k ~ lp( x, h=.15), weights=s, family="poisson" )
@@ -634,10 +634,10 @@ lines( xg, log( true_fraction( xg ) ), col="blue" )
 
 #### Spline basis: first look
 
-Another possibility is construct a smoothing curve as a linear combination of suitable 
+Another possibility for smoothing is to construct a smoothing curve as a linear combination of suitable 
 basis function.
 
-The function `bs` from the `splines` package produces a popular choice for a bsis function
+The function `bs` from the `splines` package produces a popular choice for basis functions
 known as "B splines".
 
 We ask `bs` to provide a 7-dimensional basis and evaluate the basis functions
@@ -670,7 +670,7 @@ following properties:
 
 - The degree of the polynomial can be chosen; for `bs`, the default is 3.
 
-- The basis peritions the unit, i.e., for every $x$ within the range of knots, $\sum_s b_s(x)=1$.
+- The basis partitions the unit, i.e., for every $x$ within the range of knots, $\sum_s b_s(x)=1$.
 
 For a B-spline basis made of 3rd-degree polynomials, we further have:
 
@@ -678,9 +678,12 @@ For a B-spline basis made of 3rd-degree polynomials, we further have:
 
 - The basis functions are twice differentiable, but the third derivative is discontinuous at the knots.
 
+The basis functions returned by `bs`, known as the B-splines basis, is calculated using a scheme known as
+the Cox–de Boor recursion formula, which is explained below.
+
 #### Unpenalized spline regression
 
-To deomstrate spline regression, we go back to our original example with Gaussian, rather than Poisson, noise:
+To demonstrate spline regression, we go back to our original example with Gaussian, rather than Poisson, noise:
 
 ```{R}
 n <- 100
@@ -691,7 +694,7 @@ y <- true_function( x ) + rnorm( n, sd=.1 )
 
 We seek a smoothing curve $f(x)=\sum_s \beta_s b_s(x)$ that minimizes $\sum_i\left(y_i-f(x_i)\right)^2$.
 
-We can find this by OLS regression:
+We can find this by ordinary least squares (OLS) regression:
 
 ```{r}
 my_bs <- function(x) bs( x, intercept=TRUE, Boundary.knots=c(0,1), knots=seq(0,1,length.out=8)[2:7] )
@@ -722,7 +725,7 @@ lines( xg, my_bs(xg) %*% fit$coefficients, col="red" )
 We can solve this issue by adding a penalty term on curvature to our least-square sum:
 $$\sum_i\left(y_i-f(x_i)\right)^2 + \lambda\int_0^1(f''(x))^2\text{d}x=\text{min!}$$
 
-The function `
+The function `smooth.spline` carries out this penalized regression:
 
 ```{r}
 fit <- smooth.spline( x, y, nknots=20 )
@@ -731,10 +734,11 @@ plot( x, y )
 lines( xg, true_function(xg), col="blue")
 lines( xg, predict( fit, xg )$y, col="red")
 ```
+Before we explain how `smooth.spline` works, we go back to `bs`.
 
 #### Construction for the B-spline basis
 
-In an iterative construction (de Boor construction), we increase the polynomial degree in each
+To build the B-splines basis, we use an iterative method (the de Boor construction), where we increase the polynomial degree in each
 iteration. 
 
 We start with a 0th-degree basis, where $b_{s,0}$ is simply 1 between the $s$-th and the $(s+1)$th knot
@@ -858,7 +862,7 @@ lines( xg, rowSums(bs3), col="#00000030" )
 
 For the curvature penalization mentioned earlier, we need the second derivative
 of the spline basis. As these are piece-wise 3rd-degree polynomials, we
-expect the second derivative to be piecewise linear. We can calculate explicitely
+expect the second derivative to be piecewise linear. We can calculate explicitly
 the second derivative of the Cox-de Beer function, or we can rely on other people's work
 and believe the formula given, e.g., in Wikipedia.
 
@@ -924,7 +928,7 @@ multiplies with $\operatorname{tr}X^\top X / \operatorname{tr} P$ to obtain $\la
 
 #### P-Splines
 
-An alternative to spline regression with curvature penality is P-spline smoothing.
+An alternative to spline regression with curvature penalty is P-spline smoothing.
 
 Here, one uses a basis with rather very many basis functions (large $m$ in our notation),
 lets all the basis functions keep the same shape (no "pulling in" of the boundary knots), and
@@ -941,6 +945,7 @@ $$P=\left(
 -1 &  2 & -1 &    &  \\
    & -1 &  2 & -1 &  \\
    &    & -1 &  2 & -1 & \\
+   
    &    &    & ⋱ &  ⋱ & ⋱ & \\
    &    &    &    & -1 &  2 & -1 & \\
    &    &    &    &    & -1 &  2 & -1 & \\
@@ -948,7 +953,7 @@ $$P=\left(
 \end{array}
 \right).$$
 
-To demonstrate,w e first make a really large basis, which extends far out of the domain
+To demonstrate, we first make a really large basis, which extends far out of the domain
 
 ```{r}
 knots <- seq( -1, 2, length.out=100 )
@@ -1011,3 +1016,6 @@ for( lambda in c( .01, .1, 1, 10, 100 ) ) {
 }  
 lines( xg, true_function(xg), col="blue" )
 ```
+
+We can see how a too large penalty makes the curve too stiff and a too small  penalty yields a too wiggly curve. This
+gives us flexibility to find an optimal panalty strength $\lambda$.

@@ -20,5 +20,6 @@ format:
       - custom.scss
     css: styles.css
     toc: true
+    toc-depth: 3
 
 
