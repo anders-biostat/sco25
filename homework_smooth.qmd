@@ -1,0 +1,59 @@
+---
+title: "Homework 4: Smoothing I"
+---
+
+Programming requires practice and the smoothing problem we have discussed in the previous lecture make for good exercise. Try to solve the following problems **_without_** looking into the lecture script.
+
+### Example data
+
+First we need some test data to work with.
+
+Construct data points $(x_i,y_i)$ $(i=1,\dots,n)$ that look like they sit on the graph of some function but with the y value displaced a bit by noise. To do this you can come up with some function with interesting graph, then draw random $x$ values, apply the function to them and add a bit of normal noise to get $y$ values.
+
+### Simple kernel smoothing
+
+For data points $(x_i,y_i)$ $(i=1,\dots,n)$, we have defined as their "kernel-smoothed function"
+$$ f_\text{sm}(x) = \frac{ \sum_{i=1}^n w_i y_i}{\sum_{i=1}^n w_i} \quad\text{with } 
+w_i = f_\text{K}\left(\frac{x_i-x}{h}\right),$$
+where $h$ is a constant, the smoothing bandwidth, and $f_\text{K}$ is the smoothing kernel, e.g.,
+$$ f_\text{K}(u) = \left\{ \begin{align}
+&{\textstyle \left(1-|u|^3\right)^3} \quad & \text{for } |u| \le 1 
+\\
+&0 \quad & \text{otherwise} 
+\end{align} \right.$$
+Implement the function $f_\text{sm}$ in the programming language of your choice,
+without looking into the script. 
+
+Call the function for a sequence of $x$ values to get the smoothed curve and
+plot it along with the data points.
+
+### Adaptive bandwidth
+
+Change the function such that the bandwith is chosen adaptively: for each query value $x$,
+the bandwidth $h$ is automatically chosen such that a fraction of exactly $\alpha$ of all the data points
+are under the kernel, i.e. 
+$$\left|\left\{i\mid |x-x_i|<h \right\}\right|=\alpha n.$$
+
+### Local regression
+
+Instead of the simple average used above, we perform weighted regression, i.e., we find
+parameters $a$ and $b$ that define a straight line, $y=ax+b$, that is the regression line 
+for the data points under the kernel. This means to solve the least-square problem
+$$\sum_i w_i ( a + x_i b - y_i )^2 = \text{min!}\qquad\text{with }w_i=f_\text{K}\left(\frac{x_i-x}{h}\right)$$
+for every value of $x$ and then use $(x,a+xb)$ as the graph of the smoothing function.
+
+Implement this, using your language's standard function to solve ordinary least square (OLS) problems (in R: `lm`; in Python: `numpy.linalg.lstsq`). 
+
+Produce a graph of the smoothed line for your data points.
+
+### OLS by general-purpose optimization
+
+The proper way to solve an OLS problem is to use the so-called [normal equations](https://mathworld.wolfram.com/NormalEquation.html), and this is what `lm` and `solve` do. 
+
+Alternatively, one can also use a general purpose optimizer like the `optim` function in R. This is less efficient than using the normal equations, but we implement it anyway, for "pedagogical value".
+
+For `optim` you have to implement a function that takes a parameter vector $\boldsymbol\theta$ and calculates the value of the function to be minimized. In our case, $\boldsymbol\theta$ is 2-dimensional, containing intercept $a=\theta_1$ and slope $b=\theta_2$. Your function should hence take the vector $\boldsymbol\theta$ as only argument and return $\sum_i w_i (\theta_1+\theta_2 x_i - y_i)^2$ (with $w_i$ as above). Give this function to `optim` along with some arbitrary initial values, e.g. $\boldsymbol\theta=(0,1)$. Do you get the same result as with `lm`?
+
+For Python, use `scipy.optimize` for `optim`. In both languages, choose the Nelder-Mead method for optimization (which is the default, anyway).
+
+

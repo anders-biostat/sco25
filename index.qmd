@@ -59,6 +59,7 @@ Lecture times/dates:
 - Lecture of 2025-05-19
   - [Gene expression along a trajectory](trajectory.html)
   - [Smoothing](smoothing.html)
+  - [Homework 4](homework_smooth.html): Smoothing I
 
 ## Video recordings
 
