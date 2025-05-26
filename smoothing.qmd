@@ -448,7 +448,7 @@ To understand the change in the last two equations, we need a short detour:
 
 #### Inverse-variance weighting
 
-Given $n$ independent random variables $X_i$ with variances $v_i=\operatorname{v_i}$, 
+Given $n$ independent random variables $X_i$ with variances $v_i$, 
 we want to estimate the expectation 
 of their mean, $\operatorname{E}\left(\frac{1}{n}\sum_{i=1}^n X_i\right)$, by way 
 of estimating a weighted mean,
@@ -515,7 +515,7 @@ The true values are $\alpha = 100$ (the initial click rate) and
 $\kappa = \ln 2 / 20\approx .035$ (using the half life, 20, from above).
 
 We can find maximum-likelihood estimates for $\alpha$ and $\kappa$. 
-Here is the log-likelihood for a pair of candidate values $\alpha$ and $kappa$:
+Here is the log-likelihood for a pair of candidate values $\alpha$ and $\kappa$:
 
 ```{r}
 ll <- function( alpha, kappa )
@@ -534,29 +534,29 @@ optim(
 Rewriting our model a bit, we recover the form of a "generalized linear model" (GLM). A GLM
 always has three components:
 
-(i) The response (in our case, the counts $K_i$) follows a distribution from the so-called exponential 
+\(i) The response (in our case, the counts $K_i$) follows a distribution from the so-called exponential 
 family (which includes the normal, the Poisson, the binomial, the gamma-Poisson, and others). Here, we have:
 
 $$ K_i \sim \operatorname{Pois}( \mu_i ). $$
-(ii) The mean parameter $\mu_i$ in that distribution is coupled with the so-called "linear
-predictor$ \eta_i$ by a function, the so-called "link function". Here:
+\(ii) The mean parameter $\mu_i$ in that distribution is coupled with the so-called "linear
+predictor $\eta_i$ by a function, the so-called "link function". Here:
 $$ \eta_i = \log \mu_i. $$
-(iii) The linear predictor is a linear combination of known predictors $x_ij$ with unknown coefficients $\beta_j$. In general
+\(iii) The linear predictor is a linear combination of known predictors $x_{ij}$ with unknown coefficients $\beta_j$. In general
 $$ \eta_i = \beta_0 + \sum_j \beta_j x_{ij} + o_i$$
 and here simply
 $$ \eta_i = \beta_0 + \beta_1 t_i, $$ 
 i.e. we have, besides the intercept $\beta_0$, only one further coefficient, $\beta_1$. 
 
 Also, we have no offsets $o_i$. (If the time
-we had waited at each time point to count would not always have been the same but
-differed from measurement to measurement, we would have included the length these 
-waiting times as "exposure values" $o_i$.)
+we had waited at each time point while counting clicks had not always been the same but
+differed from measurement to measurement, we would have had to account for the varying lengths $\tau_i$ of these 
+measurement intervals (often called "exposure") via offsets $o_i=\log\tau_i$.)
 
 We can clearly identify how the coefficients of the GLM correspond to
 our parameters: $\beta_1=-\kappa=-\ln2/T_{1/2}$ and $\beta_0=\ln\alpha$.
 
 If the model has this shape, the general optimizer `optim` that we have used above
-can be replaced by a GLM solver:
+can be replaced by R's GLM solver:
 
 ```{r}
 fit <- glm( k ~ t, family = poisson(link="log") )
@@ -573,9 +573,7 @@ exp(coef(fit)[1])
 The `glm` function is faster than `optim` and more stable, because it uses a special
 algorithm known as "iteratively reweighted least squares" (IRLS) fitting.
 
-I was too lazy to write up how this works, so I asked ChatGPT to do my work:
-
-https://chatgpt.com/share/38554552-182e-45cf-9ea9-556a3592d6df
+I was too lazy to write up how this works, so I asked ChatGPT to do my work: [See here](https://chatgpt.com/share/38554552-182e-45cf-9ea9-556a3592d6df).
 
 ### Local regression with GLMs
 
@@ -590,7 +588,7 @@ k <- rpois( n, q * s )
 plot( x, log( k/s * 1e4 + 1 ) )
 ```
 
-Instead of a simple kernel smoother, let's to local regression again, but now
+Instead of a simple kernel smoother, let's do local regression again, but now
 with the `glm` function instead of the `lm` function:
 
 ```{r}
@@ -654,7 +652,7 @@ Here's a plot
 ```{r}
 knots <- seq( 0, 1, length.out=8 )
 matplot( xg, bs( xg, intercept=TRUE, Boundary.knots=knots[c(1,8)], knots=knots[1:7] ), 
-    type="l", lty="solid" ) 
+    type="l", lty="solid", xlab="x", ylab="y" ) 
 
 abline( v=knots, col="gray" )
 ```
@@ -663,7 +661,7 @@ indicated above by the gray lines. The boundaries of the intervals are marked wi
 above and called knots. As we specified 7 degrees of freedom, we have $7-1=6$ knots. The knots
 can be places arbitrarily, but here, we have spaced them uniformly.
 
-A B-spline basis, comprising basis functions $b_s$ (here, $s=1,\dots,10) is constructed to have the 
+A B-spline basis, comprising basis functions $b_s$ (here, $s=1,\dots,10$) is constructed to have the 
 following properties:
 
 - Each spline is a piecewise-polynomial function, i.e, between any two knots, it is a polynomial.
@@ -678,7 +676,7 @@ For a B-spline basis made of 3rd-degree polynomials, we further have:
 
 - The basis functions are twice differentiable, but the third derivative is discontinuous at the knots.
 
-The basis functions returned by `bs`, known as the B-splines basis, is calculated using a scheme known as
+The basis functions returned by `bs`, known as the B-splines basis, is calculated using a scheme called
 the Cox–de Boor recursion formula, which is explained below.
 
 #### Unpenalized spline regression
@@ -697,7 +695,8 @@ We seek a smoothing curve $f(x)=\sum_s \beta_s b_s(x)$ that minimizes $\sum_i\le
 We can find this by ordinary least squares (OLS) regression:
 
 ```{r}
-my_bs <- function(x) bs( x, intercept=TRUE, Boundary.knots=c(0,1), knots=seq(0,1,length.out=8)[2:7] )
+my_bs <- function(x) bs( x, intercept=TRUE, 
+      Boundary.knots=c(0,1), knots=seq(0,1,length.out=8)[2:7] )
 
 fit <- lm.fit( my_bs(x), y ) 
 fit$coefficients
@@ -832,7 +831,8 @@ matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
 abline( v=knots, col="gray" )
 lines( xg, rowSums(bs3), col="#00000030" )
 ```
-The basis produced by `bs` also adds up to 1 in the outer segments. This is achieved
+
+The basis produced by `bs` adds up to 1 also in the outer segments. This is achieved
 by moving the outer knots where the sum is not 1 very close together. 
 
 We rerun the code to show this, changing only the knot vector
@@ -847,6 +847,7 @@ matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
 abline( v=knots, col="gray" )
 lines( xg, rowSums(bs3), col="#00000030" )
 ```
+
 Of course, we should form the limit of moving the outer knots exactly to 0 and 1, but that would require
 us to think very carefully about where to put $<$ and where $\le$ in the $k=0$ case, and that is cumbersome.
 Luckily for us, the authors of `bs` have done that for us.
@@ -854,7 +855,7 @@ Luckily for us, the authors of `bs` have done that for us.
 ```{r}
 bs3 <- bs( xg, df=m-4, intercept=TRUE )
 matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1) )
-abline( v=knots, col="gray" )
+abline( v=seq( 0, 1, length.out=m-6 ), col="gray" )
 lines( xg, rowSums(bs3), col="#00000030" )
 ```
 
@@ -895,36 +896,38 @@ matplot( xg[2:(nr-1)], bs3xx, type="l", lty="solid", main="2nd derivative" )
 ```
 
 For a given linear combination $f(x) = \sum_s \beta_s b_{s,3}(x)$, it is easy and
-cheap to calculate the integral of its squared curvature:
+cheap to calculate the integral of its squared curvature,a s we can see in the following:
+
 $$\begin{align}
 \int_0^1 \left(f(x)\right)^2\text{d}x &= 
 \int_0^1\left(\sum_{s}\beta_sb_{s,3}\right)\left(\sum_{s'}\beta_sb_{s',3}\right)\text{d}x\\
 &=\sum_{ss'} \beta_s\beta_{s'}\underbrace{\int_0^1b_{s,3}(x)b_{s',3}(x)\mathrm{d}x}_{=P_{ss'}}=
-\vec\beta^\top P \vec \beta
+\vec\beta^\mathsf{T} P \vec \beta
 \end{align}$$
 The matrix $P$ can be easily calculated ahead of time and so, the objective of our 
 minimization for curvature-penalized spline regression becomes:
 
 $$\begin{align}
 L=&\sum_i\left(y_i-f(x_i)\right)^2 + \lambda\int_0^1(f''(x))^2\text{d}x\\
-=&(\vec{y}-X\vec\beta)^\top(\vec{y}-X\vec\beta) + \lambda \vec{β}^\top P \vec\beta\\
-=&\vec y^\top\vec y - 2 \vec\beta^\top X^\top\vec y+\vec\beta^\top\left(
-X^\top X + \lambda P\right)\vec\beta
+=&(\vec{y}-X\vec\beta)^\mathsf{T}(\vec{y}-X\vec\beta) + \lambda \vec{β}^\mathsf{T} P \vec\beta\\
+=&\vec y^\mathsf{T}\vec y - 2 \vec\beta^\mathsf{T} X^\mathsf{T}\vec y+\vec\beta^\mathsf{T}\left(
+X^\mathsf{T} X + \lambda P\right)\vec\beta
 \end{align}$$
 
 Here, the matrix $X$ has matrix elements $X_{is}=b_{s,3}(x_i)$.
 
 To  minimize this, we take the gradient w.r.t. $\vec\beta$:
-$$ \nabla_{\vec\beta}L=-2X^\top\vec{y} + 2 \left(X^\top X + \lambda P\right)\vec\beta$$
+$$ \nabla_{\vec\beta}L=-2X^\mathsf{T}\vec{y} + 2 \left(X^\mathsf{T} X + \lambda P\right)\vec\beta$$
 Setting the gradient to zero, we obtain the OLS normal equation with the added penalty:
-$$\left(X^\top X + \lambda P\right)\vec\beta = X^\top\vec{y} $$
+$$\left(X^\mathsf{T} X + \lambda P\right)\vec\beta = X^\mathsf{T}\vec{y} $$
 As this is an equation of the form $A\vec x=\vec b$, it describes a system of linear equations
 that can be solved with QR decomposition (i.e., Gauß elimination) in order to find $\vec\beta$.
 
 This describes the math behind the `smooth.spline` function except for one point: a clever heuristic
 to find a suitable value for the penalty strength parameter $\lambda$, which we will skip over.
 (In brief: It turns out that a scale-free smoothing strength can be defined, which one then
-multiplies with $\operatorname{tr}X^\top X / \operatorname{tr} P$ to obtain $\lambda$.)
+multiplies with $\operatorname{tr}X^\mathsf{T} X / \operatorname{tr} P$ to obtain $\lambda$.)
+
 
 #### P-Splines
 
@@ -939,40 +942,30 @@ $$ \|\vec y - X\vec\beta\|^2 - \lambda \sum_{s=1}^{m-1}\left(\beta_{s+1}-\beta_s
 
 It's easy to see that this penalty can be implemented using the same normal equation
 as before when setting $P$ to 
-$$P=\left( 
-\begin{array}{r}
+
+$$ 
+P=\left( 
+\begin{array}{rrrrrrrr}
 1  & -1 &    &    &  \\
 -1 &  2 & -1 &    &  \\
    & -1 &  2 & -1 &  \\
    &    & -1 &  2 & -1 & \\
-   
    &    &    & ⋱ &  ⋱ & ⋱ & \\
    &    &    &    & -1 &  2 & -1 & \\
    &    &    &    &    & -1 &  2 & -1 & \\
    &    &    &    &    &    & -1 &  1    
 \end{array}
-\right).$$
+\right). 
+$$
 
 To demonstrate, we first make a really large basis, which extends far out of the domain
 
 ```{r}
-knots <- seq( -1, 2, length.out=100 )
+knots <- seq( -0.2, 1.2, length.out=50 )
 m <- length(knots)-4
 bs3 <- sapply( 1:m, function(s) bsf( xg, s, 3, knots ) )
 matplot( xg, bs3, type="l", lty="solid", ylim=c(0,1), main="degree-3 spline basis" )
 ```
-We remove the knots that have no influence inside the domain [0;1]:
-
-```{r}
-knots <- knots[
-  min( which( sapply( 1:length(knots), function(l) bsf( 0, 1, 3, knots[l:length(knots)] ) ) > 0 ) ):
-  max( which( sapply( 1:length(knots), function(l) bsf( 1, l-4, 3, knots[1:l] ) ) > 0 ) ) ]
-
-m <- length(knots)-4
-
-knots
-```
-
 Now, we calculate the values of the spline basis at the x coordinates of the
 data points, and, for later use, also at our grid of equidistant points
 
@@ -988,6 +981,11 @@ pty[ row(pty) == col(pty)+1 ] <- -1
 pty[ row(pty) == col(pty)-1 ] <- -1
 pty[1,1] <- 1
 pty[m,m] <- 1
+```
+
+We can use `image` to check that the matrix is correct.
+
+```{r}
 image( 1:m, 1:m, pty, asp=1 )
 ```
 
