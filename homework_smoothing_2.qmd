@@ -1,0 +1,84 @@
+---
+title: "Homework 5: Smoothing II"
+---
+
+In this homework, we will apply P-spline smoothing to the neurogenesis dataset.
+
+### Submission
+
+This time, please send me your finished homework by e-mail to [simon.anders@uni-heidelberg.de](mailto:simon.anders@uni-heidelberg.de). This will help me to see how far you get. No need to complete all problems, just send me what you have. 
+
+If possible, please create a Quarto notebook and send me the HTML file. Please make sure that the HTML file contains all the images. [This explanation](https://papagei.bioquant.uni-heidelberg.de/simon/dabio24/standalone.html) (written for another course) explains how.
+
+### Preparations
+
+Proceed as follows
+
+- Download the dataset [here](https://papagei.bioquant.uni-heidelberg.de/simon/sco25/ifnagrko.zip).
+
+- Load the data as shown in the [Trajectories](trajectory.html) lecture.
+
+- Perform standard processing with Seurat, again simply by using the code from the [Trajectories](trajectory.html) lecture. (If you don't want to copy and paste, load the notebooks's quarto file into RStudio, which you find on GitHub, [here](https://github.com/anders-biostat/sco25/blob/master/trajectory.qmd).)
+
+- Jump to the lecture section "Fitting the principal curve" and follow it.
+
+- Now create a data frame with one row per cell and the following columns:
+  - the cell barcodes, taken from the `rownames` of the Seurat object
+  - the total counts per cell, as obtained with `colSums` from the count matrix (which you can fin in the Seurat object with `LayerData(seu,"counts")`).
+  - the counts for one specific gene, e.g. "Slc1a3"
+  - the cells' pseudotimes as obtained from the `lambda` slot of the the object returned by the `princurve` function.
+  
+- Restrict your data frame to only the cells in the lineage (as also done when fitting the principal curve).
+
+- Now perfrom `locfit` smoothing using a Poisson GLM, as shown in the lecture notebook, and plot the result
+
+### P-spline smoothing
+
+Create a B-splines basis covering the range of the pseudotime values with 50 or so basis functions. Then, construct the tridiagonal penalty matrix $P$ as shown at the end of the [spline smoothing](smoothing.qmd) lecture.
+
+For a first try, calculate log-normalized expressions $y=\log(k/s+10^{-4})$ from the single-gene counts $k$ and the total counts $s$ and then perform P-spline smoothing of these versus the pseudotime values using penalized OLS by solving the penalized normal equation system with `solve`, as shown in the lecture.
+
+However, we would like to use proper GLM fitting instead of OLS. For this, we can use IRLS with penalty matrix. The package `glmGamPoi`, described in [this recent paper](https://doi.org/10.1093/bioinformatics/btaa1009), offers this functionality.
+
+Here is some code to show how it is used, by running a B-spline regression on
+the test data from the lecture. Try to change this
+to P-spline regression:
+
+```r
+# Install as glmGamPoi as follows:
+#   BiocManager::install( "glmGamPoi" )
+
+# load glmGamPoi library
+library(glmGamPoi)
+
+# using example values x, k, s from lecture
+# Run code from lecture notebook to get them
+
+# Plot them
+plot( x, log(k/s+1e-4), cex=.5, col="gray" )
+
+# Evaluate a B-spline basis at the values of x
+# to construct the model matrix (called X in the lecture)
+mm <- bs(x, df=10, intercept=TRUE)
+
+# Fit the GLM
+# - the responses, k, have to be passed as row vector, i.e., as, 1xn matrix
+# - the model matrix is passed with "~0+" to indicate that it does no 
+#   additional intercept column should be added
+# - overdispersion=0 means to fit a Poisson rather than a Gamma-Poisson model
+fit <- glm_gp( matrix( k, nrow=1 ), ~0+mm, offset=log(s), overdispersion=0 )
+
+# Plot the fitted points
+points( x, m %*% t(fit$Beta), cex=.1, col="red" )
+
+# To do penalized regression, pass the penalization matrix
+# as parameter 'ridge_penalty'
+```
+
+![](glmgampoi_example.png)
+
+
+
+### Matrix smoothing
+
+The `glm_gp` function makes it easy to run smoothing for a large number of genes is one go. Instead of a row vector of counts, simply pass it a matrix of counts, with one row per gene. Do this for the top 50 most variable genes, and then make a heatmap as shown at t!he end of the [Trajectory](trajectory.html) lecture.

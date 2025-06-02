@@ -899,9 +899,9 @@ For a given linear combination $f(x) = \sum_s \beta_s b_{s,3}(x)$, it is easy an
 cheap to calculate the integral of its squared curvature,a s we can see in the following:
 
 $$\begin{align}
-\int_0^1 \left(f(x)\right)^2\text{d}x &= 
-\int_0^1\left(\sum_{s}\beta_sb_{s,3}\right)\left(\sum_{s'}\beta_sb_{s',3}\right)\text{d}x\\
-&=\sum_{ss'} \beta_s\beta_{s'}\underbrace{\int_0^1b_{s,3}(x)b_{s',3}(x)\mathrm{d}x}_{=P_{ss'}}=
+\int_0^1 \left(f''(x)\right)^2\text{d}x &= 
+\int_0^1\left(\sum_{s}\beta_sb''_{s,3}\right)\left(\sum_{s'}\beta_sb''_{s',3}\right)\text{d}x\\
+&=\sum_{ss'} \beta_s\beta_{s'}\underbrace{\int_0^1b''_{s,3}(x)b''_{s',3}(x)\mathrm{d}x}_{=P_{ss'}}=
 \vec\beta^\mathsf{T} P \vec \beta
 \end{align}$$
 The matrix $P$ can be easily calculated ahead of time and so, the objective of our 
@@ -940,8 +940,12 @@ splines:
 
 $$ \|\vec y - X\vec\beta\|^2 - \lambda \sum_{s=1}^{m-1}\left(\beta_{s+1}-\beta_s\right)^2$$
 
-It's easy to see that this penalty can be implemented using the same normal equation
-as before when setting $P$ to 
+This now penalizes deviations from a horizontal line, i.e., keeps the function value approximately constant whenever the data does not say otherwise.
+
+The penalty term is again a quadratic form: We can write it as 
+
+$$\left(\beta_{s+1}-\beta_s\right)^2 =\vec\beta^{\mathsf T}P\vec\beta$$
+with
 
 $$ 
 P=\left( 
@@ -958,7 +962,9 @@ P=\left(
 \right). 
 $$
 
-To demonstrate, we first make a really large basis, which extends far out of the domain
+Therefore, we can use the same penalized normal equation as before to solve the penalized least-squares problem.
+
+To demonstrate P-spline smoothing, we first make a really large basis, with many basis functions, covering an x-range that extends well beyond the range of our data's x values.
 
 ```{r}
 knots <- seq( -0.2, 1.2, length.out=50 )
