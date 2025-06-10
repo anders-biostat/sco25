@@ -62,7 +62,7 @@ Lecture times/dates:
   - [Homework 4](homework_smooth.html): Smoothing I
 - Lecture of 2025-05-26
   - Smoothing (continued from previous lecture)
-  - [Homework 5](homework_smoothing_2.html): Smoothing II
+  - [Homework 5](homework_smoothing_2.html): Smoothing II (solution here: [part 1](homework5_solution.html))
 - Lecture of 2025-06-06
   - [Smoothing with Python](pysmoothing.html)
   - [Principal curves](principal_curves.qmd)

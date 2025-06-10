@@ -1,0 +1,142 @@
+---
+title: "Homework 5"
+---
+
+*This is the notebook that we filled in the exercise class of 2025-06-03. It does not contain much text, but you can get the narrative from the recording of the class, if needed.*
+
+Load the packages we will need
+
+```{r message=FALSE}
+library(tidyverse)
+library(Seurat)
+library(locfit)
+library(splines)
+```
+
+Load the data
+
+```{r}
+ReadMtx( "~/Downloads/ifnagrko/ifnagrko_raw_counts.mtx.gz",
+    "~/Downloads/ifnagrko/ifnagrko_obs.csv",
+    "~/Downloads/ifnagrko/ifnagrko_var.csv",
+    cell.sep=",", feature.sep=",", skip.cell=1, skip.feature=1, 
+    mtx.transpose=TRUE) -> count_matrix
+```
+
+Run standard Seurat pipeline
+
+```{r message=FALSE}
+count_matrix %>%
+CreateSeuratObject() %>%
+NormalizeData() %>%
+FindVariableFeatures() %>%
+ScaleData() %>%
+RunPCA( npcs=20 ) %>%
+FindNeighbors( dims=1:20 ) %>%
+FindClusters( resolution=0.5 ) %>%
+RunUMAP( dims=1:20 ) -> seu
+```
+
+Look at UMAP plot with clustering:
+
+```{r}
+UMAPPlot(seu, label=TRUE) + coord_equal()
+```
+Select clusters that form the lineage
+
+```{r}
+lineage_clusters <-  c( 10, 9, 0, 13, 14, 3, 5, 1, 2, 7 ) 
+```
+
+Plot this to check selection
+
+```{r}
+Embeddings( seu,"umap" ) %>% 
+as_tibble( rownames="cell" ) %>%
+mutate( cluster = seu$seurat_clusters ) %>%
+mutate( in_lineage = cluster %in% lineage_clusters ) %>%
+ggplot() +
+  geom_point( aes(x=umap_1, y=umap_2, col=in_lineage), size=.1 ) +
+  coord_equal()
+```
+
+Fit the principal curve
+
+```{r}
+princurve::principal_curve( 
+  Embeddings(seu,"pca")[ seu$seurat_clusters %in% lineage_clusters, ], 
+  df=10, trace=TRUE, maxit=30, approx_points=1000 ) -> prc
+```
+
+Look at the structure of the output returned by `principal_curve`:
+
+```{r}
+str(prc)
+```
+
+Make UMAP plot where the cells are coloured according to their pseudotime (the `lambda` value
+of the principal curve)
+
+```{r}
+left_join(
+  Embeddings( seu,"umap" ) %>% as_tibble( rownames="cell" ),
+  prc$lambda %>% enframe("cell","lambda"),
+  by = "cell" ) %>%
+ggplot() +
+  geom_point(aes( x=umap_1, y=umap_2, col=lambda), size=.2 ) +
+  coord_equal()
+```
+
+Another plot, this time colouring by the cells' distances to the curve
+
+```{r}
+left_join(
+  Embeddings( seu,"umap" ) %>% as_tibble( rownames="cell" ),
+  sqrt( rowSums( ( Embeddings(seu,"pca")[ rownames( prc$s ), ] - prc$s )^2 ) ) %>% 
+      enframe("cell","dist"),
+  by = "cell" ) %>%
+ggplot() +
+  geom_point(aes( x=umap_1, y=umap_2, col=dist), size=.2 ) +
+  coord_equal() + scale_color_gradientn(trans="log10",colours=rje::cubeHelix(100))
+```
+
+Create the data frame requested in the problem sheet
+
+```{r}
+tibble(
+  cell = colnames(seu),
+  total = colSums( LayerData(seu,"counts") ),
+  k = LayerData(seu,"counts")["Slc1a3",],
+  y = log( k/total + 1e-4 )
+) %>%
+left_join( enframe(prc$lambda, "cell", "lambda") ) %>%
+filter( !is.na(lambda) ) -> df
+
+df
+```
+
+Run `locfit` to regress the log-normalized expression data onto the pseudotime.
+
+```{r}
+plot( locfit( y ~ lambda, df ) )
+```
+
+(The curve is backwards, because our pseudotime runs in the wrong direction.)
+
+Instead of locfit, use spline regression:
+
+```{r}
+fit <- lm( y ~ bs(lambda,df=10), df ) 
+
+plot( y ~ lambda, df, cex=.2, col="gray" )
+points( df$lambda, fit$fitted.values, cex=1, col="red" )
+```
+
+Again a spline fit, now with Poisson GLM
+
+```{r}
+fit <- glm( k ~ bs(lambda,df=10), df, family="poisson", offset=log(df$total) ) 
+
+plot( log(k/total+1e-4) ~ lambda, df, cex=.2, col="gray", ylim=c(-15,-4) )
+points( df$lambda, cbind(1,bs(df$lambda,df=10)) %*% fit$coefficients, cex=1, col="red" )
+```
