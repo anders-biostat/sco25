@@ -126,6 +126,8 @@ plot( locfit( y ~ lambda, df ) )
 Instead of locfit, use spline regression:
 
 ```{r}
+library(splines)
+
 fit <- lm( y ~ bs(lambda,df=10), df ) 
 
 plot( y ~ lambda, df, cex=.2, col="gray" )
@@ -139,4 +141,40 @@ fit <- glm( k ~ bs(lambda,df=10), df, family="poisson", offset=log(df$total) )
 
 plot( log(k/total+1e-4) ~ lambda, df, cex=.2, col="gray", ylim=c(-15,-4) )
 points( df$lambda, cbind(1,bs(df$lambda,df=10)) %*% fit$coefficients, cex=1, col="red" )
+```
+
+*From here on, notebook still needs work.*
+
+The same, more explicit
+
+```{r}
+mm <- bs( df$lambda, intercept=TRUE, Boundary.knots=c(0,200),
+          knots=seq(0,200,length.out=8)[2:7])
+
+fit <- glm( k ~ mm+0, df, family="poisson", offset=log(df$total) ) 
+
+xg <- seq( 0, 200, length.out=1000 )
+mmxg <- bs( xg, intercept=TRUE, Boundary.knots=c(0,200),
+          knots=seq(0,200,length.out=8)[2:7])
+
+plot( log(k/total+1e-4) ~ lambda, df, cex=.2, col="gray", ylim=c(-15,-4) )
+lines( xg, mmxg %*% fit$coefficients )
+```
+
+
+Do the same with glmGamPoi:
+
+```{r}
+library( glmGamPoi )
+fit <- glm_gp( matrix( df$k, nrow=1 ), ~0+mm, offset=log(df$total), overdispersion=0 )
+fit$Beta
+```
+
+```{r}
+plot( df$lambda, df$y, ylim=c(-14,0), cex=.1 )
+
+xg <- seq( min(df$lambda), max(df$lambda), length.out=1000 )
+yg <- bs( xg, df=10, intercept=TRUE, Boundary.knots=attr(mm,"Boundary.knots"),
+          knots=attr(mm,"knots"))
+lines( xg, yg %*% t(fit$Beta) )
 ```

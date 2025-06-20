@@ -63,9 +63,13 @@ Lecture times/dates:
 - Lecture of 2025-05-26
   - Smoothing (continued from previous lecture)
   - [Homework 5](homework_smoothing_2.html): Smoothing II (solution here: [part 1](homework5_solution.html))
-- Lecture of 2025-06-06
+- Lecture of 2025-06-02
   - [Smoothing with Python](pysmoothing.html)
+- Lecture of 2025-06-16  
   - [Principal curves](principal_curves.qmd)
+  - [Gradient descent and PyTorch AutoGrad](torch_autograd.html)
+  - PCA as optimization task
+  - [Homework 6](homework_optim.html): Optimization in Python
 
 ## Video recordings
 

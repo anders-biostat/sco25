@@ -1,0 +1,27 @@
+---
+title: "Homework: Optimization in Python"
+---
+
+The purpose of this homework is to let you practice working with numerical functions in Python and with PyTorch.
+
+We consider the following function:
+
+$$f(x_1,x_2) = \frac{1}{30}\left((x_1+5)^2+x_2^2)\right) + -20\exp(-(x_1-5)^2-x_2^2)$$
+
+### Task 1: Visualization
+
+Plot the function for values within the square $[-10,10]^2$. Calculate the function values for a grid of regularly spaced points in the square (perhaps 200 by 200), arrange them as a matrix, and visualize the matrix as heatmap (i.e., as a chart made of small squares representing the matrix elements, coloured according to their value). You can use the function `pyplot.imshow` from the `matplotlib` package for this purpose.
+
+### Task 2: Minimization with scipy
+
+Use the `scipy.optim` to find the function's minima. Try different initial values.
+
+### Task 3: Minimization with torch
+
+Implement a gradient descent with PyTorch (see [lecture notes](torch_autograd.html) or [this tutorial](https://docs.pytorch.org/tutorials/beginner/blitz/autograd_tutorial.html)) and use it to find the function's minima. Again, try different starting values.
+
+### Task 4: Basins of attraction
+
+As you will certainly have noticed by now, the function has two minima, and to which of the two a gradient descent will lead you depends on where you start. Write a loop to systematically try all starting values in a grid of $200\times 200$ points in the square $[-5;5]^2$. For each starting point, store which of the two minima you reach and visualize the two minima's apparent basins of attraction as a heatmap.
+
+Does the heatmap depend on the learning rate?
